@@ -12,10 +12,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        
-        // QUI IMPORTIAMO IL REALTIME DATABASE INVECE DI FIRESTORE
         import { getDatabase, ref, set, get, child, onValue, remove } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
-        
         import { getStorage } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
 
         // Configurazione Firebase
@@ -34,7 +31,7 @@
         
         // Esponiamo i metodi a livello globale
         window.auth = getAuth(app);
-        window.db = getDatabase(app); // INIZIALIZZA RTDB
+        window.db = getDatabase(app);
         window.storage = getStorage(app);
 
         window.rtdb = { ref, set, get, child, onValue, remove };
@@ -106,12 +103,13 @@
 
         .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--primary); color: white; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
         .input { width: 100%; padding: 10px; margin: 5px 0 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; }
+        .input:disabled { background: #f1f5f9; cursor: not-allowed; color: #64748B; }
         .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
 
         /* --- MODAL --- */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; padding: 15px; }
         .modal.active { display: flex; }
-        .modal-content { background: var(--card); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; border-radius: 16px; padding: 30px; border: 1px solid var(--border); color: var(--text); }
+        .modal-content { background: var(--card); width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; border-radius: 16px; padding: 30px; border: 1px solid var(--border); color: var(--text); }
 
         /* --- GEMINI AI CHAT --- */
         .ai-chat { display: flex; flex-direction: column; height: 500px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
@@ -167,7 +165,7 @@
                 <button id="btn-tab-staff" onclick="switchLoginMode('staff')">Staff</button>
             </div>
 
-            <p id="login-desc" style="font-size: 13px; color: #666; margin-bottom: 20px;">Accesso Riservato Direzione (direzione@horizonglobal.com)</p>
+            <p id="login-desc" style="font-size: 13px; color: #666; margin-bottom: 20px;">Accesso Riservato Direzione</p>
             
             <input type="text" id="login-user" placeholder="Email Utente">
             <input type="password" id="login-pass" placeholder="Password Firebase">
@@ -185,20 +183,26 @@
         </div>
         <nav class="nav">
             <div style="font-size: 10px; color: var(--text-light); text-transform: uppercase; margin: 10px 0 5px 10px;">Workspace</div>
-            <a class="nav-link active" onclick="nav('dash', this)"><span><i class="ph ph-chart-pie"></i> Dashboard Globale</span></a>
-            <a class="nav-link" onclick="nav('aziende', this)"><span><i class="ph ph-buildings"></i> Gruppo & Aziende</span></a>
-            <a class="nav-link" onclick="nav('divs', this)"><span><i class="ph ph-tree-structure"></i> Divisioni Interne</span></a>
+            <a class="nav-link active admin-only" onclick="nav('dash', this)"><span><i class="ph ph-chart-pie"></i> Dashboard Globale</span></a>
+            <a class="nav-link admin-only" onclick="nav('aziende', this)"><span><i class="ph ph-buildings"></i> Gruppo & Aziende</span></a>
+            <a class="nav-link admin-only" onclick="nav('divs', this)"><span><i class="ph ph-tree-structure"></i> Divisioni Interne</span></a>
             
             <div style="font-size: 10px; color: var(--text-light); text-transform: uppercase; margin: 20px 0 5px 10px;">Gestione & Operatività</div>
-            <a class="nav-link" onclick="nav('staff', this)"><span><i class="ph ph-users"></i> Organico HR</span></a>
+            
+            <a class="nav-link" id="menu-staff-link" onclick="nav('staff', this)"><span><i class="ph ph-users"></i> Organico HR</span></a>
+            
+            <a class="nav-link admin-only" onclick="nav('badges', this)"><span><i class="ph ph-identification-card"></i> Gestione Badge App</span></a>
+            
             <a class="nav-link" onclick="nav('timbrature', this)"><span><i class="ph ph-clock"></i> Timbrature & Presenze</span> <i class="ph-fill ph-circle" style="color:var(--accent); font-size:8px;"></i></a>
-            <a class="nav-link" onclick="nav('docs', this)"><span><i class="ph ph-files"></i> Documenti & Finanza</span></a>
+            <a class="nav-link admin-only" onclick="nav('docs', this)"><span><i class="ph ph-files"></i> Documenti & Finanza</span></a>
             <a class="nav-link" onclick="nav('tasks', this)"><span><i class="ph ph-check-square"></i> Task & Ticket</span></a>
 
-            <div style="font-size: 10px; color: var(--text-light); text-transform: uppercase; margin: 20px 0 5px 10px;">Infrastruttura & AI</div>
-            <a class="nav-link" onclick="nav('ai', this)"><span><i class="ph ph-sparkle"></i> AI Predittiva</span> <span style="font-size:10px; background:var(--primary); color:white; padding:2px 6px; border-radius:4px;">BETA</span></a>
-            <a class="nav-link" onclick="nav('macchina', this)"><span><i class="ph ph-cpu"></i> Grado mAf</span> <i class="ph ph-warning-circle" style="color:var(--danger)"></i></a>
-            <a class="nav-link" onclick="nav('eolo', this)"><span><i class="ph ph-broadcast"></i> Eolo fFk9</span></a>
+            <div class="admin-only">
+                <div style="font-size: 10px; color: var(--text-light); text-transform: uppercase; margin: 20px 0 5px 10px;">Infrastruttura & AI</div>
+                <a class="nav-link" onclick="nav('ai', this)"><span><i class="ph ph-sparkle"></i> AI Predittiva</span> <span style="font-size:10px; background:var(--primary); color:white; padding:2px 6px; border-radius:4px;">BETA</span></a>
+                <a class="nav-link" onclick="nav('macchina', this)"><span><i class="ph ph-cpu"></i> Grado mAf</span> <i class="ph ph-warning-circle" style="color:var(--danger)"></i></a>
+                <a class="nav-link" onclick="nav('eolo', this)"><span><i class="ph ph-broadcast"></i> Eolo fFk9</span></a>
+            </div>
             
             <div style="font-size: 10px; color: var(--text-light); text-transform: uppercase; margin: 20px 0 5px 10px;">Sistema</div>
             <a class="nav-link" onclick="alert('Pannello Admin Avanzato in caricamento...')"><span><i class="ph ph-gear"></i> Settings Globali</span></a>
@@ -212,7 +216,7 @@
                 <span id="page-title">Dashboard Globale</span>
             </div>
             <div class="topbar-right-panel" style="display: flex; align-items: center; gap: 15px;">
-                <button class="btn admin-only" style="background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="createNewUserAuth()"><i class="ph ph-user-plus"></i></button>
+                <button class="btn admin-only" style="background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="createNewUserAuth()"><i class="ph ph-user-plus"></i> Crea Account Staff</button>
                 <div style="text-align: right; line-height: 1.2;">
                     <div style="font-size: 13px; font-weight: 700;" id="current-user-name">Direzione Generale</div>
                     <div style="font-size: 11px; color: var(--text-light);" id="current-user-role">Root Admin</div>
@@ -221,7 +225,7 @@
             </div>
         </header>
 
-        <section id="view-dash" class="view active">
+        <section id="view-dash" class="view active admin-only">
             <div class="grid" id="dash-summary"></div>
             <div class="card">
                 <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
@@ -234,7 +238,7 @@
             </div>
         </section>
 
-        <section id="view-aziende" class="view">
+        <section id="view-aziende" class="view admin-only">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
                 <h2>Gruppo Societario</h2>
                 <button class="btn admin-only" onclick="openModal('modal-azienda')"><i class="ph ph-plus"></i> Nuova Azienda</button>
@@ -247,7 +251,7 @@
             </div>
         </section>
 
-        <section id="view-divs" class="view">
+        <section id="view-divs" class="view admin-only">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
                 <h2>Gestione Divisioni</h2>
                 <button class="btn admin-only" onclick="openModal('modal-div')"><i class="ph ph-plus"></i> Nuova Divisione</button>
@@ -260,9 +264,41 @@
             </div>
         </section>
 
+        <section id="view-badges" class="view admin-only">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2>Gestione Codici Badge</h2>
+                    <p style="font-size: 12px; color: var(--text-light);">Crea e gestisci i codici d'accesso (PIN) che i dipendenti useranno per sbloccare l'App Timbrature sui loro smartphone.</p>
+                </div>
+                <button class="btn admin-only" onclick="openModal('modal-badge')"><i class="ph ph-plus"></i> Genera Codice Badge</button>
+            </div>
+            <div class="card">
+                <table id="table-badges">
+                    <thead><tr><th>Dipendente</th><th>Codice Segreto (PIN)</th><th>Data Creazione</th><th>Stato</th><th>Azioni</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="view-staff" class="view">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 id="staff-page-title">Gestione Organico HR Globale</h2>
+                    <p id="staff-page-desc" style="font-size: 12px; color: var(--text-light);">Gestione completa dei dipendenti e dei dati fiscali/bancari.</p>
+                </div>
+                <button class="btn admin-only" onclick="newStaff()"><i class="ph ph-plus"></i> Nuovo Dipendente</button>
+            </div>
+            <div class="card">
+                <table id="table-staff">
+                    <thead><tr><th>Nome</th><th>Ruolo</th><th>Azienda</th><th>Divisione</th><th>Stato Attuale</th><th>Azioni</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
         <section id="view-timbrature" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
-                <h2>Log Ingressi e Timbrature</h2>
+                <h2 id="timbrature-page-title">Log Ingressi e Timbrature</h2>
                 <div class="admin-only" style="display:flex; gap:10px;">
                     <button class="btn" style="background:var(--warning)" onclick="alert('Generazione Report Presenze PDF...')"><i class="ph ph-file-pdf"></i> Export</button>
                     <button class="btn" onclick="openModal('modal-timbratura')"><i class="ph ph-plus"></i> Forzatura</button>
@@ -277,7 +313,7 @@
             </div>
         </section>
 
-        <section id="view-docs" class="view">
+        <section id="view-docs" class="view admin-only">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
                 <h2>Amministrazione, Fatture & Uploads</h2>
                 <button class="btn admin-only" onclick="openModal('modal-doc')"><i class="ph ph-plus"></i> Inserisci Documento</button>
@@ -286,19 +322,6 @@
             <div class="card">
                 <table id="table-docs">
                     <thead><tr><th>Data</th><th>Descrizione</th><th>Azienda Rif.</th><th>Importo</th><th>Tipo</th><th>File</th><th>Azioni</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="view-staff" class="view">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
-                <h2>Gestione Organico HR Globale</h2>
-                <button class="btn admin-only" onclick="openModal('modal-staff')"><i class="ph ph-plus"></i> Nuovo Dipendente</button>
-            </div>
-            <div class="card">
-                <table id="table-staff">
-                    <thead><tr><th>Nome</th><th>Ruolo</th><th>Azienda</th><th>Divisione</th><th>Stato Attuale</th><th>Azioni</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -317,7 +340,7 @@
             </div>
         </section>
 
-        <section id="view-ai" class="view">
+        <section id="view-ai" class="view admin-only">
             <div class="grid">
                 <div style="grid-column: 1 / -1;">
                     <h2>Assistente Analitico Globale (Gemini Integration)</h2>
@@ -335,7 +358,7 @@
             </div>
         </section>
 
-        <section id="view-macchina" class="view">
+        <section id="view-macchina" class="view admin-only">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap: wrap;">
                 <h2 style="color: var(--primary); font-family: 'Rajdhani';">TERMINALE GRADO mAf // CORE OS v8.0</h2>
                 <div style="color: var(--danger); font-family: monospace;">STATUS: ONLINE</div>
@@ -363,7 +386,7 @@
             </div>
         </section>
 
-        <section id="view-eolo" class="view">
+        <section id="view-eolo" class="view admin-only">
             <h2 style="color: var(--primary); font-family: 'Rajdhani'; margin-bottom:20px;">RADIOTERRA EOLO fFk9 // TELEMETRIA</h2>
             <div class="grid">
                 <div class="hw-panel" style="text-align:center;">
@@ -384,6 +407,93 @@
         </section>
 
     </main>
+
+    <div id="modal-badge" class="modal">
+        <div class="modal-content">
+            <h3>Generazione Codice App Badge</h3>
+            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Seleziona il dipendente e crea una password univoca (PIN). Il dipendente la inserirà nell'App per sbloccare lo scanner.</p>
+            
+            <label style="font-size:12px; font-weight:600; display:block;">Dipendente</label>
+            <select id="badge-staff" class="input"></select>
+            
+            <label style="font-size:12px; font-weight:600; display:block;">Codice Univoco d'Accesso (PIN / Password)</label>
+            <input type="text" id="badge-code" class="input" placeholder="Es. 12345 o MATTEO-2024">
+            
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-badge')">Annulla</button>
+                <button class="btn" onclick="saveBadge()">Salva Codice Badge</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-staff" class="modal">
+        <div class="modal-content">
+            <h3 id="staff-modal-title">Gestione Dipendente HR</h3>
+            <input type="hidden" id="staff-id">
+            
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:15px;">
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Nome Cognome</label>
+                    <input type="text" id="staff-name" class="input" placeholder="Es. Luis Brotto">
+                </div>
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Ruolo Aziendale</label>
+                    <input type="text" id="staff-role" class="input" placeholder="Es. Operatore">
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Azienda di appartenenza</label>
+                    <select id="staff-company" class="input" onchange="populateDivisionsForStaff()"></select>
+                </div>
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Divisione</label>
+                    <select id="staff-div" class="input"></select>
+                </div>
+            </div>
+
+            <h4 style="margin: 15px 0 10px; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px; color: var(--primary);">Dati Personali e Fiscali</h4>
+            
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Codice Fiscale</label>
+                    <input type="text" id="staff-cf" class="input" placeholder="Codice Fiscale">
+                </div>
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Carta d'Identità</label>
+                    <input type="text" id="staff-ci" class="input" placeholder="Numero Documento">
+                </div>
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Tessera Sanitaria</label>
+                    <input type="text" id="staff-ts" class="input" placeholder="Numero Tessera">
+                </div>
+            </div>
+
+            <label style="font-size:12px; font-weight:600; display:block;">Indirizzo di Residenza</label>
+            <input type="text" id="staff-indirizzo" class="input" placeholder="Via, Città, CAP">
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Data di Nascita</label>
+                    <input type="date" id="staff-dataNascita" class="input">
+                </div>
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Luogo di Nascita</label>
+                    <input type="text" id="staff-luogoNascita" class="input" placeholder="Città (Prov)">
+                </div>
+            </div>
+
+            <h4 style="margin: 15px 0 10px; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px; color: var(--primary);">Dati Bancari</h4>
+            <label style="font-size:12px; font-weight:600; display:block;">IBAN / Coordinate di Pagamento</label>
+            <input type="text" id="staff-iban" class="input" placeholder="IT0000000000000000000000000">
+
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 15px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-staff')">Chiudi</button>
+                <button id="btn-save-staff" class="btn admin-only" onclick="saveStaff()">Salva Dati Profilo</button>
+            </div>
+        </div>
+    </div>
 
     <div id="modal-azienda" class="modal">
         <div class="modal-content">
@@ -480,23 +590,6 @@
         </div>
     </div>
 
-    <div id="modal-staff" class="modal">
-        <div class="modal-content">
-            <h3 id="staff-modal-title">Gestione Dipendente HR</h3>
-            <input type="hidden" id="staff-id">
-            <input type="text" id="staff-name" class="input" placeholder="Nome Cognome">
-            <input type="text" id="staff-role" class="input" placeholder="Ruolo Aziendale">
-            <label style="font-size:12px; font-weight:600; display:block;">Azienda di appartenenza</label>
-            <select id="staff-company" class="input" onchange="populateDivisionsForStaff()"></select>
-            <label style="font-size:12px; font-weight:600; display:block;">Divisione</label>
-            <select id="staff-div" class="input"></select>
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-staff')">Annulla</button>
-                <button class="btn" onclick="saveStaff()">Salva Profilo</button>
-            </div>
-        </div>
-    </div>
-
     <div id="modal-timbratura" class="modal">
         <div class="modal-content">
             <h3>Forzatura Timbratura (Admin Override)</h3>
@@ -558,7 +651,7 @@
             if(mode === 'admin') {
                 btnAdmin.classList.add('active');
                 btnStaff.classList.remove('active');
-                desc.innerText = 'Accesso Riservato Direzione (direzione@horizonglobal.com)';
+                desc.innerText = 'Accesso Riservato Direzione';
                 btnAction.innerText = 'Effettua Login Admin';
                 btnAction.setAttribute('onclick', "attemptLogin('admin')");
             } else {
@@ -572,13 +665,7 @@
 
         // --- 1. CORE RELATIONAL STATE ---
         let state = {
-            companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: []
-        };
-
-        const fallbackData = {
-            companies: [{ id: 1, name: 'Global Horizon', cap: 5000000, projects: 12, eff: 95, isActive: true }],
-            divisions: [{ id: 1, companyId: 1, name: 'Publishing', budget: 50000, eff: 90 }],
-            staff: [{ id: 1, name: 'Luis Brotto', role: 'Operatore', companyId: 1, divisionId: 1, status: 'IN SEDE' }]
+            companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: [], badges: []
         };
 
         // --- 1.5 REALTIME DATABASE (RTDB) FUNZIONI ---
@@ -588,7 +675,6 @@
                     const docId = item.id.toString();
                     const dbRef = window.rtdb.ref(window.db, `${collectionName}/${docId}`);
                     
-                    // Puliamo i dati prima di inviarli
                     const cleanData = JSON.parse(JSON.stringify(item));
                     await window.rtdb.set(dbRef, cleanData);
                     console.log(`[RTDB] Salvato in ${collectionName}:`, docId);
@@ -616,27 +702,8 @@
                 return;
             }
             try {
-                const dbRootRef = window.rtdb.ref(window.db);
-                
-                // Controlliamo se c'è già la tabella 'companies'
-                const snapshot = await window.rtdb.get(window.rtdb.child(dbRootRef, 'companies'));
-                
-                if (!snapshot.exists()) {
-                    // Database vuoto: inseriamo i dati di fallback
-                    const uploadCollection = async (collName, dataArray) => {
-                        for (let item of dataArray) {
-                            await saveToFirebase(collName, item);
-                        }
-                    };
-                    await Promise.all([
-                        uploadCollection('companies', fallbackData.companies),
-                        uploadCollection('divisions', fallbackData.divisions),
-                        uploadCollection('staff', fallbackData.staff),
-                    ]);
-                }
-
-                // Inizializza i Listeners in Tempo Reale
-                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks'];
+                // Inizializza i Listeners in Tempo Reale senza fallback data injection
+                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges'];
                 collections.forEach(coll => {
                     const collRef = window.rtdb.ref(window.db, coll);
                     window.rtdb.onValue(collRef, (snap) => {
@@ -648,7 +715,6 @@
                         }
                         state[coll] = arr;
                         
-                        // Aggiorna l'interfaccia solo se siamo loggati (schermata non visibile)
                         if(document.getElementById('login-overlay').style.display === 'none') {
                             renderAll();
                         }
@@ -665,7 +731,7 @@
         const getDivName = (id) => { const d = state.divisions.find(x => x.id == id); return d ? d.name : 'N/A'; };
         const getStaffName = (id) => { const s = state.staff.find(x => x.id == id); return s ? s.name : 'Sconosciuto'; };
 
-        // --- 2. AUTHENTICATION & ROLES ---
+        // --- 2. AUTHENTICATION & ROLES CON LOGICA MATCING EMAIL ---
         async function attemptLogin(roleAttempt) {
             const u = document.getElementById('login-user').value;
             const p = document.getElementById('login-pass').value;
@@ -674,7 +740,7 @@
                 const userEmail = result.user.email.toLowerCase();
 
                 if (roleAttempt === 'admin' && userEmail !== 'direzione@horizonglobal.com') {
-                    alert("Accesso negato: account non autorizzato per la Direzione.");
+                    alert("Accesso negato per Direzione. Prova ad accedere dal modulo 'Staff'.");
                     if(window.signOut) await window.signOut(window.auth);
                     return;
                 }
@@ -682,9 +748,14 @@
                 applyUserRole(userEmail);
                 document.getElementById('login-overlay').style.display = 'none';
                 
-                // Carica i dati DAL REALTIME DATABASE DOPO l'autenticazione
                 await syncConFirebase();
                 renderAll();
+                
+                // Se sei uno staff, ti porta dritto al tuo profilo
+                if(window.userRole === 'staff') {
+                    nav('staff', document.getElementById('menu-staff-link'));
+                }
+
             } catch (error) {
                 alert("Credenziali errate o utente non trovato in Firebase.\n" + error.message);
             }
@@ -697,12 +768,14 @@
                 document.getElementById('current-user-name').innerText = "Direzione Generale";
                 document.getElementById('current-user-role').innerText = "Root Admin";
                 document.getElementById('current-user-avatar').innerText = "DG";
+                document.getElementById('menu-staff-link').innerHTML = `<span><i class="ph ph-users"></i> Organico HR</span>`;
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
             } else {
                 window.userRole = 'staff';
                 document.getElementById('current-user-name').innerText = userEmail;
-                document.getElementById('current-user-role').innerText = "Staff Operativo";
+                document.getElementById('current-user-role').innerText = "Membro Staff";
                 document.getElementById('current-user-avatar').innerText = userEmail.substring(0, 2).toUpperCase();
+                document.getElementById('menu-staff-link').innerHTML = `<span><i class="ph ph-identification-card"></i> Il Mio Profilo</span>`;
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
             }
         }
@@ -758,6 +831,7 @@
             const staffOpts = state.staff.map(s => `<option value="${s.id}">${s.name} (${getCompanyName(s.companyId)})</option>`).join('');
             if(document.getElementById('timb-staff')) document.getElementById('timb-staff').innerHTML = staffOpts;
             if(document.getElementById('task-staff')) document.getElementById('task-staff').innerHTML = staffOpts;
+            if(document.getElementById('badge-staff')) document.getElementById('badge-staff').innerHTML = staffOpts;
             populateDivisionsForStaff();
         }
 
@@ -769,57 +843,91 @@
             if(el) el.innerHTML = divs.map(d => `<option value="${d.id}">${d.name}</option>`).join('') || '<option value="">Nessuna divisione</option>';
         }
 
-        // --- 4. RENDER ENGINE ---
+        // --- 4. RENDER ENGINE FILTRATO ---
         function renderAll() {
             const isAdmin = window.userRole === 'admin';
-            let totalCap = state.companies.reduce((s, c) => s + c.cap, 0);
+            
+            // LA LOGICA DI MATCHING: isoliamo la prima parte della mail "luisbrotto"
+            let userPrefix = window.currentUserEmail ? window.currentUserEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') : '';
 
-            document.getElementById('dash-summary').innerHTML = `
-                <div class="card"><div class="card-title">Capitale Consolidato Gruppo</div><div class="card-value">€ ${(totalCap/1000000).toFixed(2)} M</div></div>
-                <div class="card"><div class="card-title">Entità Corporate Attive</div><div class="card-value">${state.companies.length}</div></div>
-                <div class="card"><div class="card-title">Staff Globale Operativo</div><div class="card-value">${state.staff.length}</div></div>
-            `;
-            document.getElementById('table-dash-stats').querySelector('tbody').innerHTML = state.companies.map(c => `
-                <tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td><span style="color:${c.eff>90?'var(--accent)':'var(--warning)'}">${c.eff}%</span></td></tr>
-            `).join('');
+            // --- DASHBOARD ADMIN ---
+            if(isAdmin) {
+                let totalCap = state.companies.reduce((s, c) => s + c.cap, 0);
 
-            document.getElementById('table-aziende').querySelector('tbody').innerHTML = state.companies.map(c => `
-                <tr>
-                    <td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td>${c.eff}%</td>
-                    <td><span class="badge" style="background:var(--accent); color:white;">Attiva</span></td>
-                    <td class="action-btns">${isAdmin ? `<button class="btn-edit" onclick="editAzienda(${c.id})">Modifica Dati</button> <button class="btn-del" onclick="deleteData('companies', ${c.id})">Elimina</button>` : '-'}</td>
-                </tr>
-            `).join('');
+                document.getElementById('dash-summary').innerHTML = `
+                    <div class="card"><div class="card-title">Capitale Consolidato Gruppo</div><div class="card-value">€ ${(totalCap/1000000).toFixed(2)} M</div></div>
+                    <div class="card"><div class="card-title">Entità Corporate Attive</div><div class="card-value">${state.companies.length}</div></div>
+                    <div class="card"><div class="card-title">Staff Globale Operativo</div><div class="card-value">${state.staff.length}</div></div>
+                `;
+                document.getElementById('table-dash-stats').querySelector('tbody').innerHTML = state.companies.map(c => `
+                    <tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td><span style="color:${c.eff>90?'var(--accent)':'var(--warning)'}">${c.eff}%</span></td></tr>
+                `).join('');
 
-            document.getElementById('table-divs').querySelector('tbody').innerHTML = state.divisions.map(d => `
-                <tr>
-                    <td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td>
-                    <td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button>` : '-'}</td>
-                </tr>
-            `).join('');
+                document.getElementById('table-aziende').querySelector('tbody').innerHTML = state.companies.map(c => `
+                    <tr>
+                        <td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td>${c.eff}%</td>
+                        <td><span class="badge" style="background:var(--accent); color:white;">Attiva</span></td>
+                        <td class="action-btns"><button class="btn-edit" onclick="editAzienda(${c.id})">Modifica Dati</button> <button class="btn-del" onclick="deleteData('companies', ${c.id})">Elimina</button></td>
+                    </tr>
+                `).join('');
 
-            document.getElementById('table-tasks').querySelector('tbody').innerHTML = state.tasks.map(t => {
-                let badgeCol = t.status === 'Completato' ? 'var(--accent)' : (t.status === 'In Lavorazione' ? 'var(--primary)' : 'var(--warning)');
-                let staffName = getStaffName(t.staffId);
-                let normalizedStaffName = staffName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                let userPrefix = window.currentUserEmail ? window.currentUserEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') : '';
-                let isMyTask = (normalizedStaffName === userPrefix);
-
-                let actionHtml = '-';
-                if (isAdmin) {
-                    actionHtml = `<button class="btn-edit" onclick="editTask(${t.id})">Mod</button> <button class="btn-del" onclick="deleteData('tasks', ${t.id})">Del</button>`;
-                } else if (isMyTask && t.status !== 'Completato') {
-                    actionHtml = `<button class="btn-validate" onclick="completeTask(${t.id})">Segna Completato</button>`;
+                document.getElementById('table-divs').querySelector('tbody').innerHTML = state.divisions.map(d => `
+                    <tr>
+                        <td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td>
+                        <td class="action-btns"><button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button></td>
+                    </tr>
+                `).join('');
+                
+                if(document.getElementById('table-badges')) {
+                    document.getElementById('table-badges').querySelector('tbody').innerHTML = state.badges.map(b => `
+                        <tr>
+                            <td><b>${getStaffName(b.staffId)}</b></td>
+                            <td style="font-family: monospace; color: var(--primary); font-size: 16px;">${b.accessCode}</td>
+                            <td>${new Date(b.createdAt).toLocaleDateString()}</td>
+                            <td><span class="badge" style="background:var(--accent); color:white;">Attivo</span></td>
+                            <td class="action-btns"><button class="btn-del" onclick="deleteData('badges', ${b.id})">Revoca Accesso</button></td>
+                        </tr>
+                    `).join('');
                 }
+            }
 
-                return `<tr>
-                    <td><b>${t.title}</b></td><td>${getStaffName(t.staffId)}</td><td>${t.priority}</td>
-                    <td><span class="badge" style="background:${badgeCol}; color:white;">${t.status}</span></td>
+            // --- FILTRO STAFF E DATI FISCALI ---
+            let visibleStaff = state.staff;
+            if (!isAdmin) {
+                // Filtra solo il dipendente che ha fatto il login
+                visibleStaff = state.staff.filter(s => s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
+                document.getElementById('staff-page-title').innerText = "Il Mio Profilo HR";
+                document.getElementById('staff-page-desc').innerText = "Consulta i tuoi dati personali, fiscali e contrattuali.";
+            } else {
+                document.getElementById('staff-page-title').innerText = "Gestione Organico HR Globale";
+                document.getElementById('staff-page-desc').innerText = "Gestione completa dei dipendenti e dei dati fiscali/bancari.";
+            }
+
+            document.getElementById('table-staff').querySelector('tbody').innerHTML = visibleStaff.map(s => {
+                let actionHtml = isAdmin 
+                    ? `<button class="btn-edit" onclick="editStaff(${s.id})">Modifica Dati</button> <button class="btn-del" onclick="deleteData('staff', ${s.id})">Elimina</button>`
+                    : `<button class="btn-edit" onclick="editStaff(${s.id})">Vedi I Miei Dati</button>`;
+                
+                return `
+                <tr>
+                    <td><b>${s.name}</b></td><td>${s.role}</td><td>${getCompanyName(s.companyId)}</td><td>${getDivName(s.divisionId)}</td>
+                    <td><span class="badge" style="background:var(--primary); color:white;">${s.status}</span></td>
                     <td class="action-btns">${actionHtml}</td>
-                </tr>`;
+                </tr>
+                `;
             }).join('');
 
-            document.getElementById('table-timbrature').querySelector('tbody').innerHTML = state.time_entries.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(t => {
+            // --- FILTRO TIMBRATURE ---
+            let visibleTimbrature = state.time_entries;
+            if (!isAdmin) {
+                // Filtra solo le timbrature del dipendente
+                visibleTimbrature = state.time_entries.filter(t => getStaffName(t.staffId).toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
+                document.getElementById('timbrature-page-title').innerText = "Le Mie Timbrature";
+            } else {
+                document.getElementById('timbrature-page-title').innerText = "Log Ingressi e Timbrature";
+            }
+
+            document.getElementById('table-timbrature').querySelector('tbody').innerHTML = visibleTimbrature.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(t => {
                 const badgeColor = t.type === 'Ingresso' ? 'var(--accent)' : 'var(--warning)';
                 const isVal = t.validated ? `<i class="ph-fill ph-check-circle" style="color:var(--accent)"></i> OK` : (isAdmin ? `<button class="btn-validate" onclick="validateTimbratura(${t.id})">Valida</button>` : 'In Attesa');
                 return `<tr>
@@ -829,33 +937,52 @@
                     <td><span class="badge" style="background:${badgeColor}; color:white;">${t.type}</span> ${t.forced ? '⚠️' : ''}</td>
                     <td><span style="font-size:11px; color:var(--text-light)">${t.device} | Geo: ${t.geo}</span></td>
                     <td>${isVal}</td>
-                    <td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('time_entries', ${t.id})">Del</button>` : '-'}</td>
+                    <td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('time_entries', ${t.id})">Elimina</button>` : '-'}</td>
                 </tr>`;
             }).join('');
 
-            let totalIn = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + d.amount, 0);
-            let totalOut = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + d.amount, 0);
-            document.getElementById('finance-summary').innerHTML = `
-                <div class="card"><div class="card-title">Incassi (Attivo)</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div>
-                <div class="card"><div class="card-title">Uscite (Passivo)</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>
-            `;
-            
-            document.getElementById('table-docs').querySelector('tbody').innerHTML = state.documents.map(d => `
-                <tr>
-                    <td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td>
-                    <td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td>
-                    <td>${d.file ? `📎 File` : '-'}</td>
-                    <td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button>` : '-'}</td>
-                </tr>
-            `).join('');
+            // --- FILTRO TASK ---
+            document.getElementById('table-tasks').querySelector('tbody').innerHTML = state.tasks.map(t => {
+                let badgeCol = t.status === 'Completato' ? 'var(--accent)' : (t.status === 'In Lavorazione' ? 'var(--primary)' : 'var(--warning)');
+                
+                let staffName = getStaffName(t.staffId);
+                let normalizedStaffName = staffName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                let isMyTask = (normalizedStaffName === userPrefix);
 
-            document.getElementById('table-staff').querySelector('tbody').innerHTML = state.staff.map(s => `
-                <tr>
-                    <td><b>${s.name}</b></td><td>${s.role}</td><td>${getCompanyName(s.companyId)}</td><td>${getDivName(s.divisionId)}</td>
-                    <td><span class="badge" style="background:var(--primary); color:white;">${s.status}</span></td>
-                    <td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('staff', ${s.id})">Del</button>` : '-'}</td>
-                </tr>
-            `).join('');
+                let actionHtml = '-';
+                if (isAdmin) {
+                    actionHtml = `<button class="btn-edit" onclick="editTask(${t.id})">Modifica</button> <button class="btn-del" onclick="deleteData('tasks', ${t.id})">Del</button>`;
+                } else if (isMyTask && t.status !== 'Completato') {
+                    actionHtml = `<button class="btn-validate" onclick="completeTask(${t.id})">Segna Completato</button>`;
+                }
+
+                // Lo staff vede solo i suoi task
+                if(!isAdmin && !isMyTask) return '';
+
+                return `<tr>
+                    <td><b>${t.title}</b></td><td>${getStaffName(t.staffId)}</td><td>${t.priority}</td>
+                    <td><span class="badge" style="background:${badgeCol}; color:white;">${t.status}</span></td>
+                    <td class="action-btns">${actionHtml}</td>
+                </tr>`;
+            }).join('');
+
+            if(isAdmin) {
+                let totalIn = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + d.amount, 0);
+                let totalOut = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + d.amount, 0);
+                document.getElementById('finance-summary').innerHTML = `
+                    <div class="card"><div class="card-title">Incassi (Attivo)</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div>
+                    <div class="card"><div class="card-title">Uscite (Passivo)</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>
+                `;
+                
+                document.getElementById('table-docs').querySelector('tbody').innerHTML = state.documents.map(d => `
+                    <tr>
+                        <td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td>
+                        <td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td>
+                        <td>${d.file ? `📎 File` : '-'}</td>
+                        <td class="action-btns"><button class="btn-del" onclick="deleteData('documents', ${d.id})">Elimina</button></td>
+                    </tr>
+                `).join('');
+            }
         }
 
         // --- 5. ASYNC CRUD OPERATIONS ---
@@ -934,6 +1061,50 @@
             }
         };
 
+        // --- GESTIONE STAFF AVANZATA ---
+        window.newStaff = function() {
+            openModal('modal-staff');
+            document.getElementById('staff-modal-title').innerText = "Nuovo Dipendente";
+            document.getElementById('staff-id').value = '';
+            document.querySelectorAll('#modal-staff .input').forEach(i => {
+                i.value = '';
+                i.disabled = false;
+            });
+            document.getElementById('btn-save-staff').style.display = '';
+        };
+
+        window.editStaff = function(id) {
+            const s = state.staff.find(x => x.id == id);
+            openModal('modal-staff');
+            document.getElementById('staff-modal-title').innerText = window.userRole === 'admin' ? "Modifica Dipendente" : "I Miei Dati Personali";
+            
+            document.getElementById('staff-id').value = s.id;
+            document.getElementById('staff-name').value = s.name || '';
+            document.getElementById('staff-role').value = s.role || '';
+            document.getElementById('staff-company').value = s.companyId;
+            populateDivisionsForStaff(); 
+            document.getElementById('staff-div').value = s.divisionId;
+            
+            document.getElementById('staff-cf').value = s.cf || '';
+            document.getElementById('staff-ci').value = s.ci || '';
+            document.getElementById('staff-ts').value = s.ts || '';
+            document.getElementById('staff-indirizzo').value = s.indirizzo || '';
+            document.getElementById('staff-dataNascita').value = s.dataNascita || '';
+            document.getElementById('staff-luogoNascita').value = s.luogoNascita || '';
+            document.getElementById('staff-iban').value = s.iban || '';
+
+            // Se l'utente non è admin, rende tutto non modificabile
+            const isStaff = window.userRole !== 'admin';
+            document.querySelectorAll('#modal-staff .input').forEach(input => {
+                input.disabled = isStaff;
+            });
+            if(isStaff) {
+                document.getElementById('btn-save-staff').style.display = 'none';
+            } else {
+                document.getElementById('btn-save-staff').style.display = '';
+            }
+        };
+
         async function saveStaff() {
             const idField = document.getElementById('staff-id').value;
             const data = {
@@ -942,10 +1113,42 @@
                 role: document.getElementById('staff-role').value,
                 companyId: parseInt(document.getElementById('staff-company').value),
                 divisionId: parseInt(document.getElementById('staff-div').value),
+                cf: document.getElementById('staff-cf').value.toUpperCase(),
+                ci: document.getElementById('staff-ci').value.toUpperCase(),
+                ts: document.getElementById('staff-ts').value.toUpperCase(),
+                indirizzo: document.getElementById('staff-indirizzo').value,
+                dataNascita: document.getElementById('staff-dataNascita').value,
+                luogoNascita: document.getElementById('staff-luogoNascita').value,
+                iban: document.getElementById('staff-iban').value.toUpperCase(),
                 status: 'IN SEDE'
             };
             await saveToFirebase('staff', data);
             closeModal('modal-staff');
+        }
+
+        // --- GESTIONE NUOVO BADGE PIN ---
+        async function saveBadge() {
+            const staffId = document.getElementById('badge-staff').value;
+            const code = document.getElementById('badge-code').value.trim();
+            
+            if(!code || code.length < 4) {
+                return alert("Il codice d'accesso deve essere lungo almeno 4 caratteri.");
+            }
+            
+            const existingBadge = state.badges.find(b => b.staffId == staffId);
+            if(existingBadge) {
+                return alert("Questo dipendente ha già un codice badge attivo. Revocalo prima di crearne uno nuovo.");
+            }
+
+            const data = {
+                id: Date.now(),
+                staffId: parseInt(staffId),
+                accessCode: code,
+                createdAt: new Date().toISOString()
+            };
+            await saveToFirebase('badges', data);
+            closeModal('modal-badge');
+            document.getElementById('badge-code').value = '';
         }
 
         async function saveTimbratura() {

@@ -11,7 +11,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
 
@@ -31,10 +31,12 @@
         window.auth = getAuth(app);
         window.db = getFirestore(app);
         window.storage = getStorage(app);
-        window.googleProvider = new GoogleAuthProvider();
 
-        // Esponiamo i metodi Firestore a livello globale per il sync automatico
+        // Esponiamo i metodi a livello globale
         window.fs = { collection, getDocs, setDoc, doc, deleteDoc };
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signOut = signOut;
     </script>
 
     <style>
@@ -63,8 +65,11 @@
         /* --- LOGIN SCREEN --- */
         #login-overlay { position: fixed; inset: 0; background: #0F172A; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-box { background: white; padding: 40px; border-radius: 16px; width: 400px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .login-tabs { display: flex; margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+        .login-tabs button { flex: 1; padding: 10px; border: none; font-weight: bold; cursor: pointer; background: #f1f5f9; color: #64748B; transition: all 0.2s; }
+        .login-tabs button.active { background: var(--primary); color: white; }
         .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; outline: none; }
-        .login-box button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
         /* --- LAYOUT --- */
         .sidebar { width: var(--sidebar-w); background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; overflow-y: auto;}
@@ -124,12 +129,18 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2 style="color: var(--primary); margin-bottom: 20px;"><i class="ph-fill ph-shield-check"></i> Horizon Global</h2>
-            <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Accesso Riservato ERP</p>
-            <input type="text" id="login-user" placeholder="Username (Admin)">
-            <input type="password" id="login-pass" placeholder="Password (Admin)">
-            <button onclick="attemptLogin()">Effettua Login Interno</button>
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-            <button onclick="googleAuthLogin()" style="background: #db4437;"><i class="ph-fill ph-google-logo"></i> Login con Google Auth</button>
+            
+            <div class="login-tabs">
+                <button id="btn-tab-admin" class="active" onclick="switchLoginMode('admin')">Admin</button>
+                <button id="btn-tab-staff" onclick="switchLoginMode('staff')">Staff</button>
+            </div>
+
+            <p id="login-desc" style="font-size: 13px; color: #666; margin-bottom: 20px;">Accesso Riservato Direzione (direzione@horizonglobal.com)</p>
+            
+            <input type="text" id="login-user" placeholder="Email Utente">
+            <input type="password" id="login-pass" placeholder="Password Firebase">
+            
+            <button id="btn-login-action" class="btn-login" onclick="attemptLogin('admin')">Effettua Login Admin</button>
         </div>
     </div>
 
@@ -166,12 +177,12 @@
                 Dashboard Globale
             </div>
             <div style="display: flex; align-items: center; gap: 15px;">
-                <button class="btn" style="background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="createNewUserAuth()"><i class="ph ph-user-plus"></i> Genera Account Firebase</button>
+                <button class="btn admin-only" style="background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="createNewUserAuth()"><i class="ph ph-user-plus"></i> Crea Account Staff</button>
                 <div style="text-align: right; line-height: 1.2;">
                     <div style="font-size: 13px; font-weight: 700;" id="current-user-name">Direzione Generale</div>
-                    <div style="font-size: 11px; color: var(--text-light);">Root Admin</div>
+                    <div style="font-size: 11px; color: var(--text-light);" id="current-user-role">Root Admin</div>
                 </div>
-                <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--secondary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700;">DG</div>
+                <div id="current-user-avatar" style="width: 38px; height: 38px; border-radius: 10px; background: var(--secondary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700;">DG</div>
             </div>
         </header>
 
@@ -191,7 +202,7 @@
         <section id="view-aziende" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Gruppo Societario</h2>
-                <button class="btn" onclick="openModal('modal-azienda')"><i class="ph ph-plus"></i> Nuova Azienda</button>
+                <button class="btn admin-only" onclick="openModal('modal-azienda')"><i class="ph ph-plus"></i> Nuova Azienda</button>
             </div>
             <div class="card">
                 <table id="table-aziende">
@@ -204,7 +215,7 @@
         <section id="view-divs" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Gestione Divisioni</h2>
-                <button class="btn" onclick="openModal('modal-div')"><i class="ph ph-plus"></i> Nuova Divisione</button>
+                <button class="btn admin-only" onclick="openModal('modal-div')"><i class="ph ph-plus"></i> Nuova Divisione</button>
             </div>
             <div class="card">
                 <table id="table-divs">
@@ -217,15 +228,15 @@
         <section id="view-timbrature" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Log Ingressi e Timbrature</h2>
-                <div>
+                <div class="admin-only">
                     <button class="btn" style="background:var(--warning)" onclick="alert('Generazione Report Presenze PDF...')"><i class="ph ph-file-pdf"></i> Export Mese</button>
                     <button class="btn" onclick="openModal('modal-timbratura')"><i class="ph ph-plus"></i> Forzatura Admin</button>
                 </div>
             </div>
             <div class="card">
-                <p style="font-size:12px; color:var(--text-light); margin-bottom:15px;">* Le timbrature provengono in tempo reale da Firebase Realtime DB, generate dai dispositivi del personale.</p>
+                <p style="font-size:12px; color:var(--text-light); margin-bottom:15px;">* Le timbrature provengono in tempo reale da Firebase Realtime DB. (Modificabili solo da App Timbrature o Admin)</p>
                 <table id="table-timbrature">
-                    <thead><tr><th>Timestamp</th><th>Dipendente</th><th>Azienda/Div</th><th>Tipo</th><th>Dispositivo/Geo</th><th>Stato</th><th>Azioni Admin</th></tr></thead>
+                    <thead><tr><th>Timestamp</th><th>Dipendente</th><th>Azienda/Div</th><th>Tipo</th><th>Dispositivo/Geo</th><th>Stato</th><th>Azioni</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -234,7 +245,7 @@
         <section id="view-docs" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Amministrazione, Fatture & Uploads</h2>
-                <button class="btn" onclick="openModal('modal-doc')"><i class="ph ph-plus"></i> Inserisci/Carica Documento</button>
+                <button class="btn admin-only" onclick="openModal('modal-doc')"><i class="ph ph-plus"></i> Inserisci/Carica Documento</button>
             </div>
             <div class="grid" id="finance-summary"></div>
             <div class="card">
@@ -248,7 +259,7 @@
         <section id="view-staff" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Gestione Organico HR Globale</h2>
-                <button class="btn" onclick="openModal('modal-staff')"><i class="ph ph-plus"></i> Nuovo Dipendente</button>
+                <button class="btn admin-only" onclick="openModal('modal-staff')"><i class="ph ph-plus"></i> Nuovo Dipendente</button>
             </div>
             <div class="card">
                 <table id="table-staff">
@@ -261,7 +272,7 @@
         <section id="view-tasks" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Gestione Task & Ticketing</h2>
-                <button class="btn" onclick="openModal('modal-task')"><i class="ph ph-plus"></i> Nuovo Task</button>
+                <button class="btn admin-only" onclick="openModal('modal-task')"><i class="ph ph-plus"></i> Nuovo Task</button>
             </div>
             <div class="card">
                 <table id="table-tasks">
@@ -280,7 +291,7 @@
                         <div class="ai-msgs" id="chat-box">
                             <div class="msg bot"><strong>Gemini AI:</strong> Ciao Admin. Sono connesso tramite le nuove API. Come posso aiutarti oggi ad analizzare i dati dell'ERP?</div>
                         </div>
-                        <div class="ai-input">
+                        <div class="ai-input admin-only">
                             <input type="text" id="ai-text" placeholder="Chiedi a Gemini un'analisi aziendale trasversale...">
                             <button class="btn" onclick="sendAiPrompt()"><i class="ph ph-paper-plane-right"></i></button>
                         </div>
@@ -312,7 +323,7 @@
                         [SYS] Sincronizzazione Realtime DB per App Timbrature Mobile connessa.<br>
                         [WARN] Sensore giroscopico asse Z fuori parametro in fFk9.<br>
                     </div>
-                    <button class="btn" style="width:100%; margin-top:10px; border-radius:4px; font-family:monospace; background:#00e5ff; color:#000;" onclick="printGradoB()">Esegui Override Diagnostica</button>
+                    <button class="btn admin-only" style="width:100%; margin-top:10px; border-radius:4px; font-family:monospace; background:#00e5ff; color:#000;" onclick="printGradoB()">Esegui Override Diagnostica</button>
                 </div>
             </div>
         </section>
@@ -324,7 +335,7 @@
                     <div class="hw-title">Potenza Trasmissione (TX)</div>
                     <div style="font-size: 40px; font-family: monospace; color:#00e5ff; font-weight:bold;" id="eolo-pwr">14.2 kW</div>
                     <div style="font-size: 12px; color:#4a758c;">Amplificatore TWT Operativo</div>
-                    <input type="range" min="10" max="50" value="14" style="width:80%; margin-top:15px;" oninput="document.getElementById('eolo-pwr').innerText = this.value + '.2 kW'">
+                    <input type="range" min="10" max="50" value="14" style="width:80%; margin-top:15px;" class="admin-only" oninput="document.getElementById('eolo-pwr').innerText = this.value + '.2 kW'">
                 </div>
                 <div class="hw-panel">
                     <div class="hw-title">Log Strumentazione fFk9</div>
@@ -364,6 +375,35 @@
             <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-azienda')">Annulla</button>
                 <button class="btn" onclick="saveAzienda()">Salva Dati</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-div" class="modal">
+        <div class="modal-content">
+            <h3 id="div-modal-title">Gestione Divisione</h3>
+            <input type="hidden" id="div-id">
+            
+            <label style="font-size:12px; font-weight:600; margin-top:10px; display:block;">Nome Divisione</label>
+            <input type="text" id="div-name" class="input" placeholder="Es. Ricerca & Sviluppo">
+            
+            <label style="font-size:12px; font-weight:600; display:block;">Azienda Madre</label>
+            <select id="div-company" class="input"></select>
+            
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Budget (€)</label>
+                    <input type="number" id="div-budget" class="input" placeholder="Es. 50000">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Efficienza (%)</label>
+                    <input type="number" id="div-eff" class="input" placeholder="Da 0 a 100" max="100">
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-div')">Annulla</button>
+                <button class="btn" onclick="saveDivision()">Salva Divisione</button>
             </div>
         </div>
     </div>
@@ -471,6 +511,30 @@
     </div>
 
     <script>
+        // --- UI LOGIN MODE SWITCHER ---
+        let userRoleMode = 'admin';
+        function switchLoginMode(mode) {
+            userRoleMode = mode;
+            const btnAdmin = document.getElementById('btn-tab-admin');
+            const btnStaff = document.getElementById('btn-tab-staff');
+            const desc = document.getElementById('login-desc');
+            const btnAction = document.getElementById('btn-login-action');
+
+            if(mode === 'admin') {
+                btnAdmin.classList.add('active');
+                btnStaff.classList.remove('active');
+                desc.innerText = 'Accesso Riservato Direzione (direzione@horizonglobal.com)';
+                btnAction.innerText = 'Effettua Login Admin';
+                btnAction.setAttribute('onclick', "attemptLogin('admin')");
+            } else {
+                btnStaff.classList.add('active');
+                btnAdmin.classList.remove('active');
+                desc.innerText = 'Accesso Operativo Staff';
+                btnAction.innerText = 'Effettua Login Staff';
+                btnAction.setAttribute('onclick', "attemptLogin('staff')");
+            }
+        }
+
         // --- 1. CORE RELATIONAL STATE ---
         let state = {
             companies: [
@@ -485,7 +549,7 @@
                 { id: 3, companyId: 4, name: 'Core Dev', budget: 300000, eff: 96 }
             ],
             staff: [
-                { id: 1, name: 'Marco Valeri', role: 'Dev Lead', companyId: 4, divisionId: 3, status: 'IN SEDE' },
+                { id: 1, name: 'Luis Brotto', role: 'Operatore', companyId: 1, divisionId: 1, status: 'IN SEDE' },
                 { id: 2, name: 'Sara Kreutz', role: 'Astro Physicist', companyId: 3, divisionId: 2, status: 'FUORI SEDE' }
             ],
             time_entries: [
@@ -502,21 +566,15 @@
             ]
         };
 
-        // --- 1.5 FIREBASE AUTO-SYNC (MIGRAZIONE & LETTURA) ---
+        // --- 1.5 FIREBASE AUTO-SYNC ---
         async function syncConFirebase() {
-            if (!window.db || !window.fs) {
-                console.error("Firebase non è ancora pronto.");
-                return;
-            }
+            if (!window.db || !window.fs) return;
             
             try {
-                // Controlla se il DB è vuoto verificando la collection 'companies'
                 const compRef = window.fs.collection(window.db, 'companies');
                 const compSnapshot = await window.fs.getDocs(compRef);
                 
                 if (compSnapshot.empty) {
-                    console.warn("Prima esecuzione: Salvataggio dello state attuale su Firebase...");
-                    
                     const uploadCollection = async (collectionName, dataArray) => {
                         for (let item of dataArray) {
                             const docRef = window.fs.doc(window.db, collectionName, item.id.toString());
@@ -532,11 +590,7 @@
                         uploadCollection('documents', state.documents),
                         uploadCollection('tasks', state.tasks)
                     ]);
-                    
-                    console.log("Dati iniziali migrati su Firebase con successo!");
                 } else {
-                    console.log("Dati trovati su Firebase. Download in corso...");
-                    
                     const fetchCollection = async (collectionName) => {
                         const snap = await window.fs.getDocs(window.fs.collection(window.db, collectionName));
                         let arr = [];
@@ -552,7 +606,6 @@
                     state.tasks = await fetchCollection('tasks');
                 }
                 
-                // Aggiorna UI se già loggato
                 if(document.getElementById('login-overlay').style.display === 'none') {
                     renderAll();
                 }
@@ -567,23 +620,62 @@
         const getDivName = (id) => { const d = state.divisions.find(x => x.id == id); return d ? d.name : 'N/A'; };
         const getStaffName = (id) => { const s = state.staff.find(x => x.id == id); return s ? s.name : 'Sconosciuto'; };
 
-        // --- 2. AUTHENTICATION & INITIALIZATION ---
-        function attemptLogin() {
+        // --- 2. AUTHENTICATION & ROLES ---
+        async function attemptLogin(roleAttempt) {
             const u = document.getElementById('login-user').value;
             const p = document.getElementById('login-pass').value;
-            if(u === 'admin' && p === 'admin') {
+            try {
+                const result = await window.signInWithEmailAndPassword(window.auth, u, p);
+                const userEmail = result.user.email.toLowerCase();
+
+                if (roleAttempt === 'admin' && userEmail !== 'direzione@horizonglobal.com') {
+                    alert("Accesso negato: account non autorizzato per la Direzione. Utilizza il modulo Staff.");
+                    if(window.signOut) await window.signOut(window.auth);
+                    return;
+                }
+
+                applyUserRole(userEmail);
+
                 document.getElementById('login-overlay').style.display = 'none';
                 renderAll();
-            } else {
-                alert("Credenziali errate. Usare admin/admin");
+            } catch (error) {
+                alert("Credenziali errate o utente non trovato in Firebase.");
+                console.error("Auth Error:", error);
             }
         }
 
-        function googleAuthLogin() {
-            alert("Predisposizione Auth Firebase via Google Provider in corso...");
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('current-user-name').innerText = "Admin Google";
-            renderAll();
+        function applyUserRole(userEmail) {
+            window.currentUserEmail = userEmail;
+            
+            if (userEmail === 'direzione@horizonglobal.com') {
+                window.userRole = 'admin';
+                document.getElementById('current-user-name').innerText = "Direzione Generale";
+                document.getElementById('current-user-role').innerText = "Root Admin";
+                document.getElementById('current-user-avatar').innerText = "DG";
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+            } else {
+                window.userRole = 'staff';
+                document.getElementById('current-user-name').innerText = userEmail;
+                document.getElementById('current-user-role').innerText = "Staff Operativo";
+                document.getElementById('current-user-avatar').innerText = userEmail.substring(0, 2).toUpperCase();
+                
+                // Nascondi elementi di creazione/impostazioni per lo staff
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            }
+        }
+
+        async function createNewUserAuth() {
+            const email = prompt("Inserisci l'email aziendale per il nuovo dipendente:");
+            const password = prompt("Inserisci una password temporanea (min. 6 caratteri):");
+            
+            if (email && password) {
+                try {
+                    await window.createUserWithEmailAndPassword(window.auth, email, password);
+                    alert("Account dipendente creato con successo!\n\nATTENZIONE: Firebase, per sicurezza, ti ha loggato col nuovo account appena creato. Ricarica la pagina e accedi nuovamente come Direzione.");
+                } catch (error) {
+                    alert("Errore durante la creazione dell'account: " + error.message);
+                }
+            }
         }
 
         // --- 3. NAVIGATION ---
@@ -617,6 +709,7 @@
             const companyOpts = state.companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             if(document.getElementById('doc-company')) document.getElementById('doc-company').innerHTML = companyOpts;
             if(document.getElementById('staff-company')) document.getElementById('staff-company').innerHTML = companyOpts;
+            if(document.getElementById('div-company')) document.getElementById('div-company').innerHTML = companyOpts;
             
             const staffOpts = state.staff.map(s => `<option value="${s.id}">${s.name} (${getCompanyName(s.companyId)})</option>`).join('');
             if(document.getElementById('timb-staff')) document.getElementById('timb-staff').innerHTML = staffOpts;
@@ -635,7 +728,9 @@
 
         // --- 4. RENDER ENGINE ---
         function renderAll() {
+            const isAdmin = window.userRole === 'admin';
             let totalCap = state.companies.reduce((s, c) => s + c.cap, 0);
+
             document.getElementById('dash-summary').innerHTML = `
                 <div class="card"><div class="card-title">Capitale Consolidato Gruppo</div><div class="card-value">€ ${(totalCap/1000000).toFixed(2)} M</div></div>
                 <div class="card"><div class="card-title">Entità Corporate Attive</div><div class="card-value">${state.companies.length}</div></div>
@@ -649,33 +744,43 @@
                 <tr>
                     <td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td>${c.eff}%</td>
                     <td><span class="badge" style="background:var(--accent); color:white;">Attiva</span></td>
-                    <td class="action-btns">
-                        <button class="btn-edit" onclick="editAzienda(${c.id})">Modifica Dati</button>
-                        <button class="btn-del" onclick="deleteData('companies', ${c.id})">Elimina</button>
-                    </td>
+                    <td class="action-btns">${isAdmin ? `<button class="btn-edit" onclick="editAzienda(${c.id})">Modifica Dati</button> <button class="btn-del" onclick="deleteData('companies', ${c.id})">Elimina</button>` : '-'}</td>
                 </tr>
             `).join('');
 
             document.getElementById('table-divs').querySelector('tbody').innerHTML = state.divisions.map(d => `
-                <tr><td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td>
-                <td class="action-btns"><button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button></td></tr>
+                <tr>
+                    <td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td>
+                    <td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button>` : '-'}</td>
+                </tr>
             `).join('');
 
             document.getElementById('table-tasks').querySelector('tbody').innerHTML = state.tasks.map(t => {
                 let badgeCol = t.status === 'Completato' ? 'var(--accent)' : (t.status === 'In Lavorazione' ? 'var(--primary)' : 'var(--warning)');
+                
+                // Matching logic per lo Staff: la prima parte dell'email deve coincidere col nome dipendente
+                let staffName = getStaffName(t.staffId);
+                let normalizedStaffName = staffName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                let userPrefix = window.currentUserEmail ? window.currentUserEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+                let isMyTask = (normalizedStaffName === userPrefix);
+
+                let actionHtml = '-';
+                if (isAdmin) {
+                    actionHtml = `<button class="btn-edit" onclick="editTask(${t.id})">Modifica</button> <button class="btn-del" onclick="deleteData('tasks', ${t.id})">Del</button>`;
+                } else if (isMyTask && t.status !== 'Completato') {
+                    actionHtml = `<button class="btn-validate" onclick="completeTask(${t.id})">Segna Completato</button>`;
+                }
+
                 return `<tr>
                     <td><b>${t.title}</b></td><td>${getStaffName(t.staffId)}</td><td>${t.priority}</td>
                     <td><span class="badge" style="background:${badgeCol}; color:white;">${t.status}</span></td>
-                    <td class="action-btns">
-                        <button class="btn-edit" onclick="editTask(${t.id})">Modifica</button>
-                        <button class="btn-del" onclick="deleteData('tasks', ${t.id})">Del</button>
-                    </td>
+                    <td class="action-btns">${actionHtml}</td>
                 </tr>`;
             }).join('');
 
             document.getElementById('table-timbrature').querySelector('tbody').innerHTML = state.time_entries.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(t => {
                 const badgeColor = t.type === 'Ingresso' ? 'var(--accent)' : 'var(--warning)';
-                const isVal = t.validated ? `<i class="ph-fill ph-check-circle" style="color:var(--accent)"></i> OK` : `<button class="btn-validate" onclick="validateTimbratura(${t.id})">Valida</button>`;
+                const isVal = t.validated ? `<i class="ph-fill ph-check-circle" style="color:var(--accent)"></i> OK` : (isAdmin ? `<button class="btn-validate" onclick="validateTimbratura(${t.id})">Valida</button>` : 'In Attesa');
                 return `<tr>
                     <td>${new Date(t.timestamp).toLocaleString()}</td>
                     <td><b>${getStaffName(t.staffId)}</b></td>
@@ -683,7 +788,7 @@
                     <td><span class="badge" style="background:${badgeColor}; color:white;">${t.type}</span> ${t.forced ? '⚠️' : ''}</td>
                     <td><span style="font-size:11px; color:var(--text-light)">${t.device} | Geo: ${t.geo}</span></td>
                     <td>${isVal}</td>
-                    <td class="action-btns"><button class="btn-del" onclick="deleteData('time_entries', ${t.id})">Del</button></td>
+                    <td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('time_entries', ${t.id})">Del</button>` : '-'}</td>
                 </tr>`;
             }).join('');
 
@@ -693,12 +798,13 @@
                 <div class="card"><div class="card-title">Incassi (Attivo)</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div>
                 <div class="card"><div class="card-title">Uscite (Passivo)</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>
             `;
+            
             document.getElementById('table-docs').querySelector('tbody').innerHTML = state.documents.map(d => `
                 <tr>
                     <td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td>
                     <td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td>
                     <td>${d.file ? `<a href="#" style="color:var(--primary)">📎 Link Storage</a>` : '-'}</td>
-                    <td class="action-btns"><button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button></td>
+                    <td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button>` : '-'}</td>
                 </tr>
             `).join('');
 
@@ -706,7 +812,7 @@
                 <tr>
                     <td><b>${s.name}</b></td><td>${s.role}</td><td>${getCompanyName(s.companyId)}</td><td>${getDivName(s.divisionId)}</td>
                     <td><span class="badge" style="background:var(--primary); color:white;">${s.status}</span></td>
-                    <td class="action-btns"><button class="btn-del" onclick="deleteData('staff', ${s.id})">Del</button></td>
+                    <td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('staff', ${s.id})">Del</button>` : '-'}</td>
                 </tr>
             `).join('');
         }
@@ -772,6 +878,30 @@
             document.getElementById('azienda-name').value = ''; document.getElementById('azienda-cap').value = '';
         }
 
+        function saveDivision() {
+            const id = document.getElementById('div-id').value;
+            const data = {
+                name: document.getElementById('div-name').value,
+                companyId: parseInt(document.getElementById('div-company').value),
+                budget: parseFloat(document.getElementById('div-budget').value) || 0,
+                eff: parseInt(document.getElementById('div-eff').value) || 100
+            };
+
+            if (id) {
+                let idx = state.divisions.findIndex(d => d.id == id);
+                data.id = parseInt(id);
+                state.divisions[idx] = data;
+            } else {
+                data.id = Date.now();
+                state.divisions.push(data);
+            }
+            saveToFirebase('divisions', data);
+            closeModal('modal-div'); 
+            renderAll();
+            document.getElementById('div-name').value = ''; 
+            document.getElementById('div-budget').value = '';
+        }
+
         function editTask(id) {
             const t = state.tasks.find(x => x.id == id);
             openModal('modal-task');
@@ -803,6 +933,16 @@
             closeModal('modal-task'); renderAll();
             document.getElementById('task-title').value = '';
         }
+
+        // Funzione Staff: completamento Task se è l'assegnatario
+        window.completeTask = function(id) {
+            const t = state.tasks.find(x => x.id == id);
+            if(t) {
+                t.status = 'Completato';
+                saveToFirebase('tasks', t);
+                renderAll();
+            }
+        };
 
         function saveStaff() {
             const data = {

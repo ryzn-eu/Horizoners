@@ -12,8 +12,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
+        
+        // QUI IMPORTIAMO IL REALTIME DATABASE INVECE DI FIRESTORE
+        import { getDatabase, ref, set, get, child, onValue, remove } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
+        
+        import { getStorage } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
 
         // Configurazione Firebase
         const firebaseConfig = {
@@ -28,12 +31,13 @@
         };
         
         const app = initializeApp(firebaseConfig);
+        
+        // Esponiamo i metodi a livello globale
         window.auth = getAuth(app);
-        window.db = getFirestore(app);
+        window.db = getDatabase(app); // INIZIALIZZA RTDB
         window.storage = getStorage(app);
 
-        // Esponiamo i metodi a livello globale
-        window.fs = { collection, getDocs, setDoc, doc, deleteDoc, onSnapshot };
+        window.rtdb = { ref, set, get, child, onValue, remove };
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
         window.signOut = signOut;
@@ -317,7 +321,7 @@
             <div class="grid">
                 <div style="grid-column: 1 / -1;">
                     <h2>Assistente Analitico Globale (Gemini Integration)</h2>
-                    <p style="color:var(--text-light); font-size:14px; margin-bottom:20px;">L'AI incrocia i dati di Firestore e fornisce analisi in tempo reale tramite le API di Google Gemini.</p>
+                    <p style="color:var(--text-light); font-size:14px; margin-bottom:20px;">L'AI incrocia i dati di RTDB e fornisce analisi in tempo reale tramite le API di Google Gemini.</p>
                     <div class="ai-chat">
                         <div class="ai-msgs" id="chat-box">
                             <div class="msg bot"><strong>Gemini AI:</strong> Ciao Admin. Sono connesso tramite le nuove API. Come posso aiutarti oggi ad analizzare i dati dell'ERP?</div>
@@ -571,49 +575,54 @@
             companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: []
         };
 
-        // Dati di fallback nel caso Firebase sia vuoto al primo avvio
         const fallbackData = {
             companies: [{ id: 1, name: 'Global Horizon', cap: 5000000, projects: 12, eff: 95, isActive: true }],
             divisions: [{ id: 1, companyId: 1, name: 'Publishing', budget: 50000, eff: 90 }],
-            staff: [{ id: 1, name: 'Luis Brotto', role: 'Operatore', companyId: 1, divisionId: 1, status: 'IN SEDE' }],
-            time_entries: [], documents: [], tasks: []
+            staff: [{ id: 1, name: 'Luis Brotto', role: 'Operatore', companyId: 1, divisionId: 1, status: 'IN SEDE' }]
         };
 
-        // --- 1.5 FIREBASE ASYNC REALTIME FUNCTIONS ---
-        // Sincronizza i dati salvandoli con merge:true per non sovrascrivere
+        // --- 1.5 REALTIME DATABASE (RTDB) FUNZIONI ---
         async function saveToFirebase(collectionName, item) {
-            if (window.fs && window.db) {
+            if (window.rtdb && window.db) {
                 try {
                     const docId = item.id.toString();
-                    const docRef = window.fs.doc(window.db, collectionName, docId);
+                    const dbRef = window.rtdb.ref(window.db, `${collectionName}/${docId}`);
+                    
+                    // Puliamo i dati prima di inviarli
                     const cleanData = JSON.parse(JSON.stringify(item));
-                    await window.fs.setDoc(docRef, cleanData, { merge: true });
-                    console.log(`[Firebase] Salvato in ${collectionName}:`, docId);
+                    await window.rtdb.set(dbRef, cleanData);
+                    console.log(`[RTDB] Salvato in ${collectionName}:`, docId);
                 } catch (e) {
-                    console.error(`[Firebase] Errore in ${collectionName}:`, e);
-                    alert("Errore di sincronizzazione Cloud: " + e.message);
+                    alert(`🚨 Errore Salvataggio su Realtime Database (${collectionName}):\n${e.message}`);
                 }
             }
         }
 
         async function removeFromFirebase(collectionName, id) {
-            if (window.fs && window.db) {
+            if (window.rtdb && window.db) {
                 try {
-                    const docRef = window.fs.doc(window.db, collectionName, id.toString());
-                    await window.fs.deleteDoc(docRef);
-                    console.log(`[Firebase] Eliminato da ${collectionName}:`, id);
-                } catch (e) { console.error("Sync Error", e); }
+                    const dbRef = window.rtdb.ref(window.db, `${collectionName}/${id}`);
+                    await window.rtdb.remove(dbRef);
+                    console.log(`[RTDB] Eliminato da ${collectionName}:`, id);
+                } catch (e) { 
+                    alert(`🚨 Errore Eliminazione da Realtime Database:\n${e.message}`);
+                }
             }
         }
 
         async function syncConFirebase() {
-            if (!window.db || !window.fs) return;
+            if (!window.db || !window.rtdb) {
+                alert("🚨 Modulo Firebase RTDB non caricato!");
+                return;
+            }
             try {
-                const compRef = window.fs.collection(window.db, 'companies');
-                const compSnapshot = await window.fs.getDocs(compRef);
+                const dbRootRef = window.rtdb.ref(window.db);
                 
-                // Se il DB è vuoto, pusha i dati di fallback
-                if (compSnapshot.empty) {
+                // Controlliamo se c'è già la tabella 'companies'
+                const snapshot = await window.rtdb.get(window.rtdb.child(dbRootRef, 'companies'));
+                
+                if (!snapshot.exists()) {
+                    // Database vuoto: inseriamo i dati di fallback
                     const uploadCollection = async (collName, dataArray) => {
                         for (let item of dataArray) {
                             await saveToFirebase(collName, item);
@@ -626,20 +635,29 @@
                     ]);
                 }
 
-                // Inizializza i Real-time Listeners per ogni collezione
+                // Inizializza i Listeners in Tempo Reale
                 const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks'];
                 collections.forEach(coll => {
-                    window.fs.onSnapshot(window.fs.collection(window.db, coll), (snapshot) => {
+                    const collRef = window.rtdb.ref(window.db, coll);
+                    window.rtdb.onValue(collRef, (snap) => {
                         let arr = [];
-                        snapshot.forEach(doc => arr.push(doc.data()));
+                        if (snap.exists()) {
+                            snap.forEach(childSnap => {
+                                arr.push(childSnap.val());
+                            });
+                        }
                         state[coll] = arr;
+                        
+                        // Aggiorna l'interfaccia solo se siamo loggati (schermata non visibile)
                         if(document.getElementById('login-overlay').style.display === 'none') {
                             renderAll();
                         }
+                    }, (error) => {
+                        alert(`🚨 Accesso Negato da RTDB per (${coll}): Controlla le REGOLE nel pannello Firebase.\n${error.message}`);
                     });
                 });
             } catch (error) {
-                console.error("Errore durante il sync con Firebase:", error);
+                alert(`🚨 Errore Sync RTDB:\n${error.message}`);
             }
         }
 
@@ -664,11 +682,11 @@
                 applyUserRole(userEmail);
                 document.getElementById('login-overlay').style.display = 'none';
                 
-                // Carica i dati DOPO l'autenticazione
+                // Carica i dati DAL REALTIME DATABASE DOPO l'autenticazione
                 await syncConFirebase();
                 renderAll();
             } catch (error) {
-                alert("Credenziali errate o utente non trovato in Firebase.");
+                alert("Credenziali errate o utente non trovato in Firebase.\n" + error.message);
             }
         }
 
@@ -715,7 +733,6 @@
             } else {
                 document.body.classList.remove('hw-mode');
             }
-            // Chiudi sidebar se su mobile
             if(window.innerWidth <= 768) toggleSidebar();
         }
 
@@ -845,9 +862,6 @@
         async function deleteData(collection, id) {
             if(confirm(`Eliminare permanentemente questo record?`)) {
                 await removeFromFirebase(collection, id);
-                // Il listener onSnapshot aggiornerà l'UI automaticamente, ma per reattività istantanea:
-                state[collection] = state[collection].filter(x => x.id !== id);
-                renderAll();
             }
         }
 
@@ -1011,7 +1025,7 @@
 
         function printGradoB() {
             const term = document.getElementById('grado-terminal');
-            term.innerHTML += `> Inizializzazione routine ROOT in corso...<br>> Verifica integrità Firestore... <span style="color:var(--accent)">100% OK</span><br>> Ricalibrazione Sonda fFk9: OK<br>`;
+            term.innerHTML += `> Inizializzazione routine ROOT in corso...<br>> Verifica integrità DB... <span style="color:var(--accent)">100% OK</span><br>> Ricalibrazione Sonda fFk9: OK<br>`;
             term.scrollTop = term.scrollHeight;
         }
 

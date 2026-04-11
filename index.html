@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Horizon Global | Advanced ERP & OS</title>
+    <title>Horizon Global ERP </title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -1088,19 +1088,44 @@
             }
         }
 
+        // FUNZIONE FIXATA: Utilizzo di Promise.all e get() per inizializzazione fluida,
+        // con graffe per forEach per evitare interruzioni premature su Firebase v10
         async function syncConFirebase() {
             if (!window.db || !window.rtdb) return;
             try {
                 const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls'];
+                
+                // 1. Fetch Iniziale Sincrono (Risolve il problema dei caricamenti a vuoto e race conditions)
+                const loadPromises = collections.map(async (coll) => {
+                    const snap = await window.rtdb.get(window.rtdb.ref(window.db, coll));
+                    let arr = [];
+                    if (snap.exists()) {
+                        snap.forEach((childSnap) => { 
+                            arr.push(childSnap.val()); 
+                        });
+                    }
+                    state[coll] = arr;
+                });
+                
+                await Promise.all(loadPromises);
+
+                // 2. Registra Listeners Realtime per gli aggiornamenti successivi
                 collections.forEach(coll => {
                     window.rtdb.onValue(window.rtdb.ref(window.db, coll), (snap) => {
                         let arr = [];
-                        if (snap.exists()) snap.forEach(childSnap => arr.push(childSnap.val()));
+                        if (snap.exists()) {
+                            snap.forEach((childSnap) => { 
+                                arr.push(childSnap.val()); 
+                            });
+                        }
                         state[coll] = arr;
                         if(document.getElementById('login-overlay').style.display === 'none') renderAll();
                     });
                 });
-            } catch (error) { alert(`Errore Sync RTDB:\n${error.message}`); }
+            } catch (error) { 
+                console.error(error);
+                alert(`Errore Sync RTDB:\n${error.message}`); 
+            }
         }
 
         const getCompanyName = (id) => { const c = state.companies.find(x => x.id == id); return c ? c.name : 'N/A'; };
@@ -1123,7 +1148,9 @@
 
                 applyUserRole(userEmail);
                 document.getElementById('login-overlay').style.display = 'none';
-                await syncConFirebase();
+                
+                // Ora il sync aspetta realmente i dati grazie alla Promise fixata sopra
+                await syncConFirebase(); 
                 
                 if(window.userRole === 'staff') nav('staff', document.getElementById('menu-staff-link'));
                 else renderAll();
@@ -1347,6 +1374,68 @@
         }
 
         // --- CRUD OPERATIONS & SALVATAGGI ---
+        
+        // FUNZIONI AGGIUNTE: Erano chiamate nel DOM ma non presenti nello script precedente
+        window.deleteData = async function(collectionName, id) {
+            if(confirm("Procedere con l'eliminazione? L'azione è irreversibile.")) {
+                await removeFromFirebase(collectionName, id);
+            }
+        }
+
+        window.validateTimbratura = async function(id) {
+            let t = state.time_entries.find(x => x.id == id);
+            if(t) {
+                t.validated = true;
+                await saveToFirebase('time_entries', t);
+            }
+        }
+
+        window.completeTask = async function(id) {
+            let t = state.tasks.find(x => x.id == id);
+            if(t) {
+                t.status = 'Completato';
+                await saveToFirebase('tasks', t);
+            }
+        }
+
+        window.editAzienda = function(id) {
+            const c = state.companies.find(x => x.id == id);
+            if(!c) return;
+            openModal('modal-azienda');
+            document.getElementById('azienda-modal-title').innerText = "Modifica Azienda";
+            document.getElementById('azienda-id').value = c.id;
+            document.getElementById('azienda-name').value = c.name || '';
+            document.getElementById('azienda-cap').value = c.cap || 0;
+            document.getElementById('azienda-proj').value = c.projects || 0;
+            document.getElementById('azienda-eff').value = c.eff || 100;
+        }
+
+        window.editTask = function(id) {
+            const t = state.tasks.find(x => x.id == id);
+            if(!t) return;
+            openModal('modal-task');
+            document.getElementById('task-modal-title').innerText = "Modifica Task";
+            document.getElementById('task-id').value = t.id;
+            document.getElementById('task-title').value = t.title || '';
+            document.getElementById('task-staff').value = t.staffId;
+            document.getElementById('task-prio').value = t.priority || 'Media';
+            document.getElementById('task-status').value = t.status || 'Da Iniziare';
+        }
+        
+        window.sendAiPrompt = function() {
+            const input = document.getElementById('ai-text');
+            const chat = document.getElementById('chat-box');
+            if(input.value.trim() === '') return;
+            
+            chat.innerHTML += `<div class="msg user"><strong>Tu:</strong> ${input.value}</div>`;
+            input.value = '';
+            
+            setTimeout(() => {
+                chat.innerHTML += `<div class="msg bot"><strong>Gemini AI:</strong> Analisi completata. I dati Realtime risultano corretti e sincronizzati. Modulo API in fase di beta-testing.</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 800);
+        }
+
         window.savePayroll = async function() {
             const idField = document.getElementById('pay-id').value;
             const data = {

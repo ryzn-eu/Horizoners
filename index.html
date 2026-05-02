@@ -11,7 +11,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
         import { getDatabase, ref, set, get, child, onValue, remove } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
 
@@ -37,6 +37,7 @@
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
         window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
     </script>
 
     <style>
@@ -149,16 +150,17 @@
             margin-top: 10px; 
         }
 
-        /* --- LAYOUT & SIDEBAR --- */
+        /* --- LAYOUT & SIDEBAR (DARK THEME) --- */
         .sidebar { 
             width: var(--sidebar-w); 
-            background: var(--card); 
-            border-right: 1px solid var(--border); 
+            background: #0B1120; 
+            border-right: 1px solid #1E293B; 
             display: flex; 
             flex-direction: column; 
             z-index: 1000; 
             overflow-y: auto; 
             -webkit-overflow-scrolling: touch;
+            color: #FFFFFF;
         }
         .logo { 
             height: 70px; 
@@ -166,8 +168,9 @@
             align-items: center; 
             padding: 0 24px; 
             gap: 12px; 
-            border-bottom: 1px solid var(--border); 
+            border-bottom: 1px solid #1E293B; 
             flex-shrink: 0;
+            color: #FFFFFF;
         }
         .logo i { 
             font-size: 24px; 
@@ -186,15 +189,15 @@
             justify-content: space-between; 
             padding: 10px 16px; 
             border-radius: 8px; 
-            color: var(--text-light); 
+            color: #94A3B8; 
             text-decoration: none; 
             font-weight: 500; 
             cursor: pointer; 
             font-size: 14px;
         }
         .nav-link:hover { 
-            background: rgba(37, 99, 235, 0.1); 
-            color: var(--primary); 
+            background: rgba(255, 255, 255, 0.05); 
+            color: #FFFFFF; 
         }
         .nav-link.active { 
             background: var(--primary); 
@@ -508,12 +511,12 @@
             <span style="font-weight: 800; font-size: 15px; letter-spacing: 0.5px;">HORIZON OS v8</span>
         </div>
         <nav class="nav">
-            <div style="font-size: 10px; color: var(--text-light); text-transform: uppercase; margin: 10px 0 5px 10px;">Workspace</div>
+            <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin: 10px 0 5px 10px;">Workspace</div>
             <a class="nav-link active admin-only" onclick="nav('dash', this)"><span><i class="ph ph-chart-pie"></i> Dashboard Globale</span></a>
             <a class="nav-link admin-only" onclick="nav('aziende', this)"><span><i class="ph ph-buildings"></i> Gruppo & Aziende</span></a>
             <a class="nav-link admin-only" onclick="nav('divs', this)"><span><i class="ph ph-tree-structure"></i> Divisioni Interne</span></a>
             
-            <div style="font-size: 10px; color: var(--text-light); text-transform: uppercase; margin: 20px 0 5px 10px;">Gestione & Operatività</div>
+            <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin: 20px 0 5px 10px;">Gestione & Operatività</div>
             <a class="nav-link" id="menu-staff-link" onclick="nav('staff', this)"><span><i class="ph ph-users"></i> Organico HR</span></a>
             
             <a class="nav-link admin-only" onclick="nav('payrolls', this)"><span><i class="ph ph-money"></i> Paghe & Stipendi</span></a>
@@ -524,14 +527,20 @@
             <a class="nav-link" onclick="nav('tasks', this)"><span><i class="ph ph-check-square"></i> Task & Ticket</span></a>
 
             <div id="nav-group-hw" style="display:none;">
-                <div style="font-size: 10px; color: var(--text-light); text-transform: uppercase; margin: 20px 0 5px 10px;">Infrastruttura & AI</div>
+                <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin: 20px 0 5px 10px;">Infrastruttura & AI</div>
                 <a class="nav-link admin-only" onclick="nav('ai', this)"><span><i class="ph ph-sparkle"></i> AI Predittiva</span> <span style="font-size:10px; background:var(--primary); color:white; padding:2px 6px; border-radius:4px;">BETA</span></a>
                 <a class="nav-link" id="nav-macchina" style="display:none;" onclick="nav('macchina', this)"><span><i class="ph ph-cpu"></i> Grado mAf</span> <i class="ph ph-warning-circle" style="color:var(--danger)"></i></a>
                 <a class="nav-link" id="nav-eolo" style="display:none;" onclick="nav('eolo', this)"><span><i class="ph ph-broadcast"></i> Eolo fFk9</span></a>
             </div>
             
-            <div style="font-size: 10px; color: var(--text-light); text-transform: uppercase; margin: 20px 0 5px 10px;">Sistema</div>
+            <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin: 20px 0 5px 10px;">Sistema</div>
             <a class="nav-link admin-only" onclick="nav('settings', this)"><span><i class="ph ph-gear"></i> Settings Globali</span></a>
+
+            <!-- SPAZIATORE E TASTO ESCI IN BASSO -->
+            <div style="flex-grow: 1;"></div>
+            <a class="nav-link" onclick="esciDalSistema()" style="color: var(--danger); border-top: 1px solid #1E293B; border-radius: 0; padding-top: 15px; margin-top: auto;">
+                <span><i class="ph ph-sign-out"></i> Esci dal Sistema</span>
+            </a>
         </nav>
     </aside>
 
@@ -565,7 +574,26 @@
         </header>
 
         <section id="view-dash" class="view active admin-only">
+            <!-- KPI GLOBALI -->
             <div class="grid" id="dash-summary"></div>
+            
+            <!-- SEZIONE GRAFICI DIVISIONI E STORICO -->
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
+                <div class="card">
+                    <div class="card-title">Distribuzione Budget per Divisione</div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="budgetDoughnutChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Trend Storico Budget (Log Valori)</div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="budgetHistoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABELLA ENTITÀ -->
             <div class="card">
                 <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
                     <div class="card-title" style="margin:0;">Performance Entità Globali</div>
@@ -1077,7 +1105,6 @@
             document.getElementById('btn-tab-admin').className = mode === 'admin' ? 'active' : '';
             document.getElementById('btn-tab-staff').className = mode === 'staff' ? 'active' : '';
             document.getElementById('login-desc').innerText = mode === 'admin' ? 'Accesso Riservato Direzione (direzione@horizonglobal.com)' : 'Accesso Operativo Staff';
-            document.getElementById('btn-login-action').setAttribute('onclick', `attemptLogin('${mode}')`);
         }
 
         function toggleNotifiche() {
@@ -1087,8 +1114,86 @@
 
         // --- STATE & FIREBASE ---
         let state = {
-            companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: [], badges: [], payrolls: [], security_alerts: []
+            companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: [], badges: [], payrolls: [], security_alerts: [], budget_history: []
         };
+
+        // --- INIZIALIZZAZIONE GRAFICI ---
+        let doughnutChartInst = null;
+        let lineChartInst = null;
+
+        function renderCharts() {
+            if(!document.getElementById('view-dash').classList.contains('active')) return;
+
+            const divNames = state.divisions.map(d => d.name);
+            const divBudgets = state.divisions.map(d => d.budget);
+
+            // Grafico a Ciambella
+            const ctxD = document.getElementById('budgetDoughnutChart').getContext('2d');
+            if(doughnutChartInst) doughnutChartInst.destroy();
+            
+            doughnutChartInst = new Chart(ctxD, {
+                type: 'doughnut',
+                data: {
+                    labels: divNames.length ? divNames : ['Nessuna Divisione'],
+                    datasets: [{
+                        data: divBudgets.length ? divBudgets : [1],
+                        backgroundColor: ['#2563EB', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#14B8A6']
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+
+            // Grafico a Linee (Storico)
+            const ctxL = document.getElementById('budgetHistoryChart').getContext('2d');
+            if(lineChartInst) lineChartInst.destroy();
+
+            // Raccogliamo lo storico. Se è vuoto, creiamo un punto fittizio basato sul totale attuale per non lasciare il grafico vuoto.
+            let historyLabels = [];
+            let historyData = [];
+
+            if (state.budget_history && state.budget_history.length > 0) {
+                // Ordina per data (cronologico)
+                let sortedHistory = [...state.budget_history].sort((a, b) => a.id - b.id);
+                historyLabels = sortedHistory.map(h => h.date);
+                historyData = sortedHistory.map(h => h.total);
+            } else {
+                let currentTotal = state.divisions.reduce((acc, d) => acc + d.budget, 0);
+                historyLabels = [new Date().toLocaleDateString('it-IT')];
+                historyData = [currentTotal];
+            }
+
+            lineChartInst = new Chart(ctxL, {
+                type: 'line',
+                data: {
+                    labels: historyLabels,
+                    datasets: [{
+                        label: 'Budget Globale Divisioni (€)',
+                        data: historyData,
+                        borderColor: '#2563EB',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#2563EB'
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        }
 
         async function saveToFirebase(collectionName, item) {
             if (window.rtdb && window.db) {
@@ -1109,8 +1214,7 @@
         async function syncConFirebase() {
             if (!window.db || !window.rtdb) return;
             try {
-                // Aggiunta la collezione security_alerts per la campanella
-                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts'];
+                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history'];
                 
                 const loadPromises = collections.map(async (coll) => {
                     const snap = await window.rtdb.get(window.rtdb.ref(window.db, coll));
@@ -1148,9 +1252,29 @@
         const getStaffName = (id) => { const s = state.staff.find(x => x.id == id); return s ? s.name : 'Sconosciuto'; };
         const getStaffIban = (id) => { const s = state.staff.find(x => x.id == id); return s && s.iban ? s.iban : 'Nessun IBAN'; };
 
-        async function attemptLogin(roleAttempt) {
+        // --- GESTIONE LOGIN, AUTO-LOGIN E LOGOUT ---
+        window.addEventListener('DOMContentLoaded', () => {
+             // L'Auto-login viene innescato dallo stato persistente di Firebase
+             window.onAuthStateChanged(window.auth, async (user) => {
+                 if (user) {
+                     const userEmail = user.email.toLowerCase();
+                     applyUserRole(userEmail);
+                     document.getElementById('login-overlay').style.display = 'none';
+                     await syncConFirebase(); 
+                     if(window.userRole === 'staff') nav('staff', document.getElementById('menu-staff-link'));
+                     else renderAll();
+                 } else {
+                     document.getElementById('login-overlay').style.display = 'flex';
+                 }
+             });
+        });
+
+        window.attemptLogin = async function(roleAttempt) {
             const u = document.getElementById('login-user').value;
             const p = document.getElementById('login-pass').value;
+            const btn = document.getElementById('btn-login-action');
+            btn.innerText = "Accesso...";
+
             try {
                 const result = await window.signInWithEmailAndPassword(window.auth, u, p);
                 const userEmail = result.user.email.toLowerCase();
@@ -1158,18 +1282,27 @@
                 if (roleAttempt === 'admin' && userEmail !== 'direzione@horizonglobal.com') {
                     alert("Accesso negato per Direzione. Prova da 'Staff'.");
                     if(window.signOut) await window.signOut(window.auth);
+                    btn.innerText = "Effettua Login";
                     return;
                 }
-
-                applyUserRole(userEmail);
-                document.getElementById('login-overlay').style.display = 'none';
+                // Il resto dell'accesso è gestito dall'evento onAuthStateChanged qui sopra!
                 
-                await syncConFirebase(); 
-                
-                if(window.userRole === 'staff') nav('staff', document.getElementById('menu-staff-link'));
-                else renderAll();
+            } catch (error) { 
+                alert("Credenziali errate."); 
+                btn.innerText = "Effettua Login";
+            }
+        }
 
-            } catch (error) { alert("Credenziali errate."); }
+        window.esciDalSistema = async function() {
+            if(confirm("Sei sicuro di voler uscire dal gestionale?")) {
+                try {
+                    await window.signOut(window.auth);
+                    // Ricarico la pagina per azzerare tutte le variabili di memoria in modo pulito
+                    window.location.reload(); 
+                } catch(e) {
+                    console.error("Errore durante il logout:", e);
+                }
+            }
         }
 
         function applyUserRole(userEmail) {
@@ -1216,6 +1349,12 @@
             } else {
                 document.body.classList.remove('hw-mode');
             }
+
+            if(id === 'dash') {
+                // Piccolo timeout per dare tempo al DOM di rendere l'area attiva
+                setTimeout(renderCharts, 50);
+            }
+
             if(window.innerWidth <= 768) toggleSidebar();
         }
 
@@ -1326,6 +1465,9 @@
                 document.getElementById('nav-eolo').style.display = 'flex';
                 document.getElementById('btn-new-staff').style.display = 'flex';
 
+                // Disegna i grafici se l'admin è sulla dashboard
+                renderCharts();
+
                 // --- RENDERING NOTIFICHE DI SICUREZZA ---
                 let alerts = state.security_alerts || [];
                 alerts.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -1352,7 +1494,7 @@
                 document.getElementById('dash-summary').innerHTML = `<div class="card"><div class="card-title">Capitale Gruppo</div><div class="card-value">€ ${(totalCap/1000000).toFixed(2)} M</div></div><div class="card"><div class="card-title">Aziende</div><div class="card-value">${state.companies.length}</div></div><div class="card"><div class="card-title">Staff</div><div class="card-value">${state.staff.length}</div></div>`;
                 document.getElementById('table-dash-stats').querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td><span style="color:${c.eff>90?'var(--accent)':'var(--warning)'}">${c.eff}%</span></td></tr>`).join('');
                 document.getElementById('table-aziende').querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td>${c.eff}%</td><td><span class="badge" style="background:var(--accent); color:white;">Attiva</span></td><td class="action-btns"><button class="btn-edit" onclick="editAzienda(${c.id})">Mod</button> <button class="btn-del" onclick="deleteData('companies', ${c.id})">Del</button></td></tr>`).join('');
-                document.getElementById('table-divs').querySelector('tbody').innerHTML = state.divisions.map(d => `<tr><td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td><td class="action-btns"><button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button></td></tr>`).join('');
+                document.getElementById('table-divs').querySelector('tbody').innerHTML = state.divisions.map(d => `<tr><td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td><td class="action-btns"><button class="btn-edit" onclick="editDivision(${d.id})">Mod</button> <button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button></td></tr>`).join('');
                 
                 if(document.getElementById('table-badges')) {
                     document.getElementById('table-badges').querySelector('tbody').innerHTML = state.badges.map(b => `<tr><td><b>${getStaffName(b.staffId)}</b></td><td style="font-family: monospace; color: var(--primary); font-size: 16px;">${b.accessCode}</td><td>${new Date(b.createdAt).toLocaleDateString()}</td><td><span style="font-family:monospace; font-size:11px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${b.deviceId ? b.deviceId : 'Non ancora associato'}</span></td><td><span class="badge" style="background:var(--accent); color:white;">Attivo</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('badges', ${b.id})">Revoca App</button></td></tr>`).join('');
@@ -1414,6 +1556,14 @@
         window.deleteData = async function(collectionName, id) {
             if(confirm("Procedere con l'eliminazione? L'azione è irreversibile.")) {
                 await removeFromFirebase(collectionName, id);
+                
+                // Se eliminiamo una divisione, registriamo il cambio nello storico budget
+                if (collectionName === 'divisions') {
+                    let currentTotal = state.divisions.filter(d => d.id !== id).reduce((s, d) => s + d.budget, 0);
+                    let histDate = new Date();
+                    let formattedTime = histDate.toLocaleDateString('it-IT') + ' ' + histDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'});
+                    await saveToFirebase('budget_history', { id: Date.now(), date: formattedTime, total: currentTotal });
+                }
             }
         }
 
@@ -1443,6 +1593,18 @@
             document.getElementById('azienda-cap').value = c.cap || 0;
             document.getElementById('azienda-proj').value = c.projects || 0;
             document.getElementById('azienda-eff').value = c.eff || 100;
+        }
+        
+        window.editDivision = function(id) {
+            const d = state.divisions.find(x => x.id == id);
+            if(!d) return;
+            openModal('modal-div');
+            document.getElementById('div-modal-title').innerText = "Modifica Divisione";
+            document.getElementById('div-id').value = d.id;
+            document.getElementById('div-name').value = d.name || '';
+            document.getElementById('div-company').value = d.companyId;
+            document.getElementById('div-budget').value = d.budget || 0;
+            document.getElementById('div-eff').value = d.eff || 100;
         }
 
         window.editTask = function(id) {
@@ -1561,7 +1723,31 @@
 
         window.saveDivision = async function() {
             const idField = document.getElementById('div-id').value;
-            await saveToFirebase('divisions', { id: idField ? parseInt(idField) : Date.now(), name: document.getElementById('div-name').value, companyId: parseInt(document.getElementById('div-company').value), budget: parseFloat(document.getElementById('div-budget').value) || 0, eff: parseInt(document.getElementById('div-eff').value) || 100 });
+            const parsedId = idField ? parseInt(idField) : Date.now();
+            const newBudget = parseFloat(document.getElementById('div-budget').value) || 0;
+
+            await saveToFirebase('divisions', { 
+                id: parsedId, 
+                name: document.getElementById('div-name').value, 
+                companyId: parseInt(document.getElementById('div-company').value), 
+                budget: newBudget, 
+                eff: parseInt(document.getElementById('div-eff').value) || 100 
+            });
+
+            // Calcolo il nuovo totale budget al volo escludendo il vecchio valore di questa divisione
+            let otherDivsBudget = state.divisions.filter(d => d.id !== parsedId).reduce((s, d) => s + d.budget, 0);
+            let currentTotal = otherDivsBudget + newBudget;
+
+            // Salvo lo snapshot nello storico per i grafici lineari
+            let histDate = new Date();
+            let formattedTime = histDate.toLocaleDateString('it-IT') + ' ' + histDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'});
+            
+            await saveToFirebase('budget_history', { 
+                id: Date.now(), 
+                date: formattedTime, 
+                total: currentTotal 
+            });
+
             closeModal('modal-div');
         }
 
@@ -1582,7 +1768,7 @@
             closeModal('modal-doc');
         }
 
-        // --- HARDWARE MACCHINA (GRAFICO FLUIDO FIXATO) ---
+        // --- HARDWARE MACCHINA ---
         window.printGradoB = function() {
             const term = document.getElementById('grado-terminal');
             term.innerHTML += `> Esecuzione override sensori...<br>> Verifica integrità hardware... <span style="color:var(--accent)">100% OK</span><br>> Ricalibrazione fFk9: ONLINE<br>`;

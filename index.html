@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Horizon Global ERP </title>
+    <title>Horizon Global ERP</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -23,8 +23,7 @@
             projectId: "horizongls",
             storageBucket: "horizongls.firebasestorage.app",
             messagingSenderId: "611544552805",
-            appId: "1:611544552805:web:88fb0e35e59fb5bf543d8c",
-            measurementId: "G-JE0G5PY9LB"
+            appId: "1:611544552805:web:88fb0e35e59fb5bf543d8c"
         };
         
         // 2. Configurazione Firebase SECONDARIA (Horizon ID Core) - Per la verifica KYC
@@ -38,16 +37,15 @@
             appId: "1:366693750800:web:20b54d0d2180d30fa7d295"
         };
         
-        // Inizializza entrambe le App
         const app = initializeApp(firebaseConfig);
-        const appHorizonId = initializeApp(horizonIdConfig, "horizonIdApp"); // Nome istanza univoco
+        const appHorizonId = initializeApp(horizonIdConfig, "horizonIdApp"); 
         
         window.auth = getAuth(app);
-        window.db = getDatabase(app); // Database ERP
-        window.dbHorizonId = getDatabase(appHorizonId); // Database Horizon ID
+        window.authHorizonId = getAuth(appHorizonId); 
+        window.db = getDatabase(app); 
+        window.dbHorizonId = getDatabase(appHorizonId); 
         window.storage = getStorage(app);
 
-        // Aggiunto "update" alla finestra globale per aggiornare gli stati
         window.rtdb = { ref, set, get, child, onValue, remove, update };
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
@@ -56,446 +54,96 @@
     </script>
 
     <style>
-        /* --- BASE VARIABLES --- */
         :root {
-            --primary: #2563EB; 
-            --primary-dark: #1E40AF; 
-            --secondary: #0F172A;
-            --accent: #22C55E; 
-            --warning: #F59E0B; 
-            --danger: #EF4444;
-            --bg: #F8FAFC; 
-            --card: #FFFFFF; 
-            --text: #0F172A; 
-            --text-light: #64748B;
-            --border: #E2E8F0; 
-            --sidebar-w: 260px; 
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            --primary: #2563EB; --primary-dark: #1E40AF; --secondary: #0F172A;
+            --accent: #22C55E; --warning: #F59E0B; --danger: #EF4444;
+            --bg: #F8FAFC; --card: #FFFFFF; --text: #0F172A; --text-light: #64748B;
+            --border: #E2E8F0; --sidebar-w: 260px; --shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
             --sys-font: 'Inter', sans-serif;
         }
 
-        /* --- DARK VARIABLES (GRADO MAF) --- */
         body.hw-mode {
-            --bg: #03060a; 
-            --card: rgba(10, 15, 25, 0.85); 
-            --text: #b8f2ff; 
-            --text-light: #4a758c;
-            --border: rgba(0, 229, 255, 0.2); 
-            --primary: #00e5ff; 
-            --secondary: #0a1018;
-            --sys-font: 'Rajdhani', sans-serif;
-            background: radial-gradient(circle at top right, #09121f, var(--bg));
+            --bg: #03060a; --card: rgba(10, 15, 25, 0.85); --text: #b8f2ff; --text-light: #4a758c;
+            --border: rgba(0, 229, 255, 0.2); --primary: #00e5ff; --secondary: #0a1018;
+            --sys-font: 'Rajdhani', sans-serif; background: radial-gradient(circle at top right, #09121f, var(--bg));
         }
         body.hw-mode .sidebar { background: #020406; border-right-color: var(--border); }
         body.hw-mode .topbar { background: #020406; border-bottom-color: var(--border); }
 
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: var(--sys-font); 
-            transition: background 0.3s, color 0.3s; 
-        }
-        
-        body { 
-            background: var(--bg); 
-            color: var(--text); 
-            display: flex; 
-            height: 100vh; 
-            overflow: hidden; 
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--sys-font); transition: background 0.3s, color 0.3s; }
+        body { background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* --- LOGIN --- */
-        #login-overlay { 
-            position: fixed; 
-            inset: 0; 
-            background: #0F172A; 
-            z-index: 9999; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-        .login-box { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 16px; 
-            width: 400px; 
-            max-width: 90%; 
-            text-align: center; 
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); 
-        }
-        .login-tabs { 
-            display: flex; 
-            margin-bottom: 20px; 
-            border-radius: 8px; 
-            overflow: hidden; 
-            border: 1px solid var(--border); 
-        }
-        .login-tabs button { 
-            flex: 1; 
-            padding: 10px; 
-            border: none; 
-            font-weight: bold; 
-            cursor: pointer; 
-            background: #f1f5f9; 
-            color: #64748B; 
-            transition: all 0.2s; 
-        }
-        .login-tabs button.active { 
-            background: var(--primary); 
-            color: white; 
-        }
-        .login-box input { 
-            width: 100%; 
-            padding: 12px; 
-            margin: 10px 0; 
-            border: 1px solid #ccc; 
-            border-radius: 8px; 
-            outline: none; 
-        }
-        .btn-login { 
-            width: 100%; 
-            padding: 12px; 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-top: 10px; 
-        }
+        #login-overlay { position: fixed; inset: 0; background: #0F172A; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: white; padding: 40px; border-radius: 16px; width: 400px; max-width: 90%; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .login-tabs { display: flex; margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+        .login-tabs button { flex: 1; padding: 10px; border: none; font-weight: bold; cursor: pointer; background: #f1f5f9; color: #64748B; }
+        .login-tabs button.active { background: var(--primary); color: white; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; outline: none; }
+        .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
-        /* --- LAYOUT & SIDEBAR (DARK THEME) --- */
-        .sidebar { 
-            width: var(--sidebar-w); 
-            background: #0B1120; 
-            border-right: 1px solid #1E293B; 
-            display: flex; 
-            flex-direction: column; 
-            z-index: 1000; 
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch;
-            color: #FFFFFF;
-        }
-        .logo { 
-            height: 70px; 
-            display: flex; 
-            align-items: center; 
-            padding: 0 24px; 
-            gap: 12px; 
-            border-bottom: 1px solid #1E293B; 
-            flex-shrink: 0;
-            color: #FFFFFF;
-        }
-        .logo i { 
-            font-size: 24px; 
-            color: var(--primary); 
-        }
-        .nav { 
-            flex: 1; 
-            padding: 20px 12px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 4px; 
-        }
-        .nav-link { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 10px 16px; 
-            border-radius: 8px; 
-            color: #94A3B8; 
-            text-decoration: none; 
-            font-weight: 500; 
-            cursor: pointer; 
-            font-size: 14px;
-        }
-        .nav-link:hover { 
-            background: rgba(255, 255, 255, 0.05); 
-            color: #FFFFFF; 
-        }
-        .nav-link.active { 
-            background: var(--primary); 
-            color: white; 
-        }
+        .sidebar { width: var(--sidebar-w); background: #0B1120; border-right: 1px solid #1E293B; display: flex; flex-direction: column; z-index: 1000; overflow-y: auto; color: #FFFFFF; }
+        .logo { height: 70px; display: flex; align-items: center; padding: 0 24px; gap: 12px; border-bottom: 1px solid #1E293B; flex-shrink: 0; }
+        .logo i { font-size: 24px; color: var(--primary); }
+        .nav { flex: 1; padding: 20px 12px; display: flex; flex-direction: column; gap: 4px; }
+        .nav-link { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-radius: 8px; color: #94A3B8; text-decoration: none; font-weight: 500; cursor: pointer; font-size: 14px; }
+        .nav-link:hover { background: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
+        .nav-link.active { background: var(--primary); color: white; }
 
-        .main { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-            position: relative; 
-            width: 100%;
-        }
-        .topbar { 
-            height: 70px; 
-            background: var(--card); 
-            border-bottom: 1px solid var(--border); 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 0 32px; 
-            z-index:10; 
-            flex-shrink: 0;
-        }
-        .view { 
-            display: none; 
-            padding: 32px; 
-            overflow-y: auto; 
-            height: calc(100vh - 70px); 
-            animation: fadeIn 0.3s ease; 
-            -webkit-overflow-scrolling: touch;
-        }
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; width: 100%; }
+        .topbar { height: 70px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; z-index:10; flex-shrink: 0; }
+        .view { display: none; padding: 32px; overflow-y: auto; height: calc(100vh - 70px); animation: fadeIn 0.3s ease; }
         .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- UI COMPONENTS --- */
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 24px; 
-            margin-bottom: 24px; 
-        }
-        .card { 
-            background: var(--card); 
-            border-radius: 16px; 
-            border: 1px solid var(--border); 
-            padding: 24px; 
-            box-shadow: var(--shadow); 
-            overflow-x: auto; 
-            -webkit-overflow-scrolling: touch; 
-        }
-        .card-title { 
-            font-size: 13px; 
-            font-weight: 600; 
-            color: var(--text-light); 
-            text-transform: uppercase; 
-            margin-bottom: 12px; 
-        }
-        .card-value { 
-            font-size: 26px; 
-            font-weight: 700; 
-            color: var(--text); 
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 24px; }
+        .card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 24px; box-shadow: var(--shadow); overflow-x: auto; }
+        .card-title { font-size: 13px; font-weight: 600; color: var(--text-light); text-transform: uppercase; margin-bottom: 12px; }
+        .card-value { font-size: 26px; font-weight: 700; color: var(--text); }
         
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 10px; 
-            min-width: 600px; 
-        }
-        th { 
-            text-align: left; 
-            padding: 12px 16px; 
-            color: var(--text-light); 
-            font-size: 11px; 
-            text-transform: uppercase; 
-            border-bottom: 1px solid var(--border); 
-            white-space: nowrap; 
-        }
-        td { 
-            padding: 14px 16px; 
-            border-bottom: 1px solid var(--border); 
-            font-size: 14px; 
-            color: var(--text); 
-            white-space: nowrap; 
-        }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 600px; }
+        th { text-align: left; padding: 12px 16px; color: var(--text-light); font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text); white-space: nowrap; }
         
-        .action-btns button { 
-            padding: 6px 10px; 
-            border:none; 
-            border-radius: 4px; 
-            cursor:pointer; 
-            margin-right:5px; 
-            font-size: 12px; 
-            margin-bottom: 4px;
-        }
+        .action-btns button { padding: 6px 10px; border:none; border-radius: 4px; cursor:pointer; margin-right:5px; font-size: 12px; margin-bottom: 4px; }
         .btn-edit { background: var(--warning); color: #fff;}
         .btn-del { background: var(--danger); color: #fff;}
         .btn-validate { background: var(--accent); color: #fff; }
 
-        .btn { 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            border: none; 
-            font-weight: 600; 
-            cursor: pointer; 
-            background: var(--primary); 
-            color: white; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 8px;
-        }
-        .input { 
-            width: 100%; 
-            padding: 10px; 
-            margin: 5px 0 15px; 
-            border-radius: 8px; 
-            border: 1px solid var(--border); 
-            background: var(--bg); 
-            color: var(--text); 
-            outline: none; 
-        }
-        .input:disabled { 
-            background: #f1f5f9; 
-            cursor: not-allowed; 
-            color: #64748B; 
-        }
-        .badge { 
-            padding: 4px 8px; 
-            border-radius: 12px; 
-            font-size: 11px; 
-            font-weight: bold; 
-            display: inline-block;
-        }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--primary); color: white; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .input { width: 100%; padding: 10px; margin: 5px 0 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; }
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
 
-        /* --- MODAL --- */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.6); 
-            backdrop-filter: blur(4px); 
-            z-index: 10000; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 15px; 
-        }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; padding: 15px; }
         .modal.active { display: flex; }
-        .modal-content { 
-            background: var(--card); 
-            width: 100%; 
-            max-width: 650px; 
-            max-height: 90vh; 
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch; 
-            border-radius: 16px; 
-            padding: 30px; 
-            border: 1px solid var(--border); 
-            color: var(--text); 
-        }
+        .modal-content { background: var(--card); width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; border-radius: 16px; padding: 30px; border: 1px solid var(--border); color: var(--text); }
 
-        /* --- AI CHAT --- */
-        .ai-chat { 
-            display: flex; 
-            flex-direction: column; 
-            height: 500px; 
-            border: 1px solid var(--border); 
-            border-radius: 12px; 
-            background: var(--bg); 
-        }
-        .ai-msgs { 
-            flex: 1; 
-            padding: 20px; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            -webkit-overflow-scrolling: touch;
-        }
-        .msg { 
-            max-width: 85%; 
-            padding: 12px 16px; 
-            border-radius: 12px; 
-            font-size: 14px; 
-            line-height: 1.5; 
-        }
-        .msg.bot { 
-            background: white; 
-            border: 1px solid var(--border); 
-            align-self: flex-start; 
-        }
-        .msg.user { 
-            background: var(--primary); 
-            color: white; 
-            align-self: flex-end; 
-        }
-        .ai-input { 
-            display: flex; 
-            padding: 15px; 
-            border-top: 1px solid var(--border); 
-            background: var(--card); 
-        }
-        .ai-input input { 
-            flex: 1; 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
-            padding: 10px; 
-            margin-right: 10px; 
-            outline: none; 
-        }
+        .ai-chat { display: flex; flex-direction: column; height: 500px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+        .ai-msgs { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+        .msg.bot { background: white; border: 1px solid var(--border); align-self: flex-start; }
+        .msg.user { background: var(--primary); color: white; align-self: flex-end; }
+        .ai-input { display: flex; padding: 15px; border-top: 1px solid var(--border); background: var(--card); }
+        .ai-input input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-right: 10px; outline: none; }
 
-        /* --- MACCHINA --- */
-        .hw-panel { 
-            border: 1px solid var(--primary); 
-            padding: 15px; 
-            background: rgba(0,0,0,0.4); 
-            border-radius: 4px; 
-            box-shadow: inset 0 0 20px rgba(0,229,255,0.05); 
-        }
-        .hw-title { 
-            color: var(--primary); 
-            font-size: 14px; 
-            text-transform: uppercase; 
-            border-bottom: 1px solid rgba(0,229,255,0.3); 
-            padding-bottom: 5px; 
-            margin-bottom: 10px; 
-            letter-spacing: 1px; 
-        }
-        .terminal { 
-            background: #010204; 
-            color: #00ff66; 
-            font-family: monospace; 
-            padding: 10px; 
-            height: 150px; 
-            overflow-y: auto; 
-            border: 1px solid #1a2b3c; 
-            font-size: 12px; 
-            -webkit-overflow-scrolling: touch;
-        }
+        .hw-panel { border: 1px solid var(--primary); padding: 15px; background: rgba(0,0,0,0.4); border-radius: 4px; box-shadow: inset 0 0 20px rgba(0,229,255,0.05); }
+        .hw-title { color: var(--primary); font-size: 14px; text-transform: uppercase; border-bottom: 1px solid rgba(0,229,255,0.3); padding-bottom: 5px; margin-bottom: 10px; }
+        .terminal { background: #010204; color: #00ff66; font-family: monospace; padding: 10px; height: 150px; overflow-y: auto; border: 1px solid #1a2b3c; font-size: 12px; }
 
-        /* --- MOBILE --- */
-        .mobile-menu-btn { 
-            display: none; 
-            background: none; 
-            border: none; 
-            color: var(--text); 
-            font-size: 26px; 
-            cursor: pointer; 
-            padding: 0; 
-        }
-        .sidebar-overlay { 
-            display: none; 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.5); 
-            z-index: 999; 
-            backdrop-filter: blur(2px); 
-        }
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 26px; cursor: pointer; padding: 0; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
         
         @media (max-width: 768px) {
             .mobile-menu-btn { display: block; margin-right: 15px; }
-            .sidebar { 
-                position: fixed; 
-                left: -280px; 
-                top: 0; 
-                bottom: 0; 
-                transition: left 0.3s ease; 
-                box-shadow: 2px 0 10px rgba(0,0,0,0.1); 
-                z-index: 1001;
-            }
+            .sidebar { position: fixed; left: -280px; top: 0; bottom: 0; transition: left 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 1001; }
             .sidebar.open { left: 0; }
             .sidebar-overlay.active { display: block; }
-            
             .topbar { padding: 0 16px; height: 60px; }
             #page-title { font-size: 15px; }
             .view { padding: 16px; height: calc(100vh - 60px); }
             .grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
             .card { padding: 16px; }
             .topbar-right-panel { gap: 10px !important; }
-            #current-user-name { display: none; }
-            #current-user-role { display: none; }
+            #current-user-name, #current-user-role { display: none; }
             .btn { font-size: 13px; padding: 8px 12px; }
             .modal-content { padding: 20px; width: 100%; margin: 10px;}
             table { min-width: 500px; }
@@ -533,15 +181,15 @@
             
             <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin: 20px 0 5px 10px;">Gestione & Operatività</div>
             <a class="nav-link" id="menu-staff-link" onclick="nav('staff', this)"><span><i class="ph ph-users"></i> Organico HR</span></a>
-            
             <a class="nav-link admin-only" onclick="nav('payrolls', this)"><span><i class="ph ph-money"></i> Paghe & Stipendi</span></a>
-
             <a class="nav-link admin-only" onclick="nav('badges', this)"><span><i class="ph ph-identification-card"></i> Gestione Badge App</span></a>
             <a class="nav-link" onclick="nav('timbrature', this)"><span><i class="ph ph-clock"></i> Timbrature & Presenze</span> <i class="ph-fill ph-circle" style="color:var(--accent); font-size:8px;"></i></a>
+            
+            <a class="nav-link" onclick="nav('ordini', this)"><span><i class="ph ph-shopping-cart"></i> Ordini Servizi Horizon</span></a>
+            
             <a class="nav-link admin-only" onclick="nav('docs', this)"><span><i class="ph ph-files"></i> Documenti & Finanza</span></a>
             <a class="nav-link" onclick="nav('tasks', this)"><span><i class="ph ph-check-square"></i> Task & Ticket</span></a>
 
-            <!-- NUOVA SEZIONE ECOSISTEMA ESTERNO (HORIZON ID) -->
             <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin: 20px 0 5px 10px;">Ecosistema Esterno</div>
             <a class="nav-link admin-only" onclick="nav('horizon-id', this)"><span><i class="ph ph-identification-badge"></i> Horizon ID (Utenti)</span></a>
 
@@ -555,7 +203,6 @@
             <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin: 20px 0 5px 10px;">Sistema</div>
             <a class="nav-link admin-only" onclick="nav('settings', this)"><span><i class="ph ph-gear"></i> Settings Globali</span></a>
 
-            <!-- SPAZIATORE E TASTO ESCI IN BASSO -->
             <div style="flex-grow: 1;"></div>
             <a class="nav-link" onclick="esciDalSistema()" style="color: var(--danger); border-top: 1px solid #1E293B; border-radius: 0; padding-top: 15px; margin-top: auto;">
                 <span><i class="ph ph-sign-out"></i> Esci dal Sistema</span>
@@ -570,53 +217,33 @@
                 <span id="page-title">Dashboard Globale</span>
             </div>
             <div class="topbar-right-panel" style="display: flex; align-items: center; gap: 15px;">
-                
-                <!-- NOTIFICHE SICUREZZA -->
                 <div style="position: relative;" class="admin-only">
                     <button onclick="toggleNotifiche()" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text); position:relative; margin-top: 5px;">
                         <i class="ph ph-bell"></i>
                         <span id="bell-badge" style="display:none; position:absolute; top:-2px; right:-4px; background:var(--danger); color:white; font-size:10px; width:16px; height:16px; border-radius:50%; align-items:center; justify-content:center; font-weight:bold;">0</span>
                     </button>
                     <div id="notif-panel" style="display:none; position:absolute; top:40px; right:0; width:340px; background:var(--card); border:1px solid var(--border); box-shadow:var(--shadow); border-radius:12px; z-index:100; max-height:400px; overflow-y:auto; padding:15px;">
-                        <h4 style="font-size:14px; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:12px; color:var(--danger);"><i class="ph-fill ph-shield-warning"></i> Avvisi Sicurezza App Badge</h4>
+                        <h4 style="font-size:14px; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:12px; color:var(--danger);"><i class="ph-fill ph-shield-warning"></i> Avvisi Sicurezza</h4>
                         <div id="notif-list" style="font-size:12px; color:var(--text-light);">Nessun allarme registrato.</div>
                     </div>
                 </div>
-
-                <button class="btn admin-only" style="background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="createNewUserAuth()"><i class="ph ph-user-plus"></i> Crea Account Staff</button>
+                <button class="btn admin-only" style="background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="createNewUserAuth()"><i class="ph ph-user-plus"></i> Crea Staff</button>
                 <div style="text-align: right; line-height: 1.2;">
-                    <div style="font-size: 13px; font-weight: 700;" id="current-user-name">Direzione Generale</div>
-                    <div style="font-size: 11px; color: var(--text-light);" id="current-user-role">Root Admin</div>
+                    <div style="font-size: 13px; font-weight: 700;" id="current-user-name">...</div>
+                    <div style="font-size: 11px; color: var(--text-light);" id="current-user-role">...</div>
                 </div>
                 <div id="current-user-avatar" style="width: 38px; height: 38px; border-radius: 10px; background: var(--secondary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">DG</div>
             </div>
         </header>
 
         <section id="view-dash" class="view active admin-only">
-            <!-- KPI GLOBALI -->
             <div class="grid" id="dash-summary"></div>
-            
-            <!-- SEZIONE GRAFICI DIVISIONI E STORICO -->
             <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
-                <div class="card">
-                    <div class="card-title">Distribuzione Budget per Divisione</div>
-                    <div style="position: relative; height: 260px; width: 100%;">
-                        <canvas id="budgetDoughnutChart"></canvas>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-title">Trend Storico Budget (Log Valori)</div>
-                    <div style="position: relative; height: 260px; width: 100%;">
-                        <canvas id="budgetHistoryChart"></canvas>
-                    </div>
-                </div>
+                <div class="card"><div class="card-title">Distribuzione Budget</div><div style="position: relative; height: 260px; width: 100%;"><canvas id="budgetDoughnutChart"></canvas></div></div>
+                <div class="card"><div class="card-title">Trend Storico Budget</div><div style="position: relative; height: 260px; width: 100%;"><canvas id="budgetHistoryChart"></canvas></div></div>
             </div>
-
-            <!-- TABELLA ENTITÀ -->
             <div class="card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                    <div class="card-title" style="margin:0;">Performance Entità Globali</div>
-                </div>
+                <div class="card-title">Performance Entità Globali</div>
                 <table id="table-dash-stats">
                     <thead><tr><th>Azienda / Divisione</th><th>Capitale Sociale</th><th>Progetti Attivi</th><th>Efficienza (%)</th></tr></thead>
                     <tbody></tbody>
@@ -624,16 +251,41 @@
             </div>
         </section>
 
-        <!-- SEZIONE HORIZON ID (CONNESSA AL DB SECONDARIO) -->
+        <section id="view-ordini" class="view">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2>Ordini Servizi Horizon</h2>
+                    <p style="font-size: 12px; color: var(--text-light);">Inserimento manuale ordini da portale servizihorizon.it associati a Horizon ID.</p>
+                </div>
+                <button class="btn" onclick="openModal('modal-ordine')"><i class="ph ph-plus"></i> Nuovo Ordine</button>
+            </div>
+            <div class="card">
+                <table id="table-ordini">
+                    <thead><tr><th>Data</th><th>Cliente (Horizon ID)</th><th>Servizio</th><th>Importo</th><th>Stato</th><th>Azioni</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
         <section id="view-horizon-id" class="view admin-only">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2>Verifica Utenti Horizon ID</h2>
-                    <p style="font-size: 12px; color: var(--text-light);">Gestione anagrafiche e KYC (Verifica Documenti) dell'ecosistema esterno (Ryzn, Aura, ecc.). Connesso a `horizon-id-core`.</p>
+                    <p style="font-size: 12px; color: var(--text-light);">Connesso a `horizon-id-core`.</p>
                 </div>
             </div>
+            
+            <h3 style="margin-bottom: 10px; color: var(--warning); font-size: 16px;"><i class="ph-fill ph-clock"></i> Richieste In Attesa / Mancanti</h3>
+            <div class="card" style="margin-bottom: 30px;">
+                <table id="table-horizon-pending">
+                    <thead><tr><th>Utente / Rag. Sociale</th><th>P.IVA / CF</th><th>Email</th><th>Registrazione</th><th>Stato</th><th>Azioni</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-bottom: 10px; color: var(--success); font-size: 16px;"><i class="ph-fill ph-check-circle"></i> Utenti Attivi e Verificati</h3>
             <div class="card">
-                <table id="table-horizon-id">
+                <table id="table-horizon-active">
                     <thead><tr><th>Utente / Rag. Sociale</th><th>P.IVA / CF</th><th>Email</th><th>Registrazione</th><th>Stato</th><th>Azioni</th></tr></thead>
                     <tbody></tbody>
                 </table>
@@ -641,7 +293,7 @@
         </section>
 
         <section id="view-aziende" class="view admin-only">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Gruppo Societario</h2>
                 <button class="btn admin-only" onclick="openModal('modal-azienda')"><i class="ph ph-plus"></i> Nuova Azienda</button>
             </div>
@@ -654,7 +306,7 @@
         </section>
 
         <section id="view-divs" class="view admin-only">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Gestione Divisioni</h2>
                 <button class="btn admin-only" onclick="openModal('modal-div')"><i class="ph ph-plus"></i> Nuova Divisione</button>
             </div>
@@ -667,11 +319,8 @@
         </section>
 
         <section id="view-badges" class="view admin-only">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <h2>Gestione Codici Badge</h2>
-                    <p style="font-size: 12px; color: var(--text-light);">Crea e gestisci i codici d'accesso (PIN). Al primo accesso, il PIN verrà vincolato permanentemente allo smartphone del dipendente.</p>
-                </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2>Gestione Codici Badge</h2>
                 <button class="btn admin-only" onclick="openModal('modal-badge')"><i class="ph ph-plus"></i> Genera Codice Badge</button>
             </div>
             <div class="card">
@@ -683,11 +332,8 @@
         </section>
 
         <section id="view-payrolls" class="view admin-only">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <h2>Gestione Paghe e Stipendi</h2>
-                    <p style="font-size: 12px; color: var(--text-light);">Emetti e monitora le buste paga dello staff. L'operaio le visualizzerà nel suo Cassetto Fiscale personale.</p>
-                </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2>Gestione Paghe e Stipendi</h2>
                 <button class="btn admin-only" onclick="openModal('modal-payroll')"><i class="ph ph-plus"></i> Emetti Busta Paga</button>
             </div>
             <div class="card">
@@ -699,35 +345,31 @@
         </section>
 
         <section id="view-staff" class="view">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <div>
                     <h2 id="staff-page-title">Gestione Organico HR Globale</h2>
                     <p id="staff-page-desc" style="font-size: 12px; color: var(--text-light);">Gestione completa dei dipendenti e dei dati fiscali/bancari.</p>
                 </div>
                 <button class="btn admin-only" id="btn-new-staff" onclick="newStaff()"><i class="ph ph-plus"></i> Nuovo Dipendente</button>
             </div>
-            
             <div class="card admin-only" id="staff-admin-view">
                 <table id="table-staff">
                     <thead><tr><th>Nome</th><th>Ruolo</th><th>Azienda</th><th>Efficienza</th><th>Accesso Macchinari</th><th>Stato</th><th>Azioni</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-
-            <div id="staff-user-view" style="display:none; width: 100%;">
-                </div>
+            <div id="staff-user-view" style="display:none; width: 100%;"></div>
         </section>
 
         <section id="view-timbrature" class="view">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2 id="timbrature-page-title">Log Ingressi e Timbrature</h2>
                 <div class="admin-only" style="display:flex; gap:10px;">
-                    <button class="btn" style="background:var(--warning)" onclick="alert('Generazione Report Presenze PDF...')"><i class="ph ph-file-pdf"></i> Export</button>
+                    <button class="btn" style="background:var(--warning)" onclick="alert('Export PDF in corso...')"><i class="ph ph-file-pdf"></i> Export</button>
                     <button class="btn" onclick="openModal('modal-timbratura')"><i class="ph ph-plus"></i> Forzatura</button>
                 </div>
             </div>
             <div class="card">
-                <p style="font-size:12px; color:var(--text-light); margin-bottom:15px;">* Le timbrature provengono in tempo reale da Firebase Realtime DB.</p>
                 <table id="table-timbrature">
                     <thead><tr><th>Timestamp</th><th>Dipendente</th><th>Azienda/Div</th><th>Tipo</th><th>Dispositivo/Geo</th><th>Stato</th><th>Azioni</th></tr></thead>
                     <tbody></tbody>
@@ -736,7 +378,7 @@
         </section>
 
         <section id="view-docs" class="view admin-only">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Amministrazione, Fatture & Uploads</h2>
                 <button class="btn admin-only" onclick="openModal('modal-doc')"><i class="ph ph-plus"></i> Inserisci Documento</button>
             </div>
@@ -750,7 +392,7 @@
         </section>
 
         <section id="view-tasks" class="view">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Gestione Task & Ticketing</h2>
                 <button class="btn admin-only" onclick="openModal('modal-task')"><i class="ph ph-plus"></i> Nuovo Task</button>
             </div>
@@ -766,13 +408,12 @@
             <div class="grid">
                 <div style="grid-column: 1 / -1;">
                     <h2>Assistente Analitico Globale (Gemini Integration)</h2>
-                    <p style="color:var(--text-light); font-size:14px; margin-bottom:20px;">L'AI incrocia i dati di RTDB e fornisce analisi in tempo reale tramite le API di Google Gemini.</p>
                     <div class="ai-chat">
                         <div class="ai-msgs" id="chat-box">
-                            <div class="msg bot"><strong>Gemini AI:</strong> Ciao Admin. Sono connesso tramite le nuove API. Come posso aiutarti oggi ad analizzare i dati dell'ERP?</div>
+                            <div class="msg bot"><strong>Gemini AI:</strong> Ciao Admin. Sono connesso. Come posso aiutarti?</div>
                         </div>
                         <div class="ai-input admin-only">
-                            <input type="text" id="ai-text" placeholder="Chiedi a Gemini un'analisi aziendale trasversale...">
+                            <input type="text" id="ai-text" placeholder="Chiedi a Gemini...">
                             <button class="btn" onclick="sendAiPrompt()"><i class="ph ph-paper-plane-right"></i></button>
                         </div>
                     </div>
@@ -781,31 +422,18 @@
         </section>
 
         <section id="view-macchina" class="view">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap: wrap;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <h2 style="color: var(--primary); font-family: 'Rajdhani';">TERMINALE GRADO mAf // CORE OS v8.0</h2>
-                <div style="color: var(--danger); font-family: monospace;">STATUS: ONLINE</div>
             </div>
-            
             <div class="grid">
                 <div class="hw-panel">
                     <div class="hw-title">Sonda Orbitale & Rete BGP</div>
-                    <div style="display:flex; justify-content:space-between; font-family:monospace; margin-bottom:10px; font-size:12px;">
-                        <span>Allineamento Satellitare: <span style="color:#00ff66">STABILE</span></span>
-                        <span>RTT Latenza: <span style="color:#00e5ff">24 ms</span></span>
-                    </div>
-                    <div style="position: relative; height: 150px; width: 100%;">
-                        <canvas id="netCanvas"></canvas>
-                    </div>
+                    <div style="position: relative; height: 150px; width: 100%;"><canvas id="netCanvas"></canvas></div>
                 </div>
-                
                 <div class="hw-panel">
                     <div class="hw-title">Console Grado B (Root Access)</div>
-                    <div class="terminal" id="grado-terminal">
-                        [SYS] Accesso effettuato al Mainframe Centrale.<br>
-                        [SYS] Sincronizzazione Realtime DB...<br>
-                        [WARN] Sensore giroscopico asse Z fuori parametro.<br>
-                    </div>
-                    <button class="btn admin-only" style="width:100%; margin-top:10px; border-radius:4px; font-family:monospace; background:#00e5ff; color:#000;" onclick="printGradoB()">Esegui Override Diagnostica</button>
+                    <div class="terminal" id="grado-terminal">[SYS] Accesso effettuato al Mainframe Centrale.<br></div>
+                    <button class="btn admin-only" style="width:100%; margin-top:10px; background:#00e5ff; color:#000;" onclick="printGradoB()">Esegui Override Diagnostica</button>
                 </div>
             </div>
         </section>
@@ -816,440 +444,173 @@
                 <div class="hw-panel" style="text-align:center;">
                     <div class="hw-title">Potenza Trasmissione (TX)</div>
                     <div style="font-size: 40px; font-family: monospace; color:#00e5ff; font-weight:bold;" id="eolo-pwr">14.2 kW</div>
-                    <div style="font-size: 12px; color:#4a758c;">Amplificatore TWT Operativo</div>
                     <input type="range" min="10" max="50" value="14" style="width:80%; margin-top:15px;" class="admin-only" oninput="document.getElementById('eolo-pwr').innerText = this.value + '.2 kW'">
-                </div>
-                <div class="hw-panel">
-                    <div class="hw-title">Log Strumentazione fFk9</div>
-                    <div class="terminal" id="eolo-terminal" style="height:120px;">
-                        > Sync frequenza portante: 14.2 GHz<br>
-                        > Squelch LNB impostato a -85 dBm<br>
-                        > Filtraggio Baseband attivo.<br>
-                    </div>
                 </div>
             </div>
         </section>
 
         <section id="view-settings" class="view admin-only">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Settings Globali ERP</h2>
             </div>
             <div class="card" style="max-width: 600px;">
-                <p style="font-size: 13px; color: var(--text-light); margin-bottom: 20px;">Configurazioni di base del sistema operativo Horizon OS v8.</p>
-                
-                <label style="font-size:12px; font-weight:600; display:block;">Nome Azienda / Piattaforma</label>
+                <label style="font-size:12px; font-weight:600; display:block;">Nome Azienda</label>
                 <input type="text" class="input" value="Horizon Global ERP" disabled>
-                
-                <label style="font-size:12px; font-weight:600; display:block;">Pannello Operatori / Tema</label>
-                <select class="input">
-                    <option>Auto (Rileva da Sistema)</option>
-                    <option>Dark Mode Forzata</option>
-                    <option>Light Mode</option>
-                </select>
-
-                <label style="font-size:12px; font-weight:600; display:block;">Sicurezza Moduli Macchinari</label>
-                <select class="input">
-                    <option>Standard (Solo Utenti Autorizzati)</option>
-                    <option>Aperta (Tutti gli operatori)</option>
-                    <option>Chiusa (Nessun accesso esterno)</option>
-                </select>
-
-                <button class="btn" style="margin-top: 15px;" onclick="alert('Preferenze di sistema salvate nel Cloud Firebase.')">Salva Impostazioni</button>
+                <button class="btn" style="margin-top: 15px;" onclick="alert('Salvate.')">Salva Impostazioni</button>
             </div>
         </section>
 
     </main>
 
-    <!-- MODAL VERIFICA HORIZON ID (NUOVO) -->
+    <div id="modal-ordine" class="modal">
+        <div class="modal-content">
+            <h3 id="ordine-modal-title">Gestione Ordine Horizon</h3>
+            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Inserimento ordini da portale servizihorizon.it</p>
+            <input type="hidden" id="ordine-id">
+            
+            <label style="font-size:12px; font-weight:600; display:block;">Cliente (Horizon ID)</label>
+            <select id="ordine-cliente" class="input"></select>
+            
+            <label style="font-size:12px; font-weight:600; display:block;">Servizio Richiesto</label>
+            <select id="ordine-servizio" class="input">
+                <option value="Sito Web Vetrina">Sito Web Vetrina</option>
+                <option value="E-Commerce">E-Commerce</option>
+                <option value="Sviluppo Software Gestionale">Sviluppo Software Gestionale</option>
+                <option value="SEO & Marketing">SEO & Marketing</option>
+                <option value="Gestione Social">Gestione Social</option>
+                <option value="Hosting & Domini">Hosting & Domini</option>
+                <option value="Servizio Personalizzato">Servizio Personalizzato</option>
+            </select>
+            
+            <label style="font-size:12px; font-weight:600; display:block;">Note / Dominio / Dettagli Progetto</label>
+            <input type="text" id="ordine-note" class="input" placeholder="Es. www.azienda.it">
+            
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Importo Concordato (€)</label>
+                    <input type="number" id="ordine-importo" class="input" placeholder="Es. 1500">
+                </div>
+                <div style="flex:1; min-width: 150px;">
+                    <label style="font-size:12px; font-weight:600; display:block;">Stato Lavorazione</label>
+                    <select id="ordine-stato" class="input">
+                        <option value="Da Iniziare">Da Iniziare</option>
+                        <option value="In Lavorazione">In Lavorazione</option>
+                        <option value="Completato">Completato</option>
+                        <option value="Sospeso">Sospeso</option>
+                        <option value="Annullato">Annullato</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 15px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-ordine')">Annulla</button>
+                <button class="btn" onclick="saveOrdine()">Salva Ordine</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-verify-id" class="modal">
         <div class="modal-content" style="max-width: 800px;">
             <h3>Verifica Documenti: <span id="verify-user-name" style="color:var(--primary);"></span></h3>
-            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Dato Fiscale Registrato: <strong id="verify-user-piva" style="color:var(--text);"></strong></p>
+            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Dato Fiscale: <strong id="verify-user-piva" style="color:var(--text);"></strong></p>
             <input type="hidden" id="verify-user-uid">
             
             <div style="display:flex; gap:20px; margin-bottom: 20px; flex-wrap: wrap;">
                 <div style="flex:1; min-width: 300px;">
-                    <label style="font-size:12px; font-weight:600; display:block; margin-bottom: 5px;">Fronte Documento</label>
-                    <div style="width:100%; height:250px; background:#f1f5f9; border:1px solid var(--border); border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-                        <img id="verify-img-fronte" style="max-width:100%; max-height:100%; object-fit:contain;" src="" alt="Nessuna immagine">
+                    <label style="font-size:12px; font-weight:600; display:block; margin-bottom: 5px;">Fronte</label>
+                    <div style="width:100%; height:250px; background:#f1f5f9; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <img id="verify-img-fronte" style="max-width:100%; max-height:100%; object-fit:contain;" src="">
                     </div>
                 </div>
                 <div style="flex:1; min-width: 300px;">
-                    <label style="font-size:12px; font-weight:600; display:block; margin-bottom: 5px;">Retro Documento</label>
-                    <div style="width:100%; height:250px; background:#f1f5f9; border:1px solid var(--border); border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-                        <img id="verify-img-retro" style="max-width:100%; max-height:100%; object-fit:contain;" src="" alt="Nessuna immagine">
+                    <label style="font-size:12px; font-weight:600; display:block; margin-bottom: 5px;">Retro</label>
+                    <div style="width:100%; height:250px; background:#f1f5f9; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                        <img id="verify-img-retro" style="max-width:100%; max-height:100%; object-fit:contain;" src="">
                     </div>
                 </div>
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="closeModal('modal-verify-id')">Annulla</button>
-                <button class="btn" style="background:var(--danger);" onclick="rejectHorizonId()">Rifiuta Documenti</button>
+                <button class="btn" style="background:var(--bg); color:var(--text);" onclick="closeModal('modal-verify-id')">Annulla</button>
+                <button class="btn" style="background:var(--danger);" onclick="rejectHorizonId()">Rifiuta</button>
                 <button class="btn" style="background:var(--success);" onclick="approveHorizonId()">Approva Identità</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL GESTIONALE STANDARD -->
-    <div id="modal-payroll" class="modal">
-        <div class="modal-content">
-            <h3>Emissione Busta Paga</h3>
-            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Inserisci l'importo e il mese di riferimento. Il dipendente la vedrà immediatamente nel suo profilo.</p>
-            
-            <input type="hidden" id="pay-id">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Dipendente</label>
-            <select id="pay-staff" class="input"></select>
-            
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Mese / Periodo</label>
-                    <input type="month" id="pay-month" class="input">
-                </div>
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Importo Netto (€)</label>
-                    <input type="number" id="pay-amount" class="input" placeholder="Es. 1500">
-                </div>
-            </div>
-
-            <label style="font-size:12px; font-weight:600; display:block;">Stato Bonifico</label>
-            <select id="pay-status" class="input">
-                <option value="In Elaborazione">In Elaborazione</option>
-                <option value="Bonifico Emesso">Bonifico Emesso</option>
-            </select>
-            
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-payroll')">Annulla</button>
-                <button class="btn" onclick="savePayroll()">Salva Pagamento</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-badge" class="modal">
-        <div class="modal-content">
-            <h3>Generazione Codice App Badge</h3>
-            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Seleziona il dipendente e crea una password univoca (PIN). Il dipendente la inserirà nell'App per sbloccare lo scanner.</p>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Dipendente</label>
-            <select id="badge-staff" class="input"></select>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Codice Univoco d'Accesso (PIN / Password)</label>
-            <input type="text" id="badge-code" class="input" placeholder="Es. 12345 o MATTEO-2024">
-            
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-badge')">Annulla</button>
-                <button class="btn" onclick="saveBadge()">Salva Codice Badge</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-staff" class="modal">
-        <div class="modal-content">
-            <h3 id="staff-modal-title">Gestione Dipendente HR</h3>
-            <input type="hidden" id="staff-id">
-            
-            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:15px;">
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Nome Cognome</label>
-                    <input type="text" id="staff-name" class="input" placeholder="Es. Luis Brotto">
-                </div>
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Ruolo Aziendale</label>
-                    <input type="text" id="staff-role" class="input" placeholder="Es. Operatore">
-                </div>
-            </div>
-
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Azienda</label>
-                    <select id="staff-company" class="input" onchange="populateDivisionsForStaff()"></select>
-                </div>
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Divisione</label>
-                    <select id="staff-div" class="input"></select>
-                </div>
-            </div>
-
-            <h4 style="margin: 15px 0 10px; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px; color: var(--primary);">Metriche e Autorizzazioni Hardware</h4>
-            
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Efficienza Lavorativa (%)</label>
-                    <input type="number" id="staff-eff" class="input" placeholder="Es. 95" min="0" max="100">
-                </div>
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Accesso Macchinari System</label>
-                    <select id="staff-machine" class="input">
-                        <option value="Nessuno">Nessun Accesso</option>
-                        <option value="Grado mAf">Solo Grado mAf</option>
-                        <option value="Eolo fFk9">Solo Eolo fFk9</option>
-                        <option value="Entrambe">Entrambe le macchine</option>
-                    </select>
-                </div>
-            </div>
-
-            <h4 style="margin: 15px 0 10px; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px; color: var(--primary);">Dati Personali e Fiscali</h4>
-            
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Codice Fiscale</label>
-                    <input type="text" id="staff-cf" class="input" placeholder="Codice Fiscale">
-                </div>
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Carta d'Identità</label>
-                    <input type="text" id="staff-ci" class="input" placeholder="Numero Documento">
-                </div>
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Tessera Sanitaria</label>
-                    <input type="text" id="staff-ts" class="input" placeholder="Numero Tessera">
-                </div>
-            </div>
-
-            <label style="font-size:12px; font-weight:600; display:block;">Indirizzo di Residenza</label>
-            <input type="text" id="staff-indirizzo" class="input" placeholder="Via, Città, CAP">
-
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Data di Nascita</label>
-                    <input type="date" id="staff-dataNascita" class="input">
-                </div>
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Luogo di Nascita</label>
-                    <input type="text" id="staff-luogoNascita" class="input" placeholder="Città (Prov)">
-                </div>
-            </div>
-
-            <h4 style="margin: 15px 0 10px; font-size: 14px; border-bottom: 1px solid var(--border); padding-bottom: 5px; color: var(--primary);">Dati Bancari</h4>
-            <label style="font-size:12px; font-weight:600; display:block;">IBAN / Coordinate di Pagamento</label>
-            <input type="text" id="staff-iban" class="input" placeholder="IT0000000000000000000000000">
-
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 15px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-staff')">Chiudi</button>
-                <button id="btn-save-staff" class="btn admin-only" onclick="saveStaff()">Salva Dati Profilo</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-azienda" class="modal">
-        <div class="modal-content">
-            <h3 id="azienda-modal-title">Gestione Azienda</h3>
-            <input type="hidden" id="azienda-id">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Nome Azienda</label>
-            <input type="text" id="azienda-name" class="input" placeholder="Nome">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Capitale</label>
-            <input type="number" id="azienda-cap" class="input" placeholder="Capitale">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Progetti</label>
-            <input type="number" id="azienda-proj" class="input" placeholder="Progetti">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Efficienza</label>
-            <input type="number" id="azienda-eff" class="input" placeholder="Efficienza">
-            
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-azienda')">Annulla</button>
-                <button class="btn" onclick="saveAzienda()">Salva</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-div" class="modal">
-        <div class="modal-content">
-            <h3 id="div-modal-title">Gestione Divisione</h3>
-            <input type="hidden" id="div-id">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Nome Divisione</label>
-            <input type="text" id="div-name" class="input" placeholder="Nome">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Azienda Madre</label>
-            <select id="div-company" class="input"></select>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Budget</label>
-            <input type="number" id="div-budget" class="input" placeholder="Budget">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Efficienza</label>
-            <input type="number" id="div-eff" class="input" placeholder="Efficienza">
-            
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-div')">Annulla</button>
-                <button class="btn" onclick="saveDivision()">Salva</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-task" class="modal">
-        <div class="modal-content">
-            <h3 id="task-modal-title">Gestione Task</h3>
-            <input type="hidden" id="task-id">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Titolo</label>
-            <input type="text" id="task-title" class="input" placeholder="Titolo">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Staff</label>
-            <select id="task-staff" class="input"></select>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Priorità</label>
-            <select id="task-prio" class="input">
-                <option>Bassa</option>
-                <option>Media</option>
-                <option>Alta</option>
-            </select>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Stato</label>
-            <select id="task-status" class="input">
-                <option>Da Iniziare</option>
-                <option>In Lavorazione</option>
-                <option>Completato</option>
-            </select>
-            
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-task')">Annulla</button>
-                <button class="btn" onclick="saveTask()">Salva</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-timbratura" class="modal">
-        <div class="modal-content">
-            <h3>Forzatura Timbratura</h3>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Staff</label>
-            <select id="timb-staff" class="input"></select>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Tipo</label>
-            <select id="timb-type" class="input">
-                <option>Ingresso</option>
-                <option>Uscita</option>
-            </select>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Data e Ora</label>
-            <input type="datetime-local" id="timb-time" class="input">
-            
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-timbratura')">Annulla</button>
-                <button class="btn" onclick="saveTimbratura()">Forza a Sistema</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-doc" class="modal">
-        <div class="modal-content">
-            <h3 id="doc-modal-title">Documento / Finanza</h3>
-            <input type="hidden" id="doc-id">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Descrizione</label>
-            <input type="text" id="doc-title" class="input" placeholder="Descrizione">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Importo</label>
-            <input type="number" id="doc-amount" class="input">
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Tipo</label>
-            <select id="doc-type" class="input">
-                <option value="entrata">Incasso</option>
-                <option value="uscita">Spesa</option>
-            </select>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">Azienda</label>
-            <select id="doc-company" class="input"></select>
-            
-            <label style="font-size:12px; font-weight:600; display:block;">File</label>
-            <input type="file" id="doc-file" class="input">
-            
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-doc')">Annulla</button>
-                <button class="btn" onclick="saveDocument()">Salva e Carica</button>
-            </div>
-        </div>
-    </div>
+    <div id="modal-payroll" class="modal"><div class="modal-content"><h3>Busta Paga</h3><input type="hidden" id="pay-id"><select id="pay-staff" class="input"></select><input type="month" id="pay-month" class="input"><input type="number" id="pay-amount" class="input"><select id="pay-status" class="input"><option>In Elaborazione</option><option>Bonifico Emesso</option></select><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-payroll')">Annulla</button><button class="btn" onclick="savePayroll()">Salva</button></div></div></div>
+    <div id="modal-badge" class="modal"><div class="modal-content"><h3>Codice App Badge</h3><select id="badge-staff" class="input"></select><input type="text" id="badge-code" class="input" placeholder="PIN"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-badge')">Annulla</button><button class="btn" onclick="saveBadge()">Salva</button></div></div></div>
+    <div id="modal-staff" class="modal"><div class="modal-content"><h3 id="staff-modal-title">Gestione Dipendente HR</h3><input type="hidden" id="staff-id"><div style="display:flex; gap:10px;"><input type="text" id="staff-name" class="input" placeholder="Nome"><input type="text" id="staff-role" class="input" placeholder="Ruolo"></div><div style="display:flex; gap:10px;"><select id="staff-company" class="input" onchange="populateDivisionsForStaff()"></select><select id="staff-div" class="input"></select></div><div style="display:flex; gap:10px;"><input type="number" id="staff-eff" class="input" placeholder="Efficienza %"><select id="staff-machine" class="input"><option>Nessuno</option><option>Grado mAf</option><option>Eolo fFk9</option><option>Entrambe</option></select></div><div style="display:flex; gap:10px;"><input type="text" id="staff-cf" class="input" placeholder="CF"><input type="text" id="staff-ci" class="input" placeholder="CI"><input type="text" id="staff-ts" class="input" placeholder="TS"></div><input type="text" id="staff-indirizzo" class="input" placeholder="Indirizzo"><div style="display:flex; gap:10px;"><input type="date" id="staff-dataNascita" class="input"><input type="text" id="staff-luogoNascita" class="input" placeholder="Luogo Nascita"></div><input type="text" id="staff-iban" class="input" placeholder="IBAN"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-staff')">Chiudi</button><button id="btn-save-staff" class="btn admin-only" onclick="saveStaff()">Salva Profilo</button></div></div></div>
+    <div id="modal-azienda" class="modal"><div class="modal-content"><h3 id="azienda-modal-title">Azienda</h3><input type="hidden" id="azienda-id"><input type="text" id="azienda-name" class="input" placeholder="Nome"><input type="number" id="azienda-cap" class="input" placeholder="Capitale"><input type="number" id="azienda-proj" class="input" placeholder="Progetti"><input type="number" id="azienda-eff" class="input" placeholder="Efficienza %"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-azienda')">Annulla</button><button class="btn" onclick="saveAzienda()">Salva</button></div></div></div>
+    <div id="modal-div" class="modal"><div class="modal-content"><h3 id="div-modal-title">Divisione</h3><input type="hidden" id="div-id"><input type="text" id="div-name" class="input" placeholder="Nome"><select id="div-company" class="input"></select><input type="number" id="div-budget" class="input" placeholder="Budget"><input type="number" id="div-eff" class="input" placeholder="Efficienza %"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-div')">Annulla</button><button class="btn" onclick="saveDivision()">Salva</button></div></div></div>
+    <div id="modal-task" class="modal"><div class="modal-content"><h3 id="task-modal-title">Task</h3><input type="hidden" id="task-id"><input type="text" id="task-title" class="input"><select id="task-staff" class="input"></select><select id="task-prio" class="input"><option>Bassa</option><option>Media</option><option>Alta</option></select><select id="task-status" class="input"><option>Da Iniziare</option><option>In Lavorazione</option><option>Completato</option></select><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-task')">Annulla</button><button class="btn" onclick="saveTask()">Salva</button></div></div></div>
+    <div id="modal-timbratura" class="modal"><div class="modal-content"><h3>Timbratura</h3><select id="timb-staff" class="input"></select><select id="timb-type" class="input"><option>Ingresso</option><option>Uscita</option></select><input type="datetime-local" id="timb-time" class="input"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-timbratura')">Annulla</button><button class="btn" onclick="saveTimbratura()">Forza</button></div></div></div>
+    <div id="modal-doc" class="modal"><div class="modal-content"><h3 id="doc-modal-title">Documento</h3><input type="hidden" id="doc-id"><input type="text" id="doc-title" class="input"><input type="number" id="doc-amount" class="input"><select id="doc-type" class="input"><option value="entrata">Incasso</option><option value="uscita">Spesa</option></select><select id="doc-company" class="input"></select><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-doc')">Annulla</button><button class="btn" onclick="saveDocument()">Salva</button></div></div></div>
 
     <script>
         // --- UI LOGIN & ROUTING ---
         let userRoleMode = 'admin';
         function switchLoginMode(mode) {
             userRoleMode = mode;
-            document.getElementById('btn-tab-admin').className = mode === 'admin' ? 'active' : '';
-            document.getElementById('btn-tab-staff').className = mode === 'staff' ? 'active' : '';
-            document.getElementById('login-desc').innerText = mode === 'admin' ? 'Accesso Riservato Direzione (direzione@horizonglobal.com)' : 'Accesso Operativo Staff';
+            const btnA = document.getElementById('btn-tab-admin');
+            const btnS = document.getElementById('btn-tab-staff');
+            const desc = document.getElementById('login-desc');
+            if(btnA) btnA.className = mode === 'admin' ? 'active' : '';
+            if(btnS) btnS.className = mode === 'staff' ? 'active' : '';
+            if(desc) desc.innerText = mode === 'admin' ? 'Accesso Riservato Direzione (direzione@horizonglobal.com)' : 'Accesso Operativo Staff';
         }
 
         function toggleNotifiche() {
             const panel = document.getElementById('notif-panel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            if(panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
         }
 
         // --- STATE & FIREBASE ---
         let state = {
-            companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: [], badges: [], payrolls: [], security_alerts: [], budget_history: [],
-            horizonUsers: [] // Stato per gli utenti dell'Horizon ID Core
+            companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: [], badges: [], payrolls: [], security_alerts: [], budget_history: [], ordini: [],
+            horizonUsers: [] 
         };
 
-        // --- INIZIALIZZAZIONE GRAFICI ---
         let doughnutChartInst = null;
         let lineChartInst = null;
 
         function renderCharts() {
-            if(!document.getElementById('view-dash').classList.contains('active')) return;
+            const dashEl = document.getElementById('view-dash');
+            if(!dashEl || !dashEl.classList.contains('active')) return;
 
             const divNames = state.divisions.map(d => d.name);
             const divBudgets = state.divisions.map(d => d.budget);
 
-            const ctxD = document.getElementById('budgetDoughnutChart').getContext('2d');
-            if(doughnutChartInst) doughnutChartInst.destroy();
-            
-            doughnutChartInst = new Chart(ctxD, {
-                type: 'doughnut',
-                data: {
-                    labels: divNames.length ? divNames : ['Nessuna Divisione'],
-                    datasets: [{
-                        data: divBudgets.length ? divBudgets : [1],
-                        backgroundColor: ['#2563EB', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#14B8A6']
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right' } }
-                }
-            });
-
-            const ctxL = document.getElementById('budgetHistoryChart').getContext('2d');
-            if(lineChartInst) lineChartInst.destroy();
-
-            let historyLabels = [];
-            let historyData = [];
-
-            if (state.budget_history && state.budget_history.length > 0) {
-                let sortedHistory = [...state.budget_history].sort((a, b) => a.id - b.id);
-                historyLabels = sortedHistory.map(h => h.date);
-                historyData = sortedHistory.map(h => h.total);
-            } else {
-                let currentTotal = state.divisions.reduce((acc, d) => acc + d.budget, 0);
-                historyLabels = [new Date().toLocaleDateString('it-IT')];
-                historyData = [currentTotal];
+            const cD = document.getElementById('budgetDoughnutChart');
+            if(cD) {
+                const ctxD = cD.getContext('2d');
+                if(doughnutChartInst) doughnutChartInst.destroy();
+                doughnutChartInst = new Chart(ctxD, {
+                    type: 'doughnut',
+                    data: { labels: divNames.length ? divNames : ['Nessuna'], datasets: [{ data: divBudgets.length ? divBudgets : [1], backgroundColor: ['#2563EB', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6'] }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                });
             }
 
-            lineChartInst = new Chart(ctxL, {
-                type: 'line',
-                data: {
-                    labels: historyLabels,
-                    datasets: [{
-                        label: 'Budget Globale Divisioni (€)',
-                        data: historyData,
-                        borderColor: '#2563EB',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        pointBackgroundColor: '#2563EB'
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: false } }
+            const cH = document.getElementById('budgetHistoryChart');
+            if(cH) {
+                const ctxL = cH.getContext('2d');
+                if(lineChartInst) lineChartInst.destroy();
+
+                let historyLabels = []; let historyData = [];
+                if (state.budget_history && state.budget_history.length > 0) {
+                    let sortedHistory = [...state.budget_history].sort((a, b) => a.id - b.id);
+                    historyLabels = sortedHistory.map(h => h.date); historyData = sortedHistory.map(h => h.total);
+                } else {
+                    let currentTotal = state.divisions.reduce((acc, d) => acc + d.budget, 0);
+                    historyLabels = [new Date().toLocaleDateString('it-IT')]; historyData = [currentTotal];
                 }
-            });
+
+                lineChartInst = new Chart(ctxL, {
+                    type: 'line',
+                    data: { labels: historyLabels, datasets: [{ label: 'Budget (€)', data: historyData, borderColor: '#2563EB', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.3 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+                });
+            }
         }
 
         async function saveToFirebase(collectionName, item) {
@@ -1271,45 +632,37 @@
         async function syncConFirebase() {
             if (!window.db || !window.rtdb) return;
             try {
-                // SYNC DATABASE GESTIONALE (ERP)
-                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history'];
+                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history', 'ordini'];
                 
                 const loadPromises = collections.map(async (coll) => {
                     const snap = await window.rtdb.get(window.rtdb.ref(window.db, coll));
                     let arr = [];
-                    if (snap.exists()) {
-                        snap.forEach((childSnap) => { arr.push(childSnap.val()); });
-                    }
+                    if (snap.exists()) { snap.forEach((childSnap) => { arr.push(childSnap.val()); }); }
                     state[coll] = arr;
                 });
-                
                 await Promise.all(loadPromises);
 
                 collections.forEach(coll => {
                     window.rtdb.onValue(window.rtdb.ref(window.db, coll), (snap) => {
                         let arr = [];
-                        if (snap.exists()) {
-                            snap.forEach((childSnap) => { arr.push(childSnap.val()); });
-                        }
+                        if (snap.exists()) { snap.forEach((childSnap) => { arr.push(childSnap.val()); }); }
                         state[coll] = arr;
-                        if(document.getElementById('login-overlay').style.display === 'none') renderAll();
+                        const lo = document.getElementById('login-overlay');
+                        if(lo && lo.style.display === 'none') renderAll();
                     });
                 });
 
-                // SYNC DATABASE SECONDARIO (HORIZON ID CORE)
-                window.rtdb.onValue(window.rtdb.ref(window.dbHorizonId, 'users'), (snap) => {
-                    let arr = [];
-                    if (snap.exists()) {
-                        snap.forEach((childSnap) => { arr.push(childSnap.val()); });
-                    }
-                    state.horizonUsers = arr;
-                    if(document.getElementById('login-overlay').style.display === 'none') renderAll();
-                });
-
-            } catch (error) { 
-                console.error(error);
-                alert(`Errore Sync RTDB:\n${error.message}`); 
-            }
+                if(window.dbHorizonId) {
+                    window.rtdb.onValue(window.rtdb.ref(window.dbHorizonId, 'users'), (snap) => {
+                        let arr = [];
+                        if (snap.exists()) { snap.forEach((childSnap) => { arr.push(childSnap.val()); }); }
+                        state.horizonUsers = arr;
+                        populateSelects(); 
+                        const lo = document.getElementById('login-overlay');
+                        if(lo && lo.style.display === 'none') renderAll();
+                    });
+                }
+            } catch (error) { console.error(error); }
         }
 
         const getCompanyName = (id) => { const c = state.companies.find(x => x.id == id); return c ? c.name : 'N/A'; };
@@ -1317,26 +670,31 @@
         const getStaffName = (id) => { const s = state.staff.find(x => x.id == id); return s ? s.name : 'Sconosciuto'; };
         const getStaffIban = (id) => { const s = state.staff.find(x => x.id == id); return s && s.iban ? s.iban : 'Nessun IBAN'; };
 
-        // --- GESTIONE LOGIN, AUTO-LOGIN E LOGOUT ---
+        // --- GESTIONE LOGIN ---
         window.addEventListener('DOMContentLoaded', () => {
              window.onAuthStateChanged(window.auth, async (user) => {
+                 const lo = document.getElementById('login-overlay');
                  if (user) {
                      const userEmail = user.email.toLowerCase();
                      applyUserRole(userEmail);
-                     document.getElementById('login-overlay').style.display = 'none';
+                     if(lo) lo.style.display = 'none';
                      await syncConFirebase(); 
-                     if(window.userRole === 'staff') nav('staff', document.getElementById('menu-staff-link'));
+                     const stL = document.getElementById('menu-staff-link');
+                     if(window.userRole === 'staff' && stL) nav('staff', stL);
                      else renderAll();
                  } else {
-                     document.getElementById('login-overlay').style.display = 'flex';
+                     if(lo) lo.style.display = 'flex';
                  }
              });
         });
 
         window.attemptLogin = async function(roleAttempt) {
-            const u = document.getElementById('login-user').value;
-            const p = document.getElementById('login-pass').value;
+            const uEl = document.getElementById('login-user');
+            const pEl = document.getElementById('login-pass');
             const btn = document.getElementById('btn-login-action');
+            if(!uEl || !pEl || !btn) return;
+
+            const u = uEl.value; const p = pEl.value;
             btn.innerText = "Accesso...";
 
             try {
@@ -1349,6 +707,10 @@
                     btn.innerText = "Effettua Login";
                     return;
                 }
+
+                if (userEmail === 'direzione@horizonglobal.com' && window.authHorizonId) {
+                    try { await window.signInWithEmailAndPassword(window.authHorizonId, u, p); } catch (e) { console.error("Account Admin Horizon ID error.", e); }
+                }
             } catch (error) { 
                 alert("Credenziali errate."); 
                 btn.innerText = "Effettua Login";
@@ -1359,6 +721,7 @@
             if(confirm("Sei sicuro di voler uscire dal gestionale?")) {
                 try {
                     await window.signOut(window.auth);
+                    if(window.authHorizonId) await window.signOut(window.authHorizonId);
                     window.location.reload(); 
                 } catch(e) { console.error("Errore durante il logout:", e); }
             }
@@ -1366,21 +729,20 @@
 
         function applyUserRole(userEmail) {
             window.currentUserEmail = userEmail;
-            if (userEmail === 'direzione@horizonglobal.com') {
-                window.userRole = 'admin';
-                document.getElementById('current-user-name').innerText = "Direzione Generale";
-                document.getElementById('current-user-role').innerText = "Root Admin";
-                document.getElementById('current-user-avatar').innerText = "DG";
-                document.getElementById('menu-staff-link').innerHTML = `<span><i class="ph ph-users"></i> Organico HR</span>`;
-                document.getElementById('nav-group-hw').style.display = 'block';
-            } else {
-                window.userRole = 'staff';
-                document.getElementById('current-user-name').innerText = userEmail;
-                document.getElementById('current-user-role').innerText = "Staff Operativo";
-                document.getElementById('current-user-avatar').innerText = userEmail.substring(0, 2).toUpperCase();
-                document.getElementById('menu-staff-link').innerHTML = `<span><i class="ph ph-identification-card"></i> Il Mio Profilo HR</span>`;
-                document.getElementById('nav-group-hw').style.display = 'block';
-            }
+            const isAdmin = (userEmail === 'direzione@horizonglobal.com');
+            window.userRole = isAdmin ? 'admin' : 'staff';
+            
+            const nEl = document.getElementById('current-user-name');
+            const rEl = document.getElementById('current-user-role');
+            const aEl = document.getElementById('current-user-avatar');
+            const mEl = document.getElementById('menu-staff-link');
+            const hwEl = document.getElementById('nav-group-hw');
+
+            if(nEl) nEl.innerText = isAdmin ? "Direzione Generale" : userEmail;
+            if(rEl) rEl.innerText = isAdmin ? "Root Admin" : "Staff Operativo";
+            if(aEl) aEl.innerText = isAdmin ? "DG" : userEmail.substring(0, 2).toUpperCase();
+            if(mEl) mEl.innerHTML = isAdmin ? `<span><i class="ph ph-users"></i> Organico HR</span>` : `<span><i class="ph ph-identification-card"></i> Il Mio Profilo HR</span>`;
+            if(hwEl) hwEl.style.display = 'block';
         }
 
         async function createNewUserAuth() {
@@ -1398,9 +760,13 @@
         function nav(id, element) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.getElementById('view-'+id).classList.add('active');
-            if(element) element.classList.add('active');
-            if(element) document.getElementById('page-title').innerText = element.innerText;
+            const target = document.getElementById('view-'+id);
+            if(target) target.classList.add('active');
+            if(element) {
+                element.classList.add('active');
+                const pt = document.getElementById('page-title');
+                if(pt) pt.innerText = element.innerText;
+            }
             
             if(id === 'macchina' || id === 'eolo') {
                 document.body.classList.add('hw-mode');
@@ -1409,97 +775,52 @@
                 document.body.classList.remove('hw-mode');
             }
 
-            if(id === 'dash') {
-                setTimeout(renderCharts, 50);
-            }
-
+            if(id === 'dash') setTimeout(renderCharts, 50);
             if(window.innerWidth <= 768) toggleSidebar();
         }
 
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('sidebar-overlay').classList.toggle('active');
+            const sb = document.getElementById('sidebar');
+            const sbo = document.getElementById('sidebar-overlay');
+            if(sb) sb.classList.toggle('open');
+            if(sbo) sbo.classList.toggle('active');
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('active'); populateSelects(); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function openModal(id) { 
+            const m = document.getElementById(id);
+            if(m) m.classList.add('active'); 
+            populateSelects(); 
+        }
+        function closeModal(id) { 
+            const m = document.getElementById(id);
+            if(m) m.classList.remove('active'); 
+        }
 
         function populateSelects() {
             const companyOpts = state.companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            if(document.getElementById('doc-company')) document.getElementById('doc-company').innerHTML = companyOpts;
-            if(document.getElementById('staff-company')) document.getElementById('staff-company').innerHTML = companyOpts;
-            if(document.getElementById('div-company')) document.getElementById('div-company').innerHTML = companyOpts;
-            
+            ['doc-company','staff-company','div-company'].forEach(i => { const el = document.getElementById(i); if(el) el.innerHTML = companyOpts; });
             const staffOpts = state.staff.map(s => `<option value="${s.id}">${s.name} (${getCompanyName(s.companyId)})</option>`).join('');
-            if(document.getElementById('timb-staff')) document.getElementById('timb-staff').innerHTML = staffOpts;
-            if(document.getElementById('task-staff')) document.getElementById('task-staff').innerHTML = staffOpts;
-            if(document.getElementById('badge-staff')) document.getElementById('badge-staff').innerHTML = staffOpts;
-            if(document.getElementById('pay-staff')) document.getElementById('pay-staff').innerHTML = staffOpts;
+            ['timb-staff','task-staff','badge-staff','pay-staff'].forEach(i => { const el = document.getElementById(i); if(el) el.innerHTML = staffOpts; });
             populateDivisionsForStaff();
+
+            const activeHorizonUsers = state.horizonUsers.filter(u => u.statoVerifica === 'approvato');
+            const horizonOpts = activeHorizonUsers.map(u => `<option value="${u.uid}">${u.nome} (${u.email})</option>`).join('');
+            const ordCli = document.getElementById('ordine-cliente');
+            if(ordCli) ordCli.innerHTML = horizonOpts || '<option value="">Nessun utente Horizon ID attivo</option>';
         }
 
-        function populateDivisionsForStaff() {
+        window.populateDivisionsForStaff = function() {
             const compId = document.getElementById('staff-company')?.value;
-            if(!compId) return;
-            const divs = state.divisions.filter(d => d.companyId == compId);
             const el = document.getElementById('staff-div');
-            if(el) el.innerHTML = divs.map(d => `<option value="${d.id}">${d.name}</option>`).join('') || '<option value="">Nessuna divisione</option>';
-        }
-
-        // --- DASHBOARD STAFF UTENTE LOGGATO ---
-        window.renderStaffUserView = function(staff) {
-            const container = document.getElementById('staff-user-view');
-            if(!staff) {
-                container.innerHTML = `<div class="card" style="text-align:center; padding: 40px;"><p>Profilo Non Trovato. Contatta HR.</p></div>`;
-                return;
-            }
-
-            let ibanHTML = '';
-            if(!staff.iban || staff.iban.trim() === '') {
-                ibanHTML = `
-                    <div style="background: rgba(239,68,68,0.1); border: 1px solid var(--danger); padding: 15px; border-radius: 8px; margin-top: 15px;">
-                        <h4 style="color: var(--danger); margin-bottom: 10px;">Azione Richiesta: Inserisci IBAN</h4>
-                        <p style="font-size: 12px; margin-bottom: 15px;">Il tuo IBAN non è presente a sistema. Inseriscilo ora per permettere l'accredito dello stipendio.</p>
-                        <input type="text" id="my-new-iban" class="input" placeholder="Es. IT0000000000000000000000000" style="margin-bottom: 10px;">
-                        <button class="btn" style="width:100%;" onclick="saveMyIban(${staff.id})">Salva IBAN Definitivo</button>
-                    </div>
-                `;
-            } else {
-                ibanHTML = `
-                    <div style="margin-top: 15px;">
-                        <label style="font-size:12px; font-weight:600; display:block;">IBAN Bancario Registrato</label>
-                        <div style="font-family: monospace; font-size: 16px; font-weight: bold; color: var(--primary); background: var(--bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">${staff.iban}</div>
-                    </div>
-                `;
-            }
-
-            let myPayrolls = state.payrolls.filter(p => p.staffId == staff.id).sort((a,b) => new Date(b.month) - new Date(a.month));
-            let payrollHTML = myPayrolls.map(p => `<tr><td>${p.month}</td><td><b>€ ${parseFloat(p.amount).toLocaleString()}</b></td><td><span class="badge" style="background:${p.status === 'Bonifico Emesso' ? 'var(--success)' : 'var(--warning)'}; color:white;">${p.status}</span></td></tr>`).join('');
-            if(myPayrolls.length === 0) payrollHTML = `<tr><td colspan="3" style="text-align:center;">Nessuna busta paga presente.</td></tr>`;
-
-            container.innerHTML = `
-                <div class="grid">
-                    <div class="card">
-                        <h3 style="color: var(--primary); margin-bottom: 15px; border-bottom:1px solid var(--border); padding-bottom:10px;">Dati Anagrafici e Sensibili</h3>
-                        <p style="margin-bottom:8px;"><strong>Nome:</strong> ${staff.name}</p>
-                        <p style="margin-bottom:8px;"><strong>Ruolo:</strong> ${staff.role}</p>
-                        <p style="margin-bottom:8px;"><strong>Codice Fiscale:</strong> ${staff.cf || 'Non inserito'}</p>
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding:10px; border-radius:8px; margin-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:12px; font-weight:600;">Efficienza Valutata:</span>
-                            <span style="color: var(--success); font-weight: 800; font-size:16px;">${staff.eff || 100}%</span>
-                        </div>
-                        ${ibanHTML}
-                    </div>
-                    <div class="card">
-                        <h3 style="color: var(--primary); margin-bottom: 15px;"><i class="ph-fill ph-file-text"></i> Cassetto Buste Paga</h3>
-                        <table><thead><tr><th>Periodo</th><th>Netto</th><th>Stato</th></tr></thead><tbody>${payrollHTML}</tbody></table>
-                    </div>
-                </div>
-            `;
+            if(!compId || !el) return;
+            const divs = state.divisions.filter(d => d.companyId == compId);
+            el.innerHTML = divs.map(d => `<option value="${d.id}">${d.name}</option>`).join('') || '<option value="">Nessuna divisione</option>';
         }
 
         window.saveMyIban = async function(staffId) {
-            const input = document.getElementById('my-new-iban').value.trim();
+            const el = document.getElementById('my-new-iban');
+            if(!el) return;
+            const input = el.value.trim();
             if(input.length < 15) return alert("Inserisci un IBAN valido.");
             const s = state.staff.find(x => x.id == staffId);
             if(s) {
@@ -1509,7 +830,7 @@
             }
         }
 
-        // --- RENDER MOTORE PRINCIPALE ---
+        // --- RENDER MOTORE PRINCIPALE (SAFE MODE) ---
         function renderAll() {
             const isAdmin = window.userRole === 'admin';
             let userPrefix = window.currentUserEmail ? window.currentUserEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') : '';
@@ -1517,150 +838,189 @@
 
             if(isAdmin) {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-                document.getElementById('staff-admin-view').style.display = 'block';
-                document.getElementById('staff-user-view').style.display = 'none';
-                document.getElementById('nav-macchina').style.display = 'flex';
-                document.getElementById('nav-eolo').style.display = 'flex';
-                document.getElementById('btn-new-staff').style.display = 'flex';
+                const sAv = document.getElementById('staff-admin-view'); if(sAv) sAv.style.display = 'block';
+                const sUv = document.getElementById('staff-user-view'); if(sUv) sUv.style.display = 'none';
 
                 renderCharts();
 
-                // RENDERING TABELLA HORIZON ID (UTENTI ESTERNI)
-                if(document.getElementById('table-horizon-id')) {
-                    document.getElementById('table-horizon-id').querySelector('tbody').innerHTML = (state.horizonUsers || []).map(u => {
-                        let statusBadge = '';
-                        let actionBtn = '';
-                        if(u.statoVerifica === 'approvato') {
-                            statusBadge = `<span class="badge" style="background:var(--success); color:white;">Approvato</span>`;
-                            actionBtn = `<button class="btn-del" onclick="revokeHorizonId('${u.uid}')">Revoca Approvazione</button>`;
-                        } else if(u.statoVerifica === 'in_attesa') {
-                            statusBadge = `<span class="badge" style="background:var(--warning); color:white;">In Attesa</span>`;
-                            actionBtn = `<button class="btn-validate" onclick="openVerifyModal('${u.uid}')">Verifica Documenti</button>`;
-                        } else {
-                            statusBadge = `<span class="badge" style="background:var(--danger); color:white;">Mancante</span>`;
-                            actionBtn = `-`;
-                        }
-                        return `<tr><td><b>${u.nome}</b></td><td><span style="font-family:monospace; font-size:12px;">${u.piva_cf || 'N/A'}</span></td><td>${u.email}</td><td>${new Date(u.dataRegistrazione).toLocaleDateString()}</td><td>${statusBadge}</td><td class="action-btns">${actionBtn}</td></tr>`;
-                    }).join('');
+                // TABELLE HORIZON ID
+                const hPending = document.getElementById('table-horizon-pending');
+                const hActive = document.getElementById('table-horizon-active');
+                if(hPending && hActive) {
+                    const pendingTbody = hPending.querySelector('tbody');
+                    const activeTbody = hActive.querySelector('tbody');
+                    if(pendingTbody && activeTbody) {
+                        let pendingHtml = ''; let activeHtml = '';
+                        (state.horizonUsers || []).forEach(u => {
+                            let actionBtn = '';
+                            if(u.statoVerifica === 'approvato') {
+                                actionBtn = `<button class="btn-del" onclick="revokeHorizonId('${u.uid}')">Revoca Approvazione</button>`;
+                                activeHtml += `<tr><td><b>${u.nome}</b></td><td><span style="font-family:monospace; font-size:12px;">${u.piva_cf || 'N/A'}</span></td><td>${u.email}</td><td>${new Date(u.dataRegistrazione).toLocaleDateString()}</td><td><span class="badge" style="background:var(--success); color:white;">Approvato</span></td><td class="action-btns">${actionBtn}</td></tr>`;
+                            } else {
+                                let statusBadge = '';
+                                if(u.statoVerifica === 'in_attesa') {
+                                    statusBadge = `<span class="badge" style="background:var(--warning); color:white;">In Attesa</span>`;
+                                    actionBtn = `<button class="btn-validate" onclick="openVerifyModal('${u.uid}')">Verifica Documenti</button>`;
+                                } else {
+                                    statusBadge = `<span class="badge" style="background:var(--danger); color:white;">Mancante</span>`;
+                                    actionBtn = `-`;
+                                }
+                                pendingHtml += `<tr><td><b>${u.nome}</b></td><td><span style="font-family:monospace; font-size:12px;">${u.piva_cf || 'N/A'}</span></td><td>${u.email}</td><td>${new Date(u.dataRegistrazione).toLocaleDateString()}</td><td>${statusBadge}</td><td class="action-btns">${actionBtn}</td></tr>`;
+                            }
+                        });
+                        pendingTbody.innerHTML = pendingHtml || '<tr><td colspan="6" style="text-align:center;">Nessuna richiesta in attesa</td></tr>';
+                        activeTbody.innerHTML = activeHtml || '<tr><td colspan="6" style="text-align:center;">Nessun utente approvato</td></tr>';
+                    }
                 }
 
-                // RENDERING NOTIFICHE DI SICUREZZA
+                // TABELLA ORDINI
+                const tOrdini = document.getElementById('table-ordini');
+                if(tOrdini) {
+                    const ordTbody = tOrdini.querySelector('tbody');
+                    if(ordTbody) {
+                        ordTbody.innerHTML = state.ordini.map(o => {
+                            let cliente = state.horizonUsers.find(u => u.uid === o.clienteId);
+                            let nomeCliente = cliente ? cliente.nome : 'Utente non trovato';
+                            let badgeCol = o.stato === 'Completato' ? 'var(--success)' : (o.stato === 'In Lavorazione' ? 'var(--primary)' : (o.stato === 'Annullato' ? 'var(--danger)' : 'var(--warning)'));
+                            return `<tr><td>${o.data}</td><td><b>${nomeCliente}</b></td><td>${o.servizio}</td><td>€ ${o.importo.toLocaleString()}</td><td><span class="badge" style="background:${badgeCol}; color:white;">${o.stato}</span></td><td class="action-btns"><button class="btn-edit" onclick="editOrdine(${o.id})">Modifica</button> <button class="btn-del" onclick="deleteData('ordini', ${o.id})">Elimina</button></td></tr>`;
+                        }).join('') || '<tr><td colspan="6" style="text-align:center;">Nessun ordine registrato.</td></tr>';
+                    }
+                }
+
+                // NOTIFICHE
                 let alerts = state.security_alerts || [];
                 alerts.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const bBadge = document.getElementById('bell-badge');
+                const nList = document.getElementById('notif-list');
                 if(alerts.length > 0) {
-                    document.getElementById('bell-badge').style.display = 'flex';
-                    document.getElementById('bell-badge').innerText = alerts.length;
-                    document.getElementById('notif-list').innerHTML = alerts.map(a => `
-                        <div style="padding:10px; border-bottom:1px solid var(--border); background:rgba(239,68,68,0.05); border-radius:6px; margin-bottom:8px;">
-                            <strong style="color:var(--danger); display:block; margin-bottom:2px;"><i class="ph-fill ph-warning-circle"></i> Accesso Anomalo Bloccato</strong>
-                            <span style="color:var(--text); font-weight:600; display:block;">PIN: ${a.pin} ${a.staffId ? `(Dipendente: ${getStaffName(a.staffId)})` : ''}</span>
-                            <span style="color:var(--text-light); font-size:11px; display:block; margin-top:4px;">${a.message}</span>
-                            <span style="color:var(--text-light); font-size:10px; display:block; margin-top:4px;">${new Date(a.timestamp).toLocaleString()}</span>
-                            <div style="text-align: right; margin-top:5px;">
-                                <button onclick="deleteData('security_alerts', ${a.id})" style="background:none; border:none; color:var(--text-light); font-size:11px; cursor:pointer; text-decoration:underline;">Ignora</button>
+                    if(bBadge) { bBadge.style.display = 'flex'; bBadge.innerText = alerts.length; }
+                    if(nList) {
+                        nList.innerHTML = alerts.map(a => `
+                            <div style="padding:10px; border-bottom:1px solid var(--border); background:rgba(239,68,68,0.05); border-radius:6px; margin-bottom:8px;">
+                                <strong style="color:var(--danger); display:block; margin-bottom:2px;"><i class="ph-fill ph-warning-circle"></i> Accesso Anomalo Bloccato</strong>
+                                <span style="color:var(--text); font-weight:600; display:block;">PIN: ${a.pin} ${a.staffId ? `(Dipendente: ${getStaffName(a.staffId)})` : ''}</span>
+                                <span style="color:var(--text-light); font-size:11px; display:block; margin-top:4px;">${a.message}</span>
+                                <span style="color:var(--text-light); font-size:10px; display:block; margin-top:4px;">${new Date(a.timestamp).toLocaleString()}</span>
+                                <div style="text-align: right; margin-top:5px;">
+                                    <button onclick="deleteData('security_alerts', ${a.id})" style="background:none; border:none; color:var(--text-light); font-size:11px; cursor:pointer; text-decoration:underline;">Ignora</button>
+                                </div>
                             </div>
-                        </div>
-                    `).join('');
+                        `).join('');
+                    }
                 } else {
-                    document.getElementById('bell-badge').style.display = 'none';
-                    document.getElementById('notif-list').innerHTML = 'Nessun allarme registrato.';
+                    if(bBadge) bBadge.style.display = 'none';
+                    if(nList) nList.innerHTML = 'Nessun allarme registrato.';
                 }
 
+                // DASH SUMMARY E TABELLE MAIN
                 let totalCap = state.companies.reduce((s, c) => s + c.cap, 0);
-                document.getElementById('dash-summary').innerHTML = `<div class="card"><div class="card-title">Capitale Gruppo</div><div class="card-value">€ ${(totalCap/1000000).toFixed(2)} M</div></div><div class="card"><div class="card-title">Aziende</div><div class="card-value">${state.companies.length}</div></div><div class="card"><div class="card-title">Staff</div><div class="card-value">${state.staff.length}</div></div>`;
-                document.getElementById('table-dash-stats').querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td><span style="color:${c.eff>90?'var(--accent)':'var(--warning)'}">${c.eff}%</span></td></tr>`).join('');
-                document.getElementById('table-aziende').querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td>${c.eff}%</td><td><span class="badge" style="background:var(--accent); color:white;">Attiva</span></td><td class="action-btns"><button class="btn-edit" onclick="editAzienda(${c.id})">Mod</button> <button class="btn-del" onclick="deleteData('companies', ${c.id})">Del</button></td></tr>`).join('');
-                document.getElementById('table-divs').querySelector('tbody').innerHTML = state.divisions.map(d => `<tr><td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td><td class="action-btns"><button class="btn-edit" onclick="editDivision(${d.id})">Mod</button> <button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button></td></tr>`).join('');
+                const dSum = document.getElementById('dash-summary');
+                if(dSum) dSum.innerHTML = `<div class="card"><div class="card-title">Capitale Gruppo</div><div class="card-value">€ ${(totalCap/1000000).toFixed(2)} M</div></div><div class="card"><div class="card-title">Aziende</div><div class="card-value">${state.companies.length}</div></div><div class="card"><div class="card-title">Staff</div><div class="card-value">${state.staff.length}</div></div>`;
                 
-                if(document.getElementById('table-badges')) {
-                    document.getElementById('table-badges').querySelector('tbody').innerHTML = state.badges.map(b => `<tr><td><b>${getStaffName(b.staffId)}</b></td><td style="font-family: monospace; color: var(--primary); font-size: 16px;">${b.accessCode}</td><td>${new Date(b.createdAt).toLocaleDateString()}</td><td><span style="font-family:monospace; font-size:11px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${b.deviceId ? b.deviceId : 'Non ancora associato'}</span></td><td><span class="badge" style="background:var(--accent); color:white;">Attivo</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('badges', ${b.id})">Revoca App</button></td></tr>`).join('');
-                }
-
-                if(document.getElementById('table-payrolls')) {
-                    document.getElementById('table-payrolls').querySelector('tbody').innerHTML = state.payrolls.sort((a,b)=>new Date(b.month)-new Date(a.month)).map(p => `<tr><td><b>${p.month}</b></td><td>${getStaffName(p.staffId)}</td><td>€ ${parseFloat(p.amount).toLocaleString()}</td><td style="font-family:monospace; font-size:12px;">${getStaffIban(p.staffId)}</td><td><span class="badge" style="background:${p.status === 'Bonifico Emesso' ? 'var(--success)' : 'var(--warning)'}; color:white;">${p.status}</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('payrolls', ${p.id})">Del</button></td></tr>`).join('');
-                }
-
-                document.getElementById('staff-page-title').innerText = "Gestione Organico HR Globale";
-                document.getElementById('staff-page-desc').innerText = "Gestione dipendenti, permessi e dati fiscali/bancari.";
+                const tDash = document.getElementById('table-dash-stats'); if(tDash && tDash.querySelector('tbody')) tDash.querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td><span style="color:${c.eff>90?'var(--accent)':'var(--warning)'}">${c.eff}%</span></td></tr>`).join('');
+                const tAz = document.getElementById('table-aziende'); if(tAz && tAz.querySelector('tbody')) tAz.querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td>${c.eff}%</td><td><span class="badge" style="background:var(--accent); color:white;">Attiva</span></td><td class="action-btns"><button class="btn-edit" onclick="editAzienda(${c.id})">Mod</button> <button class="btn-del" onclick="deleteData('companies', ${c.id})">Del</button></td></tr>`).join('');
+                const tDiv = document.getElementById('table-divs'); if(tDiv && tDiv.querySelector('tbody')) tDiv.querySelector('tbody').innerHTML = state.divisions.map(d => `<tr><td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td><td class="action-btns"><button class="btn-edit" onclick="editDivision(${d.id})">Mod</button> <button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button></td></tr>`).join('');
+                const tBad = document.getElementById('table-badges'); if(tBad && tBad.querySelector('tbody')) tBad.querySelector('tbody').innerHTML = state.badges.map(b => `<tr><td><b>${getStaffName(b.staffId)}</b></td><td style="font-family: monospace; color: var(--primary); font-size: 16px;">${b.accessCode}</td><td>${new Date(b.createdAt).toLocaleDateString()}</td><td><span style="font-family:monospace; font-size:11px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${b.deviceId ? b.deviceId : 'Non ancora associato'}</span></td><td><span class="badge" style="background:var(--accent); color:white;">Attivo</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('badges', ${b.id})">Revoca App</button></td></tr>`).join('');
+                const tPay = document.getElementById('table-payrolls'); if(tPay && tPay.querySelector('tbody')) tPay.querySelector('tbody').innerHTML = state.payrolls.sort((a,b)=>new Date(b.month)-new Date(a.month)).map(p => `<tr><td><b>${p.month}</b></td><td>${getStaffName(p.staffId)}</td><td>€ ${parseFloat(p.amount).toLocaleString()}</td><td style="font-family:monospace; font-size:12px;">${getStaffIban(p.staffId)}</td><td><span class="badge" style="background:${p.status === 'Bonifico Emesso' ? 'var(--success)' : 'var(--warning)'}; color:white;">${p.status}</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('payrolls', ${p.id})">Del</button></td></tr>`).join('');
                 
-                document.getElementById('table-staff').querySelector('tbody').innerHTML = state.staff.map(s => {
-                    return `<tr><td><b>${s.name}</b></td><td>${s.role}</td><td>${getCompanyName(s.companyId)}</td><td><span style="color:var(--success); font-weight:800;">${s.eff || 100}%</span></td><td><span class="badge" style="background:var(--secondary); color:white;">${s.machineAccess || 'Nessuno'}</span></td><td><span class="badge" style="background:var(--primary); color:white;">${s.status}</span></td><td class="action-btns"><button class="btn-edit" onclick="editStaff(${s.id})">Modifica</button> <button class="btn-del" onclick="deleteData('staff', ${s.id})">Del</button></td></tr>`;
-                }).join('');
+                const tStaff = document.getElementById('table-staff'); if(tStaff && tStaff.querySelector('tbody')) tStaff.querySelector('tbody').innerHTML = state.staff.map(s => `<tr><td><b>${s.name}</b></td><td>${s.role}</td><td>${getCompanyName(s.companyId)}</td><td><span style="color:var(--success); font-weight:800;">${s.eff || 100}%</span></td><td><span class="badge" style="background:var(--secondary); color:white;">${s.machineAccess || 'Nessuno'}</span></td><td><span class="badge" style="background:var(--primary); color:white;">${s.status}</span></td><td class="action-btns"><button class="btn-edit" onclick="editStaff(${s.id})">Modifica</button> <button class="btn-del" onclick="deleteData('staff', ${s.id})">Del</button></td></tr>`).join('');
+
+                const stTit = document.getElementById('staff-page-title'); if(stTit) stTit.innerText = "Gestione Organico HR Globale";
+                const stDesc = document.getElementById('staff-page-desc'); if(stDesc) stDesc.innerText = "Gestione completa dei dipendenti e dei dati fiscali/bancari.";
 
             } else {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-                document.getElementById('staff-admin-view').style.display = 'none';
-                document.getElementById('staff-user-view').style.display = 'block';
-                document.getElementById('btn-new-staff').style.display = 'none';
-
-                if (myStaffRecord) {
-                    let machineAccess = myStaffRecord.machineAccess || 'Nessuno';
-                    document.getElementById('nav-macchina').style.display = (machineAccess === 'Grado mAf' || machineAccess === 'Entrambe') ? 'flex' : 'none';
-                    document.getElementById('nav-eolo').style.display = (machineAccess === 'Eolo fFk9' || machineAccess === 'Entrambe') ? 'flex' : 'none';
-                    renderStaffUserView(myStaffRecord);
-                } else {
-                    document.getElementById('nav-macchina').style.display = 'none';
-                    document.getElementById('nav-eolo').style.display = 'none';
-                    renderStaffUserView(null);
-                }
+                const sAv = document.getElementById('staff-admin-view'); if(sAv) sAv.style.display = 'none';
+                const sUv = document.getElementById('staff-user-view'); if(sUv) { sUv.style.display = 'block'; sUv.innerHTML = myStaffRecord ? `<div class="card"><h3>Profilo Operativo: ${myStaffRecord.name}</h3><p>Ruolo: ${myStaffRecord.role}</p></div>` : `<div class="card"><p>Nessun profilo assegnato.</p></div>`; }
+                const bNs = document.getElementById('btn-new-staff'); if(bNs) bNs.style.display = 'none';
             }
 
-            let visibleTimbrature = isAdmin ? state.time_entries : state.time_entries.filter(t => getStaffName(t.staffId).toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
-            document.getElementById('timbrature-page-title').innerText = isAdmin ? "Log Ingressi e Timbrature" : "Le Mie Timbrature";
-            document.getElementById('table-timbrature').querySelector('tbody').innerHTML = visibleTimbrature.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(t => `<tr><td>${new Date(t.timestamp).toLocaleString()}</td><td><b>${getStaffName(t.staffId)}</b></td><td>${getCompanyName(state.staff.find(x=>x.id==t.staffId)?.companyId)}</td><td><span class="badge" style="background:${t.type==='Ingresso'?'var(--accent)':'var(--warning)'}; color:white;">${t.type}</span></td><td><span style="font-size:11px;">${t.device} | Geo: ${t.geo}</span></td><td>${t.validated ? `<i class="ph-fill ph-check-circle" style="color:var(--accent)"></i> OK` : (isAdmin ? `<button class="btn-validate" onclick="validateTimbratura(${t.id})">Valida</button>` : 'In Attesa')}</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('time_entries', ${t.id})">Del</button>` : '-'}</td></tr>`).join('');
+            // COMUNI (Timbrature, Tasks, Docs)
+            const tTimb = document.getElementById('table-timbrature');
+            if(tTimb && tTimb.querySelector('tbody')) {
+                let visibleTimbrature = isAdmin ? state.time_entries : state.time_entries.filter(t => getStaffName(t.staffId).toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
+                tTimb.querySelector('tbody').innerHTML = visibleTimbrature.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(t => `<tr><td>${new Date(t.timestamp).toLocaleString()}</td><td><b>${getStaffName(t.staffId)}</b></td><td>${getCompanyName(state.staff.find(x=>x.id==t.staffId)?.companyId)}</td><td><span class="badge" style="background:${t.type==='Ingresso'?'var(--accent)':'var(--warning)'}; color:white;">${t.type}</span></td><td><span style="font-size:11px;">${t.device} | Geo: ${t.geo}</span></td><td>${t.validated ? `<i class="ph-fill ph-check-circle" style="color:var(--accent)"></i> OK` : (isAdmin ? `<button class="btn-validate" onclick="validateTimbratura(${t.id})">Valida</button>` : 'In Attesa')}</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('time_entries', ${t.id})">Del</button>` : '-'}</td></tr>`).join('');
+            }
 
-            document.getElementById('table-tasks').querySelector('tbody').innerHTML = state.tasks.map(t => {
-                let badgeCol = t.status === 'Completato' ? 'var(--accent)' : (t.status === 'In Lavorazione' ? 'var(--primary)' : 'var(--warning)');
-                let isMyTask = (getStaffName(t.staffId).toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
-                if(!isAdmin && !isMyTask) return '';
-                let actionHtml = isAdmin ? `<button class="btn-edit" onclick="editTask(${t.id})">Mod</button> <button class="btn-del" onclick="deleteData('tasks', ${t.id})">Del</button>` : (isMyTask && t.status !== 'Completato' ? `<button class="btn-validate" onclick="completeTask(${t.id})">Completato</button>` : '-');
-                return `<tr><td><b>${t.title}</b></td><td>${getStaffName(t.staffId)}</td><td>${t.priority}</td><td><span class="badge" style="background:${badgeCol}; color:white;">${t.status}</span></td><td class="action-btns">${actionHtml}</td></tr>`;
-            }).join('');
+            const tTasks = document.getElementById('table-tasks');
+            if(tTasks && tTasks.querySelector('tbody')) {
+                tTasks.querySelector('tbody').innerHTML = state.tasks.map(t => {
+                    let badgeCol = t.status === 'Completato' ? 'var(--accent)' : (t.status === 'In Lavorazione' ? 'var(--primary)' : 'var(--warning)');
+                    let isMyTask = (getStaffName(t.staffId).toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
+                    if(!isAdmin && !isMyTask) return '';
+                    let actionHtml = isAdmin ? `<button class="btn-edit" onclick="editTask(${t.id})">Mod</button> <button class="btn-del" onclick="deleteData('tasks', ${t.id})">Del</button>` : (isMyTask && t.status !== 'Completato' ? `<button class="btn-validate" onclick="completeTask(${t.id})">Completato</button>` : '-');
+                    return `<tr><td><b>${t.title}</b></td><td>${getStaffName(t.staffId)}</td><td>${t.priority}</td><td><span class="badge" style="background:${badgeCol}; color:white;">${t.status}</span></td><td class="action-btns">${actionHtml}</td></tr>`;
+                }).join('');
+            }
 
             if(isAdmin) {
                 let totalIn = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + d.amount, 0);
                 let totalOut = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + d.amount, 0);
-                document.getElementById('finance-summary').innerHTML = `<div class="card"><div class="card-title">Incassi</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div><div class="card"><div class="card-title">Uscite</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>`;
-                document.getElementById('table-docs').querySelector('tbody').innerHTML = state.documents.map(d => `<tr><td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td><td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td><td>${d.file ? `📎` : '-'}</td><td class="action-btns"><button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button></td></tr>`).join('');
+                const fSum = document.getElementById('finance-summary'); if(fSum) fSum.innerHTML = `<div class="card"><div class="card-title">Incassi</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div><div class="card"><div class="card-title">Uscite</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>`;
+                const tDocs = document.getElementById('table-docs'); if(tDocs && tDocs.querySelector('tbody')) tDocs.querySelector('tbody').innerHTML = state.documents.map(d => `<tr><td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td><td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td><td>${d.file ? `📎` : '-'}</td><td class="action-btns"><button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button></td></tr>`).join('');
             }
         }
 
-        // --- GESTIONE VERIFICA KYC (HORIZON ID) ---
+        // --- GESTIONE ORDINI (VENDITE HORIZON) ---
+        window.editOrdine = function(id) {
+            const o = state.ordini.find(x => x.id == id);
+            if(!o) return;
+            openModal('modal-ordine');
+            const tit = document.getElementById('ordine-modal-title'); if(tit) tit.innerText = "Modifica Ordine Horizon";
+            const elId = document.getElementById('ordine-id'); if(elId) elId.value = o.id;
+            const elCli = document.getElementById('ordine-cliente'); if(elCli) elCli.value = o.clienteId;
+            const elSer = document.getElementById('ordine-servizio'); if(elSer) elSer.value = o.servizio;
+            const elNot = document.getElementById('ordine-note'); if(elNot) elNot.value = o.note || '';
+            const elImp = document.getElementById('ordine-importo'); if(elImp) elImp.value = o.importo || 0;
+            const elSta = document.getElementById('ordine-stato'); if(elSta) elSta.value = o.stato || 'In Attesa';
+        }
+
+        window.saveOrdine = async function() {
+            const elId = document.getElementById('ordine-id');
+            const idField = elId ? elId.value : null;
+            const data = {
+                id: idField ? parseInt(idField) : Date.now(),
+                clienteId: document.getElementById('ordine-cliente') ? document.getElementById('ordine-cliente').value : '',
+                servizio: document.getElementById('ordine-servizio') ? document.getElementById('ordine-servizio').value : '',
+                note: document.getElementById('ordine-note') ? document.getElementById('ordine-note').value : '',
+                importo: document.getElementById('ordine-importo') ? (parseFloat(document.getElementById('ordine-importo').value) || 0) : 0,
+                stato: document.getElementById('ordine-stato') ? document.getElementById('ordine-stato').value : '',
+                data: idField ? state.ordini.find(o => o.id == idField).data : new Date().toISOString().split('T')[0]
+            };
+            if(!data.clienteId) return alert("Seleziona un cliente Horizon ID.");
+            await saveToFirebase('ordini', data);
+            closeModal('modal-ordine');
+        }
+
+        // --- VERIFICA KYC (HORIZON ID) ---
         window.openVerifyModal = function(uid) {
-            // Cerca l'utente nello stato scaricato dal DB Horizon ID Core
             const u = state.horizonUsers.find(x => x.uid === uid);
             if(!u || !u.documenti) return alert("Documenti fotografici non trovati per questo utente.");
             
-            document.getElementById('verify-user-uid').value = u.uid;
-            document.getElementById('verify-user-name').innerText = u.nome;
-            document.getElementById('verify-user-piva').innerText = u.piva_cf || 'Nessun dato';
+            const elUid = document.getElementById('verify-user-uid'); if(elUid) elUid.value = u.uid;
+            const elName = document.getElementById('verify-user-name'); if(elName) elName.innerText = u.nome;
+            const elPiva = document.getElementById('verify-user-piva'); if(elPiva) elPiva.innerText = u.piva_cf || 'Nessun dato';
             
-            // Inserisce i link sicuri di Cloudinary
-            document.getElementById('verify-img-fronte').src = u.documenti.fronte || '';
-            document.getElementById('verify-img-retro').src = u.documenti.retro || '';
+            const imgFro = document.getElementById('verify-img-fronte'); if(imgFro) imgFro.src = u.documenti.fronte || '';
+            const imgRet = document.getElementById('verify-img-retro'); if(imgRet) imgRet.src = u.documenti.retro || '';
             
             openModal('modal-verify-id');
         }
 
         window.approveHorizonId = async function() {
-            const uid = document.getElementById('verify-user-uid').value;
+            const elUid = document.getElementById('verify-user-uid');
+            if(!elUid) return;
             try {
-                // Esegue l'update sul Database Horizon ID (dbHorizonId)
-                await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${uid}`), {
-                    statoVerifica: "approvato",
-                    documenti: null // Rimuove i link dal DB per questioni di privacy post-verifica
-                });
+                await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${elUid.value}`), { statoVerifica: "approvato", documenti: null });
                 closeModal('modal-verify-id');
             } catch(e) { alert("Errore di connessione a Horizon ID Core: " + e.message); }
         }
 
         window.rejectHorizonId = async function() {
-            const uid = document.getElementById('verify-user-uid').value;
+            const elUid = document.getElementById('verify-user-uid');
+            if(!elUid) return;
             try {
-                await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${uid}`), {
-                    statoVerifica: "mancante",
-                    documenti: null // Rimuove i file rifiutati
-                });
+                await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${elUid.value}`), { statoVerifica: "mancante", documenti: null });
                 closeModal('modal-verify-id');
             } catch(e) { alert("Errore: " + e.message); }
         }
@@ -1668,9 +1028,7 @@
         window.revokeHorizonId = async function(uid) {
             if(confirm("Sei sicuro di voler revocare l'approvazione a questo utente? Dovrà ricaricare i documenti.")) {
                 try {
-                    await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${uid}`), {
-                        statoVerifica: "mancante"
-                    });
+                    await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${uid}`), { statoVerifica: "mancante" });
                 } catch(e) { alert("Errore: " + e.message); }
             }
         }
@@ -1690,78 +1048,73 @@
 
         window.validateTimbratura = async function(id) {
             let t = state.time_entries.find(x => x.id == id);
-            if(t) {
-                t.validated = true;
-                await saveToFirebase('time_entries', t);
-            }
+            if(t) { t.validated = true; await saveToFirebase('time_entries', t); }
         }
 
         window.completeTask = async function(id) {
             let t = state.tasks.find(x => x.id == id);
-            if(t) {
-                t.status = 'Completato';
-                await saveToFirebase('tasks', t);
-            }
+            if(t) { t.status = 'Completato'; await saveToFirebase('tasks', t); }
         }
 
         window.editAzienda = function(id) {
             const c = state.companies.find(x => x.id == id);
             if(!c) return;
             openModal('modal-azienda');
-            document.getElementById('azienda-modal-title').innerText = "Modifica Azienda";
-            document.getElementById('azienda-id').value = c.id;
-            document.getElementById('azienda-name').value = c.name || '';
-            document.getElementById('azienda-cap').value = c.cap || 0;
-            document.getElementById('azienda-proj').value = c.projects || 0;
-            document.getElementById('azienda-eff').value = c.eff || 100;
+            const tit = document.getElementById('azienda-modal-title'); if(tit) tit.innerText = "Modifica Azienda";
+            const elId = document.getElementById('azienda-id'); if(elId) elId.value = c.id;
+            const elName = document.getElementById('azienda-name'); if(elName) elName.value = c.name || '';
+            const elCap = document.getElementById('azienda-cap'); if(elCap) elCap.value = c.cap || 0;
+            const elProj = document.getElementById('azienda-proj'); if(elProj) elProj.value = c.projects || 0;
+            const elEff = document.getElementById('azienda-eff'); if(elEff) elEff.value = c.eff || 100;
         }
         
         window.editDivision = function(id) {
             const d = state.divisions.find(x => x.id == id);
             if(!d) return;
             openModal('modal-div');
-            document.getElementById('div-modal-title').innerText = "Modifica Divisione";
-            document.getElementById('div-id').value = d.id;
-            document.getElementById('div-name').value = d.name || '';
-            document.getElementById('div-company').value = d.companyId;
-            document.getElementById('div-budget').value = d.budget || 0;
-            document.getElementById('div-eff').value = d.eff || 100;
+            const tit = document.getElementById('div-modal-title'); if(tit) tit.innerText = "Modifica Divisione";
+            const elId = document.getElementById('div-id'); if(elId) elId.value = d.id;
+            const elName = document.getElementById('div-name'); if(elName) elName.value = d.name || '';
+            const elCo = document.getElementById('div-company'); if(elCo) elCo.value = d.companyId;
+            const elBud = document.getElementById('div-budget'); if(elBud) elBud.value = d.budget || 0;
+            const elEff = document.getElementById('div-eff'); if(elEff) elEff.value = d.eff || 100;
         }
 
         window.editTask = function(id) {
             const t = state.tasks.find(x => x.id == id);
             if(!t) return;
             openModal('modal-task');
-            document.getElementById('task-modal-title').innerText = "Modifica Task";
-            document.getElementById('task-id').value = t.id;
-            document.getElementById('task-title').value = t.title || '';
-            document.getElementById('task-staff').value = t.staffId;
-            document.getElementById('task-prio').value = t.priority || 'Media';
-            document.getElementById('task-status').value = t.status || 'Da Iniziare';
+            const tit = document.getElementById('task-modal-title'); if(tit) tit.innerText = "Modifica Task";
+            const elId = document.getElementById('task-id'); if(elId) elId.value = t.id;
+            const elTit = document.getElementById('task-title'); if(elTit) elTit.value = t.title || '';
+            const elSt = document.getElementById('task-staff'); if(elSt) elSt.value = t.staffId;
+            const elPr = document.getElementById('task-prio'); if(elPr) elPr.value = t.priority || 'Media';
+            const elStat = document.getElementById('task-status'); if(elStat) elStat.value = t.status || 'Da Iniziare';
         }
         
         window.sendAiPrompt = function() {
             const input = document.getElementById('ai-text');
             const chat = document.getElementById('chat-box');
-            if(input.value.trim() === '') return;
+            if(!input || input.value.trim() === '' || !chat) return;
             
             chat.innerHTML += `<div class="msg user"><strong>Tu:</strong> ${input.value}</div>`;
             input.value = '';
             
             setTimeout(() => {
-                chat.innerHTML += `<div class="msg bot"><strong>Gemini AI:</strong> Analisi completata. I dati Realtime risultano corretti e sincronizzati. Modulo API in fase di beta-testing.</div>`;
+                chat.innerHTML += `<div class="msg bot"><strong>Gemini AI:</strong> Analisi completata. I dati Realtime risultano corretti e sincronizzati.</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 800);
         }
 
         window.savePayroll = async function() {
-            const idField = document.getElementById('pay-id').value;
+            const elId = document.getElementById('pay-id');
+            const idField = elId ? elId.value : null;
             const data = {
                 id: idField ? parseInt(idField) : Date.now(),
-                staffId: parseInt(document.getElementById('pay-staff').value),
-                month: document.getElementById('pay-month').value,
-                amount: parseFloat(document.getElementById('pay-amount').value) || 0,
-                status: document.getElementById('pay-status').value
+                staffId: document.getElementById('pay-staff') ? parseInt(document.getElementById('pay-staff').value) : 0,
+                month: document.getElementById('pay-month') ? document.getElementById('pay-month').value : '',
+                amount: document.getElementById('pay-amount') ? (parseFloat(document.getElementById('pay-amount').value) || 0) : 0,
+                status: document.getElementById('pay-status') ? document.getElementById('pay-status').value : ''
             };
             if(!data.month) return alert("Seleziona il mese.");
             await saveToFirebase('payrolls', data);
@@ -1770,55 +1123,57 @@
 
         window.newStaff = function() {
             openModal('modal-staff');
-            document.getElementById('staff-modal-title').innerText = "Nuovo Dipendente";
-            document.getElementById('staff-id').value = '';
+            const tit = document.getElementById('staff-modal-title'); if(tit) tit.innerText = "Nuovo Dipendente";
+            const elId = document.getElementById('staff-id'); if(elId) elId.value = '';
             document.querySelectorAll('#modal-staff .input').forEach(i => { i.value = ''; i.disabled = false; });
-            document.getElementById('staff-eff').value = '100';
-            document.getElementById('staff-machine').value = 'Nessuno';
-            document.getElementById('btn-save-staff').style.display = '';
+            const elEff = document.getElementById('staff-eff'); if(elEff) elEff.value = '100';
+            const elMac = document.getElementById('staff-machine'); if(elMac) elMac.value = 'Nessuno';
+            const btnSave = document.getElementById('btn-save-staff'); if(btnSave) btnSave.style.display = '';
         };
 
         window.editStaff = function(id) {
             const s = state.staff.find(x => x.id == id);
+            if(!s) return;
             openModal('modal-staff');
-            document.getElementById('staff-modal-title').innerText = "Modifica Dipendente";
+            const tit = document.getElementById('staff-modal-title'); if(tit) tit.innerText = "Modifica Dipendente";
             
-            document.getElementById('staff-id').value = s.id;
-            document.getElementById('staff-name').value = s.name || '';
-            document.getElementById('staff-role').value = s.role || '';
-            document.getElementById('staff-company').value = s.companyId;
+            const elId = document.getElementById('staff-id'); if(elId) elId.value = s.id;
+            const elNam = document.getElementById('staff-name'); if(elNam) elNam.value = s.name || '';
+            const elRol = document.getElementById('staff-role'); if(elRol) elRol.value = s.role || '';
+            const elCom = document.getElementById('staff-company'); if(elCom) elCom.value = s.companyId;
             populateDivisionsForStaff(); 
-            document.getElementById('staff-div').value = s.divisionId;
+            const elDiv = document.getElementById('staff-div'); if(elDiv) elDiv.value = s.divisionId;
             
-            document.getElementById('staff-eff').value = s.eff || '100';
-            document.getElementById('staff-machine').value = s.machineAccess || 'Nessuno';
+            const elEff = document.getElementById('staff-eff'); if(elEff) elEff.value = s.eff || '100';
+            const elMac = document.getElementById('staff-machine'); if(elMac) elMac.value = s.machineAccess || 'Nessuno';
 
-            document.getElementById('staff-cf').value = s.cf || '';
-            document.getElementById('staff-ci').value = s.ci || '';
-            document.getElementById('staff-ts').value = s.ts || '';
-            document.getElementById('staff-indirizzo').value = s.indirizzo || '';
-            document.getElementById('staff-dataNascita').value = s.dataNascita || '';
-            document.getElementById('staff-luogoNascita').value = s.luogoNascita || '';
-            document.getElementById('staff-iban').value = s.iban || '';
+            const elCf = document.getElementById('staff-cf'); if(elCf) elCf.value = s.cf || '';
+            const elCi = document.getElementById('staff-ci'); if(elCi) elCi.value = s.ci || '';
+            const elTs = document.getElementById('staff-ts'); if(elTs) elTs.value = s.ts || '';
+            const elInd = document.getElementById('staff-indirizzo'); if(elInd) elInd.value = s.indirizzo || '';
+            const elDn = document.getElementById('staff-dataNascita'); if(elDn) elDn.value = s.dataNascita || '';
+            const elLn = document.getElementById('staff-luogoNascita'); if(elLn) elLn.value = s.luogoNascita || '';
+            const elIban = document.getElementById('staff-iban'); if(elIban) elIban.value = s.iban || '';
         };
 
         window.saveStaff = async function() {
-            const idField = document.getElementById('staff-id').value;
+            const elId = document.getElementById('staff-id');
+            const idField = elId ? elId.value : null;
             const data = {
                 id: idField ? parseInt(idField) : Date.now(),
-                name: document.getElementById('staff-name').value,
-                role: document.getElementById('staff-role').value,
-                companyId: parseInt(document.getElementById('staff-company').value),
-                divisionId: parseInt(document.getElementById('staff-div').value),
-                eff: parseInt(document.getElementById('staff-eff').value) || 100,
-                machineAccess: document.getElementById('staff-machine').value,
-                cf: document.getElementById('staff-cf').value.toUpperCase(),
-                ci: document.getElementById('staff-ci').value.toUpperCase(),
-                ts: document.getElementById('staff-ts').value.toUpperCase(),
-                indirizzo: document.getElementById('staff-indirizzo').value,
-                dataNascita: document.getElementById('staff-dataNascita').value,
-                luogoNascita: document.getElementById('staff-luogoNascita').value,
-                iban: document.getElementById('staff-iban').value.toUpperCase(),
+                name: document.getElementById('staff-name') ? document.getElementById('staff-name').value : '',
+                role: document.getElementById('staff-role') ? document.getElementById('staff-role').value : '',
+                companyId: document.getElementById('staff-company') ? parseInt(document.getElementById('staff-company').value) : 0,
+                divisionId: document.getElementById('staff-div') ? parseInt(document.getElementById('staff-div').value) : 0,
+                eff: document.getElementById('staff-eff') ? (parseInt(document.getElementById('staff-eff').value) || 100) : 100,
+                machineAccess: document.getElementById('staff-machine') ? document.getElementById('staff-machine').value : '',
+                cf: document.getElementById('staff-cf') ? document.getElementById('staff-cf').value.toUpperCase() : '',
+                ci: document.getElementById('staff-ci') ? document.getElementById('staff-ci').value.toUpperCase() : '',
+                ts: document.getElementById('staff-ts') ? document.getElementById('staff-ts').value.toUpperCase() : '',
+                indirizzo: document.getElementById('staff-indirizzo') ? document.getElementById('staff-indirizzo').value : '',
+                dataNascita: document.getElementById('staff-dataNascita') ? document.getElementById('staff-dataNascita').value : '',
+                luogoNascita: document.getElementById('staff-luogoNascita') ? document.getElementById('staff-luogoNascita').value : '',
+                iban: document.getElementById('staff-iban') ? document.getElementById('staff-iban').value.toUpperCase() : '',
                 status: 'IN SEDE'
             };
             await saveToFirebase('staff', data);
@@ -1826,32 +1181,44 @@
         }
 
         window.saveBadge = async function() {
-            const staffId = document.getElementById('badge-staff').value;
-            const code = document.getElementById('badge-code').value.trim();
+            const elSt = document.getElementById('badge-staff');
+            const elCo = document.getElementById('badge-code');
+            if(!elSt || !elCo) return;
+            const staffId = elSt.value;
+            const code = elCo.value.trim();
             if(!code || code.length < 4) return alert("PIN minimo 4 caratteri.");
             if(state.badges.find(b => b.staffId == staffId)) return alert("Questo dipendente ha già un badge attivo. Revocalo prima.");
             await saveToFirebase('badges', { id: Date.now(), staffId: parseInt(staffId), accessCode: code, createdAt: new Date().toISOString() });
             closeModal('modal-badge');
-            document.getElementById('badge-code').value = '';
+            elCo.value = '';
         }
 
         window.saveAzienda = async function() {
-            const idField = document.getElementById('azienda-id').value;
-            await saveToFirebase('companies', { id: idField ? parseInt(idField) : Date.now(), name: document.getElementById('azienda-name').value, cap: parseFloat(document.getElementById('azienda-cap').value) || 0, projects: parseInt(document.getElementById('azienda-proj').value) || 0, eff: parseInt(document.getElementById('azienda-eff').value) || 100, isActive: true });
+            const elId = document.getElementById('azienda-id');
+            const idField = elId ? elId.value : null;
+            await saveToFirebase('companies', { 
+                id: idField ? parseInt(idField) : Date.now(), 
+                name: document.getElementById('azienda-name') ? document.getElementById('azienda-name').value : '', 
+                cap: document.getElementById('azienda-cap') ? (parseFloat(document.getElementById('azienda-cap').value) || 0) : 0, 
+                projects: document.getElementById('azienda-proj') ? (parseInt(document.getElementById('azienda-proj').value) || 0) : 0, 
+                eff: document.getElementById('azienda-eff') ? (parseInt(document.getElementById('azienda-eff').value) || 100) : 100, 
+                isActive: true 
+            });
             closeModal('modal-azienda');
         }
 
         window.saveDivision = async function() {
-            const idField = document.getElementById('div-id').value;
+            const elId = document.getElementById('div-id');
+            const idField = elId ? elId.value : null;
             const parsedId = idField ? parseInt(idField) : Date.now();
-            const newBudget = parseFloat(document.getElementById('div-budget').value) || 0;
+            const newBudget = document.getElementById('div-budget') ? (parseFloat(document.getElementById('div-budget').value) || 0) : 0;
 
             await saveToFirebase('divisions', { 
                 id: parsedId, 
-                name: document.getElementById('div-name').value, 
-                companyId: parseInt(document.getElementById('div-company').value), 
+                name: document.getElementById('div-name') ? document.getElementById('div-name').value : '', 
+                companyId: document.getElementById('div-company') ? parseInt(document.getElementById('div-company').value) : 0, 
                 budget: newBudget, 
-                eff: parseInt(document.getElementById('div-eff').value) || 100 
+                eff: document.getElementById('div-eff') ? (parseInt(document.getElementById('div-eff').value) || 100) : 100 
             });
 
             let otherDivsBudget = state.divisions.filter(d => d.id !== parsedId).reduce((s, d) => s + d.budget, 0);
@@ -1860,42 +1227,66 @@
             let histDate = new Date();
             let formattedTime = histDate.toLocaleDateString('it-IT') + ' ' + histDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'});
             
-            await saveToFirebase('budget_history', { 
-                id: Date.now(), 
-                date: formattedTime, 
-                total: currentTotal 
-            });
-
+            await saveToFirebase('budget_history', { id: Date.now(), date: formattedTime, total: currentTotal });
             closeModal('modal-div');
         }
 
         window.saveTask = async function() {
-            const idField = document.getElementById('task-id').value;
-            await saveToFirebase('tasks', { id: idField ? parseInt(idField) : Date.now(), title: document.getElementById('task-title').value, staffId: parseInt(document.getElementById('task-staff').value), priority: document.getElementById('task-prio').value, status: document.getElementById('task-status').value });
+            const elId = document.getElementById('task-id');
+            const idField = elId ? elId.value : null;
+            await saveToFirebase('tasks', { 
+                id: idField ? parseInt(idField) : Date.now(), 
+                title: document.getElementById('task-title') ? document.getElementById('task-title').value : '', 
+                staffId: document.getElementById('task-staff') ? parseInt(document.getElementById('task-staff').value) : 0, 
+                priority: document.getElementById('task-prio') ? document.getElementById('task-prio').value : '', 
+                status: document.getElementById('task-status') ? document.getElementById('task-status').value : '' 
+            });
             closeModal('modal-task');
         }
 
         window.saveTimbratura = async function() {
-            await saveToFirebase('time_entries', { id: Date.now(), staffId: parseInt(document.getElementById('timb-staff').value), timestamp: document.getElementById('timb-time').value || new Date().toISOString(), type: document.getElementById('timb-type').value, geo: 'Inserimento Manuale Admin', device: 'Desktop System', validated: true, forced: true });
+            await saveToFirebase('time_entries', { 
+                id: Date.now(), 
+                staffId: document.getElementById('timb-staff') ? parseInt(document.getElementById('timb-staff').value) : 0, 
+                timestamp: document.getElementById('timb-time') && document.getElementById('timb-time').value ? document.getElementById('timb-time').value : new Date().toISOString(), 
+                type: document.getElementById('timb-type') ? document.getElementById('timb-type').value : '', 
+                geo: 'Inserimento Manuale Admin', 
+                device: 'Desktop System', 
+                validated: true, 
+                forced: true 
+            });
             closeModal('modal-timbratura');
         }
 
         window.saveDocument = async function() {
-            const idField = document.getElementById('doc-id').value;
-            await saveToFirebase('documents', { id: idField ? parseInt(idField) : Date.now(), date: new Date().toISOString().split('T')[0], title: document.getElementById('doc-title').value, amount: parseFloat(document.getElementById('doc-amount').value) || 0, type: document.getElementById('doc-type').value, companyId: parseInt(document.getElementById('doc-company').value), file: document.getElementById('doc-file').value ? true : false });
+            const elId = document.getElementById('doc-id');
+            const idField = elId ? elId.value : null;
+            await saveToFirebase('documents', { 
+                id: idField ? parseInt(idField) : Date.now(), 
+                date: new Date().toISOString().split('T')[0], 
+                title: document.getElementById('doc-title') ? document.getElementById('doc-title').value : '', 
+                amount: document.getElementById('doc-amount') ? (parseFloat(document.getElementById('doc-amount').value) || 0) : 0, 
+                type: document.getElementById('doc-type') ? document.getElementById('doc-type').value : '', 
+                companyId: document.getElementById('doc-company') ? parseInt(document.getElementById('doc-company').value) : 0, 
+                file: document.getElementById('doc-file') && document.getElementById('doc-file').value ? true : false 
+            });
             closeModal('modal-doc');
         }
 
         // --- HARDWARE MACCHINA ---
         window.printGradoB = function() {
             const term = document.getElementById('grado-terminal');
-            term.innerHTML += `> Esecuzione override sensori...<br>> Verifica integrità hardware... <span style="color:var(--accent)">100% OK</span><br>> Ricalibrazione fFk9: ONLINE<br>`;
-            term.scrollTop = term.scrollHeight;
+            if(term) {
+                term.innerHTML += `> Esecuzione override sensori...<br>> Verifica integrità hardware... <span style="color:var(--accent)">100% OK</span><br>> Ricalibrazione fFk9: ONLINE<br>`;
+                term.scrollTop = term.scrollHeight;
+            }
         }
 
         function initHardwareCharts() {
             if(window.netChartRendered) return;
-            const ctx = document.getElementById('netCanvas').getContext('2d');
+            const cEl = document.getElementById('netCanvas');
+            if(!cEl) return;
+            const ctx = cEl.getContext('2d');
             
             let initialData = Array(15).fill(0).map(() => Math.floor(Math.random() * (200 - 100 + 1)) + 100);
 
@@ -1926,7 +1317,8 @@
             });
             
             setInterval(() => {
-                if(document.getElementById('view-macchina').classList.contains('active')) {
+                const vm = document.getElementById('view-macchina');
+                if(vm && vm.classList.contains('active')) {
                     const dataArr = window.hwChart.data.datasets[0].data;
                     dataArr.shift();
                     let lastVal = dataArr[dataArr.length - 1];

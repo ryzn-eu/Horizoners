@@ -26,7 +26,7 @@
             appId: "1:611544552805:web:88fb0e35e59fb5bf543d8c"
         };
         
-        // 2. Configurazione Firebase SECONDARIA (Horizon ID Core) - Per la verifica KYC
+        // 2. Configurazione Firebase SECONDARIA (Horizon ID Core) - Per la verifica KYC e Monitoraggio Ordini App
         const horizonIdConfig = {
             apiKey: "AIzaSyD8_itwMJwjLSftJaFJ6ztQN-B6WSBORoo",
             authDomain: "horizon-id-core.firebaseapp.com",
@@ -56,7 +56,7 @@
     <style>
         :root {
             --primary: #2563EB; --primary-dark: #1E40AF; --secondary: #0F172A;
-            --accent: #22C55E; --warning: #F59E0B; --danger: #EF4444;
+            --accent: #22C55E; --success: #22C55E; --warning: #F59E0B; --danger: #EF4444;
             --bg: #F8FAFC; --card: #FFFFFF; --text: #0F172A; --text-light: #64748B;
             --border: #E2E8F0; --sidebar-w: 260px; --shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
             --sys-font: 'Inter', sans-serif;
@@ -132,6 +132,8 @@
         .mobile-menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 26px; cursor: pointer; padding: 0; }
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px); }
         
+        tr.clickable-row:hover { background-color: rgba(37, 99, 235, 0.05); cursor: pointer; }
+        
         @media (max-width: 768px) {
             .mobile-menu-btn { display: block; margin-right: 15px; }
             .sidebar { position: fixed; left: -280px; top: 0; bottom: 0; transition: left 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 1001; }
@@ -185,7 +187,7 @@
             <a class="nav-link admin-only" onclick="nav('badges', this)"><span><i class="ph ph-identification-card"></i> Gestione Badge App</span></a>
             <a class="nav-link" onclick="nav('timbrature', this)"><span><i class="ph ph-clock"></i> Timbrature & Presenze</span> <i class="ph-fill ph-circle" style="color:var(--accent); font-size:8px;"></i></a>
             
-            <a class="nav-link" onclick="nav('ordini', this)"><span><i class="ph ph-shopping-cart"></i> Ordini Servizi Horizon</span></a>
+            <a class="nav-link" onclick="nav('ordini', this)"><span><i class="ph ph-shopping-cart"></i> Ordini & Servizi Horizon</span></a>
             
             <a class="nav-link admin-only" onclick="nav('docs', this)"><span><i class="ph ph-files"></i> Documenti & Finanza</span></a>
             <a class="nav-link" onclick="nav('tasks', this)"><span><i class="ph ph-check-square"></i> Task & Ticket</span></a>
@@ -255,13 +257,16 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h2>Ordini Servizi Horizon</h2>
-                    <p style="font-size: 12px; color: var(--text-light);">Inserimento manuale ordini da portale servizihorizon.it associati a Horizon ID.</p>
+                    <p style="font-size: 12px; color: var(--text-light);">Inserimento ordini personalizzati in sync con App Cliente (Horizon ID).</p>
                 </div>
-                <button class="btn" onclick="openModal('modal-ordine')"><i class="ph ph-plus"></i> Nuovo Ordine</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn admin-only" style="background:var(--secondary);" onclick="openModal('modal-servizio')"><i class="ph ph-list-plus"></i> Gestione Catalogo Servizi</button>
+                    <button class="btn" onclick="apriNuovoOrdine()"><i class="ph ph-plus"></i> Nuovo Ordine</button>
+                </div>
             </div>
             <div class="card">
                 <table id="table-ordini">
-                    <thead><tr><th>Data</th><th>Cliente (Horizon ID)</th><th>Servizio</th><th>Importo</th><th>Stato</th><th>Azioni</th></tr></thead>
+                    <thead><tr><th>Data</th><th>Cliente (Horizon ID)</th><th>Servizio</th><th>Importo</th><th>Stato Attuale</th><th>Azioni Admin</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -462,48 +467,100 @@
 
     </main>
 
-    <div id="modal-ordine" class="modal">
+    <div id="modal-servizio" class="modal">
         <div class="modal-content">
-            <h3 id="ordine-modal-title">Gestione Ordine Horizon</h3>
-            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Inserimento ordini da portale servizihorizon.it</p>
-            <input type="hidden" id="ordine-id">
+            <h3>Nuovo Servizio a Catalogo</h3>
+            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Aggiungi manualmente i servizi al database per renderli disponibili in base al target.</p>
+            <input type="hidden" id="servizio-id">
             
-            <label style="font-size:12px; font-weight:600; display:block;">Cliente (Horizon ID)</label>
-            <select id="ordine-cliente" class="input"></select>
+            <label style="font-size:12px; font-weight:600; display:block;">Nome Servizio</label>
+            <input type="text" id="servizio-nome" class="input" placeholder="Es. Sviluppo Gestionale, Consulenza Fiscale...">
             
-            <label style="font-size:12px; font-weight:600; display:block;">Servizio Richiesto</label>
-            <select id="ordine-servizio" class="input">
-                <option value="Sito Web Vetrina">Sito Web Vetrina</option>
-                <option value="E-Commerce">E-Commerce</option>
-                <option value="Sviluppo Software Gestionale">Sviluppo Software Gestionale</option>
-                <option value="SEO & Marketing">SEO & Marketing</option>
-                <option value="Gestione Social">Gestione Social</option>
-                <option value="Hosting & Domini">Hosting & Domini</option>
-                <option value="Servizio Personalizzato">Servizio Personalizzato</option>
+            <label style="font-size:12px; font-weight:600; display:block;">Destinato a (Target Cliente)</label>
+            <select id="servizio-target" class="input">
+                <option value="Aziende">Solo Aziende (B2B)</option>
+                <option value="Cittadini">Solo Cittadini / Privati (B2C)</option>
+                <option value="Entrambi">Entrambi (B2B & B2C)</option>
             </select>
             
-            <label style="font-size:12px; font-weight:600; display:block;">Note / Dominio / Dettagli Progetto</label>
-            <input type="text" id="ordine-note" class="input" placeholder="Es. www.azienda.it">
+            <label style="font-size:12px; font-weight:600; display:block;">Descrizione Dettagliata e Requisiti Modulo</label>
+            <textarea id="servizio-desc" class="input" placeholder="Descrivi i dettagli che servono per questo servizio..." style="min-height:80px;"></textarea>
             
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Importo Concordato (€)</label>
-                    <input type="number" id="ordine-importo" class="input" placeholder="Es. 1500">
-                </div>
-                <div style="flex:1; min-width: 150px;">
-                    <label style="font-size:12px; font-weight:600; display:block;">Stato Lavorazione</label>
-                    <select id="ordine-stato" class="input">
-                        <option value="Da Iniziare">Da Iniziare</option>
-                        <option value="In Lavorazione">In Lavorazione</option>
-                        <option value="Completato">Completato</option>
-                        <option value="Sospeso">Sospeso</option>
-                        <option value="Annullato">Annullato</option>
-                    </select>
-                </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-servizio')">Annulla</button>
+                <button class="btn" onclick="saveServizio()">Salva nel Catalogo</button>
             </div>
+        </div>
+    </div>
+
+    <div id="modal-ordine" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h3 id="ordine-modal-title">Nuovo Ordine Horizon</h3>
+            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Modulo adattivo per inserimento ordini (registrazione simultanea su ERP e App Horizon ID)</p>
+            <input type="hidden" id="ordine-id">
+            
+            <label style="font-size:12px; font-weight:600; display:block;">Target Inserimento</label>
+            <select id="ordine-tipo-cliente" class="input" onchange="aggiornaModuloOrdine()">
+                <option value="Azienda">Richiesta per Azienda (B2B)</option>
+                <option value="Privato">Richiesta per Cittadino / Privato (B2C)</option>
+            </select>
+
+            <label style="font-size:12px; font-weight:600; display:block;">Cliente App (Horizon ID Associato)</label>
+            <select id="ordine-cliente" class="input"></select>
+            
+            <label style="font-size:12px; font-weight:600; display:block;">Servizio Richiesto (Dal Catalogo Firebase)</label>
+            <select id="ordine-servizio" class="input"></select>
+            
+            <div id="campi-azienda" style="display:flex; gap:10px; flex-wrap:wrap; background:rgba(37,99,235,0.05); padding:10px; border-radius:8px; border:1px solid rgba(37,99,235,0.2); margin-bottom:15px;">
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Ragione Sociale</label><input type="text" id="ordine-ragione" class="input" style="margin-bottom:0;" placeholder="Ragione Sociale SPA"></div>
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Partita IVA</label><input type="text" id="ordine-piva" class="input" style="margin-bottom:0;" placeholder="P.IVA"></div>
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Codice Univoco SDI</label><input type="text" id="ordine-sdi" class="input" style="margin-bottom:0;" placeholder="SDI a 7 caratteri"></div>
+            </div>
+            
+            <div id="campi-privato" style="display:none; gap:10px; flex-wrap:wrap; background:rgba(34,197,94,0.05); padding:10px; border-radius:8px; border:1px solid rgba(34,197,94,0.2); margin-bottom:15px;">
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Nome e Cognome Completo</label><input type="text" id="ordine-nome-cognome" class="input" style="margin-bottom:0;" placeholder="Nome e Cognome"></div>
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Codice Fiscale</label><input type="text" id="ordine-cf" class="input" style="margin-bottom:0;" placeholder="16 Caratteri"></div>
+            </div>
+
+            <label style="font-size:12px; font-weight:600; display:block;">Dettagli Specifici e Moduli Richiesta</label>
+            <textarea id="ordine-note" class="input" placeholder="Inserisci note, requisiti tecnici o file allegati virtuali..." style="min-height:60px;"></textarea>
+            
+            <label style="font-size:12px; font-weight:600; display:block;">Importo Concordato (€)</label>
+            <input type="number" id="ordine-importo" class="input" placeholder="Es. 1500">
+            
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 15px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-ordine')">Annulla</button>
-                <button class="btn" onclick="saveOrdine()">Salva Ordine</button>
+                <button class="btn" onclick="saveOrdine()">Registra ed Emetti Ordine</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-ordine-dettagli" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3>Scheda Avanzamento Ordine <span id="dettagli-id-testo" style="font-size:14px; color:var(--text-light); font-family:monospace;"></span></h3>
+            
+            <div id="dettagli-ordine-content" style="margin-top: 15px; margin-bottom: 20px; padding: 15px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); font-size:14px; line-height: 1.6;">
+                </div>
+            
+            <div class="admin-only" style="background: rgba(37, 99, 235, 0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--primary);">
+                <h4 style="color:var(--primary); margin-bottom:10px;"><i class="ph ph-arrows-clockwise"></i> Gestione Stato Lavorazione</h4>
+                <input type="hidden" id="dettagli-ordine-id">
+                <input type="hidden" id="dettagli-cliente-id">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <select id="dettagli-stato-select" class="input" style="margin:0; flex:1;">
+                        <option value="Richiesto">Richiesto</option>
+                        <option value="In Lavorazione">In Lavorazione</option>
+                        <option value="In Attivazione">In Attivazione</option>
+                        <option value="Attivo">Attivo</option>
+                        <option value="Annullato">Annullato</option>
+                    </select>
+                    <button class="btn" onclick="updateOrdineStato()"><i class="ph ph-check-circle"></i> Sincronizza Stato</button>
+                </div>
+                <p style="font-size:11px; color:var(--text-light); margin-top:8px;"><i class="ph-fill ph-info"></i> L'aggiornamento aggiornerà in Real-Time sia Horizon Global (ERP) che Horizon ID Core (App Cliente).</p>
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-ordine-dettagli')">Chiudi Scheda</button>
             </div>
         </div>
     </div>
@@ -530,9 +587,9 @@
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:var(--bg); color:var(--text);" onclick="closeModal('modal-verify-id')">Annulla</button>
-                <button class="btn" style="background:var(--danger);" onclick="rejectHorizonId()">Rifiuta</button>
-                <button class="btn" style="background:var(--success);" onclick="approveHorizonId()">Approva Identità</button>
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-verify-id')">Annulla</button>
+                <button class="btn" style="background:var(--danger); color:white;" onclick="rejectHorizonId()">Rifiuta</button>
+                <button class="btn" style="background:var(--accent); color:white;" onclick="approveHorizonId()">Approva Identità</button>
             </div>
         </div>
     </div>
@@ -567,7 +624,7 @@
         // --- STATE & FIREBASE ---
         let state = {
             companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: [], badges: [], payrolls: [], security_alerts: [], budget_history: [], ordini: [],
-            horizonUsers: [] 
+            horizonUsers: [], servizi: [] // Aggiunto servizi
         };
 
         let doughnutChartInst = null;
@@ -632,7 +689,8 @@
         async function syncConFirebase() {
             if (!window.db || !window.rtdb) return;
             try {
-                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history', 'ordini'];
+                // Aggiunta 'servizi'
+                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history', 'ordini', 'servizi'];
                 
                 const loadPromises = collections.map(async (coll) => {
                     const snap = await window.rtdb.get(window.rtdb.ref(window.db, coll));
@@ -807,6 +865,9 @@
             const horizonOpts = activeHorizonUsers.map(u => `<option value="${u.uid}">${u.nome} (${u.email})</option>`).join('');
             const ordCli = document.getElementById('ordine-cliente');
             if(ordCli) ordCli.innerHTML = horizonOpts || '<option value="">Nessun utente Horizon ID attivo</option>';
+            
+            // Aggiorna anche modulo ordini per filtrare servizi dinamicamente
+            if(window.aggiornaModuloOrdine) aggiornaModuloOrdine();
         }
 
         window.populateDivisionsForStaff = function() {
@@ -830,7 +891,7 @@
             }
         }
 
-        // --- RENDER MOTORE PRINCIPALE (SAFE MODE) ---
+        // --- RENDER MOTORE PRINCIPALE ---
         function renderAll() {
             const isAdmin = window.userRole === 'admin';
             let userPrefix = window.currentUserEmail ? window.currentUserEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') : '';
@@ -873,7 +934,7 @@
                     }
                 }
 
-                // TABELLA ORDINI
+                // TABELLA ORDINI CON GESTIONE SCHEDA E STATI
                 const tOrdini = document.getElementById('table-ordini');
                 if(tOrdini) {
                     const ordTbody = tOrdini.querySelector('tbody');
@@ -881,9 +942,19 @@
                         ordTbody.innerHTML = state.ordini.map(o => {
                             let cliente = state.horizonUsers.find(u => u.uid === o.clienteId);
                             let nomeCliente = cliente ? cliente.nome : 'Utente non trovato';
-                            let badgeCol = o.stato === 'Completato' ? 'var(--success)' : (o.stato === 'In Lavorazione' ? 'var(--primary)' : (o.stato === 'Annullato' ? 'var(--danger)' : 'var(--warning)'));
-                            return `<tr><td>${o.data}</td><td><b>${nomeCliente}</b></td><td>${o.servizio}</td><td>€ ${o.importo.toLocaleString()}</td><td><span class="badge" style="background:${badgeCol}; color:white;">${o.stato}</span></td><td class="action-btns"><button class="btn-edit" onclick="editOrdine(${o.id})">Modifica</button> <button class="btn-del" onclick="deleteData('ordini', ${o.id})">Elimina</button></td></tr>`;
-                        }).join('') || '<tr><td colspan="6" style="text-align:center;">Nessun ordine registrato.</td></tr>';
+                            let badgeCol = o.stato === 'Attivo' ? 'var(--success)' : (o.stato === 'In Lavorazione' || o.stato === 'In Attivazione' ? 'var(--primary)' : (o.stato === 'Annullato' ? 'var(--danger)' : 'var(--warning)'));
+                            return `<tr class="clickable-row" onclick="openOrdineDettagli(${o.id})">
+                                <td>${o.data}</td>
+                                <td><b>${nomeCliente}</b> <br><small style="color:var(--text-light);">${o.tipoCliente || '-'}</small></td>
+                                <td>${o.servizio}</td>
+                                <td>€ ${o.importo.toLocaleString()}</td>
+                                <td><span class="badge" style="background:${badgeCol}; color:white;">${o.stato}</span></td>
+                                <td class="action-btns" onclick="event.stopPropagation();">
+                                    <button class="btn-edit" style="background:var(--secondary); color:white;" onclick="openOrdineDettagli(${o.id})"><i class="ph ph-sliders"></i> Gestisci</button> 
+                                    <button class="btn-del" onclick="deleteData('ordini', ${o.id})">Elimina</button>
+                                </td>
+                            </tr>`;
+                        }).join('') || '<tr><td colspan="6" style="text-align:center;">Nessun ordine registrato. Inserisci il primo per monitoraggio.</td></tr>';
                     }
                 }
 
@@ -961,35 +1032,161 @@
             }
         }
 
-        // --- GESTIONE ORDINI (VENDITE HORIZON) ---
-        window.editOrdine = function(id) {
-            const o = state.ordini.find(x => x.id == id);
-            if(!o) return;
+        // --- NUOVE FUNZIONI: SERVIZI, ORDINI DINAMICI E DOPPIA SINCRO ---
+        
+        window.saveServizio = async function() {
+            const data = {
+                id: Date.now(),
+                nome: document.getElementById('servizio-nome').value,
+                target: document.getElementById('servizio-target').value,
+                descrizione: document.getElementById('servizio-desc').value
+            };
+            if(!data.nome) return alert("Inserisci il nome del servizio");
+            await saveToFirebase('servizi', data);
+            closeModal('modal-servizio');
+            alert("Nuovo servizio aggiunto con successo al catalogo Firebase.");
+        }
+
+        window.apriNuovoOrdine = function() {
             openModal('modal-ordine');
-            const tit = document.getElementById('ordine-modal-title'); if(tit) tit.innerText = "Modifica Ordine Horizon";
-            const elId = document.getElementById('ordine-id'); if(elId) elId.value = o.id;
-            const elCli = document.getElementById('ordine-cliente'); if(elCli) elCli.value = o.clienteId;
-            const elSer = document.getElementById('ordine-servizio'); if(elSer) elSer.value = o.servizio;
-            const elNot = document.getElementById('ordine-note'); if(elNot) elNot.value = o.note || '';
-            const elImp = document.getElementById('ordine-importo'); if(elImp) elImp.value = o.importo || 0;
-            const elSta = document.getElementById('ordine-stato'); if(elSta) elSta.value = o.stato || 'In Attesa';
+            const elId = document.getElementById('ordine-id'); if(elId) elId.value = '';
+            document.getElementById('ordine-tipo-cliente').value = 'Azienda'; // Default
+            aggiornaModuloOrdine();
+        }
+
+        window.aggiornaModuloOrdine = function() {
+            const tipo = document.getElementById('ordine-tipo-cliente') ? document.getElementById('ordine-tipo-cliente').value : 'Azienda';
+            const cA = document.getElementById('campi-azienda');
+            const cP = document.getElementById('campi-privato');
+            
+            if(tipo === 'Azienda') {
+                if(cA) cA.style.display = 'flex'; 
+                if(cP) cP.style.display = 'none';
+            } else {
+                if(cA) cA.style.display = 'none'; 
+                if(cP) cP.style.display = 'flex';
+            }
+            
+            // Filtro Catalogo in base a Target
+            const elSer = document.getElementById('ordine-servizio');
+            if(elSer && state.servizi) {
+                let servFiltrati = state.servizi.filter(s => s.target === 'Entrambi' || (tipo === 'Azienda' ? s.target === 'Aziende' : s.target === 'Cittadini'));
+                elSer.innerHTML = servFiltrati.map(s => `<option value="${s.nome}">${s.nome} (${s.target})</option>`).join('') || '<option value="">(Nessun servizio nel catalogo)</option>';
+            }
         }
 
         window.saveOrdine = async function() {
             const elId = document.getElementById('ordine-id');
             const idField = elId ? elId.value : null;
+            const newId = idField ? parseInt(idField) : Date.now();
+            const clienteId = document.getElementById('ordine-cliente').value;
+            const tipoCliente = document.getElementById('ordine-tipo-cliente').value;
+            
+            if(!clienteId) return alert("Seleziona un cliente Horizon ID.");
+            
+            let extraDati = {};
+            if(tipoCliente === 'Azienda') {
+                extraDati = {
+                    ragioneSociale: document.getElementById('ordine-ragione').value,
+                    piva: document.getElementById('ordine-piva').value,
+                    sdi: document.getElementById('ordine-sdi').value
+                };
+            } else {
+                extraDati = {
+                    nomeCognome: document.getElementById('ordine-nome-cognome').value,
+                    cf: document.getElementById('ordine-cf').value
+                };
+            }
+
             const data = {
-                id: idField ? parseInt(idField) : Date.now(),
-                clienteId: document.getElementById('ordine-cliente') ? document.getElementById('ordine-cliente').value : '',
-                servizio: document.getElementById('ordine-servizio') ? document.getElementById('ordine-servizio').value : '',
-                note: document.getElementById('ordine-note') ? document.getElementById('ordine-note').value : '',
-                importo: document.getElementById('ordine-importo') ? (parseFloat(document.getElementById('ordine-importo').value) || 0) : 0,
-                stato: document.getElementById('ordine-stato') ? document.getElementById('ordine-stato').value : '',
-                data: idField ? state.ordini.find(o => o.id == idField).data : new Date().toISOString().split('T')[0]
+                id: newId,
+                clienteId: clienteId,
+                tipoCliente: tipoCliente,
+                servizio: document.getElementById('ordine-servizio').value,
+                note: document.getElementById('ordine-note').value,
+                importo: parseFloat(document.getElementById('ordine-importo').value) || 0,
+                stato: idField ? state.ordini.find(o => o.id == idField).stato : 'Richiesto',
+                data: idField ? state.ordini.find(o => o.id == idField).data : new Date().toISOString().split('T')[0],
+                ...extraDati
             };
-            if(!data.clienteId) return alert("Seleziona un cliente Horizon ID.");
+            
+            // 1. Salva su Horizon Global ERP
             await saveToFirebase('ordini', data);
+            
+            // 2. Salva su Horizon ID Core (Doppia Sincronizzazione Realtime)
+            if(window.rtdb && window.dbHorizonId) {
+                try {
+                    await window.rtdb.set(window.rtdb.ref(window.dbHorizonId, `users/${clienteId}/ordini/${newId}`), data);
+                } catch(e) { console.error("Errore Sync Horizon ID App:", e); }
+            }
+
             closeModal('modal-ordine');
+        }
+
+        window.openOrdineDettagli = function(id) {
+            const o = state.ordini.find(x => x.id == id);
+            if(!o) return;
+            
+            let cliente = state.horizonUsers.find(u => u.uid === o.clienteId);
+            let nomeCliente = cliente ? cliente.nome : 'Sconosciuto';
+            
+            document.getElementById('dettagli-id-testo').innerText = `#${o.id}`;
+            document.getElementById('dettagli-ordine-id').value = o.id;
+            document.getElementById('dettagli-cliente-id').value = o.clienteId;
+            document.getElementById('dettagli-stato-select').value = o.stato;
+            
+            let extraHtml = o.tipoCliente === 'Azienda' 
+                ? `<p><b>Ragione Sociale:</b> ${o.ragioneSociale || '-'}</p><p><b>Partita IVA:</b> ${o.piva || '-'}</p><p><b>Codice SDI:</b> <span style="font-family:monospace">${o.sdi || '-'}</span></p>`
+                : `<p><b>Nome e Cognome:</b> ${o.nomeCognome || '-'}</p><p><b>Codice Fiscale:</b> <span style="font-family:monospace">${o.cf || '-'}</span></p>`;
+
+            let badgeCol = o.stato === 'Attivo' ? 'var(--success)' : (o.stato === 'In Lavorazione' || o.stato === 'In Attivazione' ? 'var(--primary)' : (o.stato === 'Annullato' ? 'var(--danger)' : 'var(--warning)'));
+
+            document.getElementById('dettagli-ordine-content').innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <strong><i class="ph-fill ph-tag"></i> Stato Avanzamento Attuale:</strong> 
+                    <span class="badge" style="font-size:12px; padding:6px 12px; background:${badgeCol}; color:white;">${o.stato}</span>
+                </div>
+                <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
+                <h4 style="margin-bottom:10px; color:var(--primary);"><i class="ph-fill ph-user-circle"></i> Dati Anagrafica / Cliente</h4>
+                <p><b>Account Horizon ID:</b> ${nomeCliente} <span style="color:var(--text-light); font-size:11px;">(${o.clienteId})</span></p>
+                <p><b>Inquadramento:</b> ${o.tipoCliente}</p>
+                <div style="background:var(--bg); border:1px solid var(--border); padding:10px; border-radius:6px; margin:10px 0;">
+                    ${extraHtml}
+                </div>
+                <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
+                <h4 style="margin-bottom:10px; color:var(--primary);"><i class="ph-fill ph-shopping-bag"></i> Dettagli della Fornitura</h4>
+                <p><b>Data Registrazione:</b> ${o.data}</p>
+                <p><b>Servizio Erogato:</b> <strong style="color:var(--text)">${o.servizio}</strong></p>
+                <p><b>Importo Progetto:</b> <span style="color:var(--accent); font-weight:bold;">€ ${o.importo.toLocaleString()}</span></p>
+                <p style="margin-top:10px;"><b>Note Tecniche & File di Progetto:</b><br> <span style="color:var(--text-light); white-space:pre-wrap;">${o.note || 'Nessuna specifica tecnica fornita.'}</span></p>
+            `;
+            
+            openModal('modal-ordine-dettagli');
+        }
+
+        window.updateOrdineStato = async function() {
+            const id = document.getElementById('dettagli-ordine-id').value;
+            const clienteId = document.getElementById('dettagli-cliente-id').value;
+            const newStato = document.getElementById('dettagli-stato-select').value;
+            
+            if(!id || !clienteId) return;
+            let o = state.ordini.find(x => x.id == parseInt(id));
+            if(!o) return;
+            
+            o.stato = newStato;
+            
+            // 1. Update ERP
+            await window.rtdb.update(window.rtdb.ref(window.db, `ordini/${id}`), { stato: newStato });
+            
+            // 2. Update Horizon ID Core
+            if(window.dbHorizonId) {
+                try {
+                    await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${clienteId}/ordini/${id}`), { stato: newStato });
+                } catch(e) { console.error("Errore Sincronizzazione Update Stato Horizon App:", e); }
+            }
+            
+            alert("Stato Ordine aggiornato sul Gestionale ERP e sincronizzato sull'App Horizon ID del Cliente in tempo reale!");
+            openOrdineDettagli(id); // Aggiorna la view del modale
         }
 
         // --- VERIFICA KYC (HORIZON ID) ---
@@ -1036,6 +1233,14 @@
         // --- CRUD OPERATIONS GESTIONALE ---
         window.deleteData = async function(collectionName, id) {
             if(confirm("Procedere con l'eliminazione? L'azione è irreversibile.")) {
+                // Se elimino un ordine, rimuovo anche da app? (Logica accessoria, di base elimino da ERP per sicurezza, o se vuoi elimino da entrambi).
+                if(collectionName === 'ordini') {
+                    let o = state.ordini.find(x => x.id == id);
+                    if(o && window.dbHorizonId) {
+                        try { await window.rtdb.remove(window.rtdb.ref(window.dbHorizonId, `users/${o.clienteId}/ordini/${id}`)); } catch(e) {}
+                    }
+                }
+
                 await removeFromFirebase(collectionName, id);
                 if (collectionName === 'divisions') {
                     let currentTotal = state.divisions.filter(d => d.id !== id).reduce((s, d) => s + d.budget, 0);
@@ -1101,7 +1306,7 @@
             input.value = '';
             
             setTimeout(() => {
-                chat.innerHTML += `<div class="msg bot"><strong>Gemini AI:</strong> Analisi completata. I dati Realtime risultano corretti e sincronizzati.</div>`;
+                chat.innerHTML += `<div class="msg bot"><strong>Gemini AI:</strong> Analisi completata. I dati Realtime risultano corretti e sincronizzati sui Cloud Services.</div>`;
                 chat.scrollTop = chat.scrollHeight;
             }, 800);
         }

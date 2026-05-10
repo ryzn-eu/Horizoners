@@ -189,7 +189,7 @@
             
             <a class="nav-link" onclick="nav('ordini', this)"><span><i class="ph ph-shopping-cart"></i> Ordini & Servizi Horizon</span></a>
             
-            <a class="nav-link admin-only" onclick="nav('docs', this)"><span><i class="ph ph-files"></i> Documenti & Finanza</span></a>
+            <a class="nav-link" onclick="nav('docs', this)"><span><i class="ph ph-files"></i> Documenti & Finanza</span></a>
             <a class="nav-link" onclick="nav('tasks', this)"><span><i class="ph ph-check-square"></i> Task & Ticket</span></a>
 
             <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin: 20px 0 5px 10px;">Ecosistema Esterno</div>
@@ -343,7 +343,7 @@
             </div>
             <div class="card">
                 <table id="table-payrolls">
-                    <thead><tr><th>Periodo</th><th>Dipendente</th><th>Importo</th><th>IBAN Bonifico</th><th>Stato</th><th>Azioni</th></tr></thead>
+                    <thead><tr><th>Periodo</th><th>Dipendente</th><th>Importo</th><th>IBAN Bonifico</th><th>Stato</th><th>Documento PDF</th><th>Azioni</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -382,15 +382,15 @@
             </div>
         </section>
 
-        <section id="view-docs" class="view admin-only">
+        <section id="view-docs" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2>Amministrazione, Fatture & Uploads</h2>
                 <button class="btn admin-only" onclick="openModal('modal-doc')"><i class="ph ph-plus"></i> Inserisci Documento</button>
             </div>
-            <div class="grid" id="finance-summary"></div>
+            <div class="grid admin-only" id="finance-summary"></div>
             <div class="card">
                 <table id="table-docs">
-                    <thead><tr><th>Data</th><th>Descrizione</th><th>Azienda Rif.</th><th>Importo</th><th>Tipo</th><th>File</th><th>Azioni</th></tr></thead>
+                    <thead><tr><th>Data</th><th>Descrizione</th><th>Azienda Rif.</th><th>Importo</th><th>Tipo</th><th>File / Download</th><th>Azioni</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -602,14 +602,49 @@
         </div>
     </div>
 
-    <div id="modal-payroll" class="modal"><div class="modal-content"><h3>Busta Paga</h3><input type="hidden" id="pay-id"><select id="pay-staff" class="input"></select><input type="month" id="pay-month" class="input"><input type="number" id="pay-amount" class="input"><select id="pay-status" class="input"><option>In Elaborazione</option><option>Bonifico Emesso</option></select><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-payroll')">Annulla</button><button class="btn" onclick="savePayroll()">Salva</button></div></div></div>
+    <div id="modal-payroll" class="modal">
+        <div class="modal-content">
+            <h3>Busta Paga</h3>
+            <input type="hidden" id="pay-id">
+            <select id="pay-staff" class="input"></select>
+            <input type="month" id="pay-month" class="input">
+            <input type="number" id="pay-amount" class="input" placeholder="Importo Netto">
+            <select id="pay-status" class="input">
+                <option>In Elaborazione</option>
+                <option>Bonifico Emesso</option>
+            </select>
+            <label style="font-size:12px; font-weight:600; display:block;">File Busta Paga (PDF/Img)</label>
+            <input type="file" id="pay-file" class="input" accept=".pdf,image/*">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-payroll')">Annulla</button>
+                <button class="btn" onclick="savePayroll()">Salva Documento</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-doc" class="modal">
+        <div class="modal-content">
+            <h3 id="doc-modal-title">Documento / Fattura</h3>
+            <input type="hidden" id="doc-id">
+            <input type="text" id="doc-title" class="input" placeholder="Titolo/Descrizione Documento">
+            <input type="number" id="doc-amount" class="input" placeholder="Importo Transazione">
+            <select id="doc-type" class="input"><option value="entrata">Incasso</option><option value="uscita">Spesa</option></select>
+            <select id="doc-company" class="input"></select>
+            <label style="font-size:12px; font-weight:600; display:block;">Carica File Fattura/Doc (PDF/Img)</label>
+            <input type="file" id="doc-file-upload" class="input" accept=".pdf,image/*">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-doc')">Annulla</button>
+                <button class="btn" onclick="saveDocument()">Salva Fattura</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-badge" class="modal"><div class="modal-content"><h3>Codice App Badge</h3><select id="badge-staff" class="input"></select><input type="text" id="badge-code" class="input" placeholder="PIN"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-badge')">Annulla</button><button class="btn" onclick="saveBadge()">Salva</button></div></div></div>
     <div id="modal-staff" class="modal"><div class="modal-content"><h3 id="staff-modal-title">Gestione Dipendente HR</h3><input type="hidden" id="staff-id"><div style="display:flex; gap:10px;"><input type="text" id="staff-name" class="input" placeholder="Nome"><input type="text" id="staff-role" class="input" placeholder="Ruolo"></div><div style="display:flex; gap:10px;"><select id="staff-company" class="input" onchange="populateDivisionsForStaff()"></select><select id="staff-div" class="input"></select></div><div style="display:flex; gap:10px;"><input type="number" id="staff-eff" class="input" placeholder="Efficienza %"><select id="staff-machine" class="input"><option>Nessuno</option><option>Grado mAf</option><option>Eolo fFk9</option><option>Entrambe</option></select></div><div style="display:flex; gap:10px;"><input type="text" id="staff-cf" class="input" placeholder="CF"><input type="text" id="staff-ci" class="input" placeholder="CI"><input type="text" id="staff-ts" class="input" placeholder="TS"></div><input type="text" id="staff-indirizzo" class="input" placeholder="Indirizzo"><div style="display:flex; gap:10px;"><input type="date" id="staff-dataNascita" class="input"><input type="text" id="staff-luogoNascita" class="input" placeholder="Luogo Nascita"></div><input type="text" id="staff-iban" class="input" placeholder="IBAN"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-staff')">Chiudi</button><button id="btn-save-staff" class="btn admin-only" onclick="saveStaff()">Salva Profilo</button></div></div></div>
     <div id="modal-azienda" class="modal"><div class="modal-content"><h3 id="azienda-modal-title">Azienda</h3><input type="hidden" id="azienda-id"><input type="text" id="azienda-name" class="input" placeholder="Nome"><input type="number" id="azienda-cap" class="input" placeholder="Capitale"><input type="number" id="azienda-proj" class="input" placeholder="Progetti"><input type="number" id="azienda-eff" class="input" placeholder="Efficienza %"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-azienda')">Annulla</button><button class="btn" onclick="saveAzienda()">Salva</button></div></div></div>
     <div id="modal-div" class="modal"><div class="modal-content"><h3 id="div-modal-title">Divisione</h3><input type="hidden" id="div-id"><input type="text" id="div-name" class="input" placeholder="Nome"><select id="div-company" class="input"></select><input type="number" id="div-budget" class="input" placeholder="Budget"><input type="number" id="div-eff" class="input" placeholder="Efficienza %"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-div')">Annulla</button><button class="btn" onclick="saveDivision()">Salva</button></div></div></div>
     <div id="modal-task" class="modal"><div class="modal-content"><h3 id="task-modal-title">Task</h3><input type="hidden" id="task-id"><input type="text" id="task-title" class="input"><select id="task-staff" class="input"></select><select id="task-prio" class="input"><option>Bassa</option><option>Media</option><option>Alta</option></select><select id="task-status" class="input"><option>Da Iniziare</option><option>In Lavorazione</option><option>Completato</option></select><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-task')">Annulla</button><button class="btn" onclick="saveTask()">Salva</button></div></div></div>
     <div id="modal-timbratura" class="modal"><div class="modal-content"><h3>Timbratura</h3><select id="timb-staff" class="input"></select><select id="timb-type" class="input"><option>Ingresso</option><option>Uscita</option></select><input type="datetime-local" id="timb-time" class="input"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-timbratura')">Annulla</button><button class="btn" onclick="saveTimbratura()">Forza</button></div></div></div>
-    <div id="modal-doc" class="modal"><div class="modal-content"><h3 id="doc-modal-title">Documento</h3><input type="hidden" id="doc-id"><input type="text" id="doc-title" class="input"><input type="number" id="doc-amount" class="input"><select id="doc-type" class="input"><option value="entrata">Incasso</option><option value="uscita">Spesa</option></select><select id="doc-company" class="input"></select><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-doc')">Annulla</button><button class="btn" onclick="saveDocument()">Salva</button></div></div></div>
 
     <script>
         // --- UI LOGIN & ROUTING ---
@@ -627,6 +662,22 @@
         function toggleNotifiche() {
             const panel = document.getElementById('notif-panel');
             if(panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // --- UPLOAD FUNZIONE GLOBALE (CLOUDINARY) ---
+        window.uploadToCloudinary = async function(file, folderName) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'horizon_docs');
+            if(folderName) formData.append('folder', folderName);
+            
+            const res = await fetch(`https://api.cloudinary.com/v1_1/dxblnwvuq/auto/upload`, { 
+                method: 'POST', 
+                body: formData 
+            });
+            const data = await res.json();
+            if(data.error) throw new Error(data.error.message);
+            return data.secure_url;
         }
 
         // --- STATE & FIREBASE ---
@@ -860,7 +911,6 @@
             const m = document.getElementById(id);
             if(m) {
                 m.classList.remove('active'); 
-                // Spegniamo il video se stiamo chiudendo la verifica
                 if(id === 'modal-verify-id') {
                     const vid = document.getElementById('verify-video');
                     if(vid) vid.pause();
@@ -880,7 +930,6 @@
             const ordCli = document.getElementById('ordine-cliente');
             if(ordCli) ordCli.innerHTML = horizonOpts || '<option value="">Nessun utente Horizon ID attivo</option>';
             
-            // Aggiorna anche modulo ordini per filtrare servizi dinamicamente
             if(window.aggiornaModuloOrdine) aggiornaModuloOrdine();
         }
 
@@ -1006,7 +1055,12 @@
                 const tAz = document.getElementById('table-aziende'); if(tAz && tAz.querySelector('tbody')) tAz.querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td>${c.eff}%</td><td><span class="badge" style="background:var(--accent); color:white;">Attiva</span></td><td class="action-btns"><button class="btn-edit" onclick="editAzienda(${c.id})">Mod</button> <button class="btn-del" onclick="deleteData('companies', ${c.id})">Del</button></td></tr>`).join('');
                 const tDiv = document.getElementById('table-divs'); if(tDiv && tDiv.querySelector('tbody')) tDiv.querySelector('tbody').innerHTML = state.divisions.map(d => `<tr><td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td><td class="action-btns"><button class="btn-edit" onclick="editDivision(${d.id})">Mod</button> <button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button></td></tr>`).join('');
                 const tBad = document.getElementById('table-badges'); if(tBad && tBad.querySelector('tbody')) tBad.querySelector('tbody').innerHTML = state.badges.map(b => `<tr><td><b>${getStaffName(b.staffId)}</b></td><td style="font-family: monospace; color: var(--primary); font-size: 16px;">${b.accessCode}</td><td>${new Date(b.createdAt).toLocaleDateString()}</td><td><span style="font-family:monospace; font-size:11px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${b.deviceId ? b.deviceId : 'Non ancora associato'}</span></td><td><span class="badge" style="background:var(--accent); color:white;">Attivo</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('badges', ${b.id})">Revoca App</button></td></tr>`).join('');
-                const tPay = document.getElementById('table-payrolls'); if(tPay && tPay.querySelector('tbody')) tPay.querySelector('tbody').innerHTML = state.payrolls.sort((a,b)=>new Date(b.month)-new Date(a.month)).map(p => `<tr><td><b>${p.month}</b></td><td>${getStaffName(p.staffId)}</td><td>€ ${parseFloat(p.amount).toLocaleString()}</td><td style="font-family:monospace; font-size:12px;">${getStaffIban(p.staffId)}</td><td><span class="badge" style="background:${p.status === 'Bonifico Emesso' ? 'var(--success)' : 'var(--warning)'}; color:white;">${p.status}</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('payrolls', ${p.id})">Del</button></td></tr>`).join('');
+                
+                // PAYROLLS - Vista Admin
+                const tPay = document.getElementById('table-payrolls'); 
+                if(tPay && tPay.querySelector('tbody')) {
+                    tPay.querySelector('tbody').innerHTML = state.payrolls.sort((a,b)=>new Date(b.month)-new Date(a.month)).map(p => `<tr><td><b>${p.month}</b></td><td>${getStaffName(p.staffId)}</td><td>€ ${parseFloat(p.amount).toLocaleString()}</td><td style="font-family:monospace; font-size:12px;">${getStaffIban(p.staffId)}</td><td><span class="badge" style="background:${p.status === 'Bonifico Emesso' ? 'var(--success)' : 'var(--warning)'}; color:white;">${p.status}</span></td><td>${p.fileUrl ? `<a href="${p.fileUrl}" target="_blank" class="badge" style="background:var(--primary); color:white; text-decoration:none;"><i class="ph-fill ph-download-simple"></i> Scarica</a>` : '<span style="font-size:11px; color:var(--text-light)">Nessun file</span>'}</td><td class="action-btns"><button class="btn-del" onclick="deleteData('payrolls', ${p.id})">Del</button></td></tr>`).join('');
+                }
                 
                 const tStaff = document.getElementById('table-staff'); if(tStaff && tStaff.querySelector('tbody')) tStaff.querySelector('tbody').innerHTML = state.staff.map(s => `<tr><td><b>${s.name}</b></td><td>${s.role}</td><td>${getCompanyName(s.companyId)}</td><td><span style="color:var(--success); font-weight:800;">${s.eff || 100}%</span></td><td><span class="badge" style="background:var(--secondary); color:white;">${s.machineAccess || 'Nessuno'}</span></td><td><span class="badge" style="background:var(--primary); color:white;">${s.status}</span></td><td class="action-btns"><button class="btn-edit" onclick="editStaff(${s.id})">Modifica</button> <button class="btn-del" onclick="deleteData('staff', ${s.id})">Del</button></td></tr>`).join('');
 
@@ -1014,9 +1068,39 @@
                 const stDesc = document.getElementById('staff-page-desc'); if(stDesc) stDesc.innerText = "Gestione completa dei dipendenti e dei dati fiscali/bancari.";
 
             } else {
+                // UTENTE STAFF / DIPENDENTE
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
                 const sAv = document.getElementById('staff-admin-view'); if(sAv) sAv.style.display = 'none';
-                const sUv = document.getElementById('staff-user-view'); if(sUv) { sUv.style.display = 'block'; sUv.innerHTML = myStaffRecord ? `<div class="card"><h3>Profilo Operativo: ${myStaffRecord.name}</h3><p>Ruolo: ${myStaffRecord.role}</p></div>` : `<div class="card"><p>Nessun profilo assegnato.</p></div>`; }
+                
+                const sUv = document.getElementById('staff-user-view'); 
+                if(sUv) { 
+                    sUv.style.display = 'block'; 
+                    if(myStaffRecord) {
+                        let myPayrolls = state.payrolls.filter(p => p.staffId == myStaffRecord.id).sort((a,b)=>new Date(b.month)-new Date(a.month));
+                        let payrollHtml = myPayrolls.map(p => `
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; margin-bottom:10px;">
+                                <div>
+                                    <strong style="display:block;">Busta Paga: ${p.month}</strong>
+                                    <span style="font-size:12px; color:var(--text-light);">Importo: € ${parseFloat(p.amount).toLocaleString()} | Stato: ${p.status}</span>
+                                </div>
+                                ${p.fileUrl ? `<a href="${p.fileUrl}" target="_blank" class="btn" style="padding:6px 12px; font-size:12px; text-decoration:none; display:inline-flex; width:auto;"><i class="ph ph-download-simple"></i> Scarica PDF</a>` : '<span style="font-size:11px; color:var(--text-light)">File non disp.</span>'}
+                            </div>
+                        `).join('');
+
+                        sUv.innerHTML = `
+                            <div class="card" style="margin-bottom:20px;">
+                                <h3>Profilo Operativo: ${myStaffRecord.name}</h3>
+                                <p style="font-size:14px; color:var(--text-light); margin-top:5px;">Ruolo: ${myStaffRecord.role}</p>
+                            </div>
+                            <div class="card">
+                                <h3 style="margin-bottom:15px;"><i class="ph-fill ph-money"></i> Le mie Buste Paga</h3>
+                                ${payrollHtml || '<p style="font-size:13px; color:var(--text-light)">Nessuna busta paga presente.</p>'}
+                            </div>
+                        `;
+                    } else {
+                        sUv.innerHTML = `<div class="card"><p>Nessun profilo assegnato.</p></div>`; 
+                    }
+                }
                 const bNs = document.getElementById('btn-new-staff'); if(bNs) bNs.style.display = 'none';
             }
 
@@ -1038,16 +1122,18 @@
                 }).join('');
             }
 
-            if(isAdmin) {
-                let totalIn = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + d.amount, 0);
-                let totalOut = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + d.amount, 0);
-                const fSum = document.getElementById('finance-summary'); if(fSum) fSum.innerHTML = `<div class="card"><div class="card-title">Incassi</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div><div class="card"><div class="card-title">Uscite</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>`;
-                const tDocs = document.getElementById('table-docs'); if(tDocs && tDocs.querySelector('tbody')) tDocs.querySelector('tbody').innerHTML = state.documents.map(d => `<tr><td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td><td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td><td>${d.file ? `📎` : '-'}</td><td class="action-btns"><button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button></td></tr>`).join('');
+            // DOCUMENTI E FATTURE (Visibili a Staff in Lettura)
+            let totalIn = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + d.amount, 0);
+            let totalOut = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + d.amount, 0);
+            const fSum = document.getElementById('finance-summary'); if(fSum) fSum.innerHTML = `<div class="card"><div class="card-title">Incassi</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div><div class="card"><div class="card-title">Uscite</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>`;
+            
+            const tDocs = document.getElementById('table-docs'); 
+            if(tDocs && tDocs.querySelector('tbody')) {
+                tDocs.querySelector('tbody').innerHTML = state.documents.map(d => `<tr><td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td><td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td><td>${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="badge" style="background:var(--primary); color:white; text-decoration:none;"><i class="ph-fill ph-file-pdf"></i> Apri / Scarica</a>` : '-'}</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button>` : '-'}</td></tr>`).join('');
             }
         }
 
-        // --- NUOVE FUNZIONI: SERVIZI, ORDINI DINAMICI E DOPPIA SINCRO ---
-        
+        // --- NUOVE FUNZIONI: SERVIZI E ORDINI ---
         window.saveServizio = async function() {
             const data = {
                 id: Date.now(),
@@ -1081,7 +1167,6 @@
                 if(cP) cP.style.display = 'flex';
             }
             
-            // Filtro Catalogo in base a Target
             const elSer = document.getElementById('ordine-servizio');
             if(elSer && state.servizi) {
                 let servFiltrati = state.servizi.filter(s => s.target === 'Entrambi' || (tipo === 'Azienda' ? s.target === 'Aziende' : s.target === 'Cittadini'));
@@ -1124,10 +1209,8 @@
                 ...extraDati
             };
             
-            // 1. Salva su Horizon Global ERP
             await saveToFirebase('ordini', data);
             
-            // 2. Salva su Horizon ID Core (Doppia Sincronizzazione Realtime)
             if(window.rtdb && window.dbHorizonId) {
                 try {
                     await window.rtdb.set(window.rtdb.ref(window.dbHorizonId, `users/${clienteId}/ordini/${newId}`), data);
@@ -1189,10 +1272,8 @@
             
             o.stato = newStato;
             
-            // 1. Update ERP
             await window.rtdb.update(window.rtdb.ref(window.db, `ordini/${id}`), { stato: newStato });
             
-            // 2. Update Horizon ID Core
             if(window.dbHorizonId) {
                 try {
                     await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${clienteId}/ordini/${id}`), { stato: newStato });
@@ -1200,7 +1281,7 @@
             }
             
             alert("Stato Ordine aggiornato sul Gestionale ERP e sincronizzato sull'App Horizon ID del Cliente in tempo reale!");
-            openOrdineDettagli(id); // Aggiorna la view del modale
+            openOrdineDettagli(id); 
         }
 
         // --- VERIFICA KYC (HORIZON ID) CON VIDEO ---
@@ -1330,15 +1411,45 @@
         window.savePayroll = async function() {
             const elId = document.getElementById('pay-id');
             const idField = elId ? elId.value : null;
+            const fileInput = document.getElementById('pay-file');
+            
+            const btn = document.querySelector('#modal-payroll .btn:last-child');
+            const origText = btn.innerText;
+            btn.innerHTML = `<i class="ph ph-spinner ph-spin"></i> Upload...`;
+            btn.disabled = true;
+
+            let fileUrl = idField && state.payrolls.find(p => p.id == idField)?.fileUrl ? state.payrolls.find(p => p.id == idField).fileUrl : '';
+
+            if (fileInput && fileInput.files[0]) {
+                try {
+                    fileUrl = await window.uploadToCloudinary(fileInput.files[0], 'Buste paga');
+                } catch(e) {
+                    alert("Errore upload Busta Paga: " + e.message);
+                    btn.innerHTML = origText;
+                    btn.disabled = false;
+                    return;
+                }
+            }
+
             const data = {
                 id: idField ? parseInt(idField) : Date.now(),
                 staffId: document.getElementById('pay-staff') ? parseInt(document.getElementById('pay-staff').value) : 0,
                 month: document.getElementById('pay-month') ? document.getElementById('pay-month').value : '',
                 amount: document.getElementById('pay-amount') ? (parseFloat(document.getElementById('pay-amount').value) || 0) : 0,
-                status: document.getElementById('pay-status') ? document.getElementById('pay-status').value : ''
+                status: document.getElementById('pay-status') ? document.getElementById('pay-status').value : '',
+                fileUrl: fileUrl
             };
-            if(!data.month) return alert("Seleziona il mese.");
+            if(!data.month) {
+                alert("Seleziona il mese.");
+                btn.innerHTML = origText;
+                btn.disabled = false;
+                return;
+            }
             await saveToFirebase('payrolls', data);
+            
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            if(fileInput) fileInput.value = '';
             closeModal('modal-payroll');
         }
 
@@ -1482,15 +1593,42 @@
         window.saveDocument = async function() {
             const elId = document.getElementById('doc-id');
             const idField = elId ? elId.value : null;
-            await saveToFirebase('documents', { 
+            const fileInput = document.getElementById('doc-file-upload');
+            
+            const btn = document.querySelector('#modal-doc .btn:last-child');
+            const origText = btn.innerText;
+            btn.innerHTML = `<i class="ph ph-spinner ph-spin"></i> Upload...`;
+            btn.disabled = true;
+
+            let fileUrl = idField && state.documents.find(d => d.id == idField)?.fileUrl ? state.documents.find(d => d.id == idField).fileUrl : '';
+
+            if (fileInput && fileInput.files[0]) {
+                try {
+                    fileUrl = await window.uploadToCloudinary(fileInput.files[0], 'Fatture');
+                } catch(e) {
+                    alert("Errore upload Documento: " + e.message);
+                    btn.innerHTML = origText;
+                    btn.disabled = false;
+                    return;
+                }
+            }
+
+            const data = { 
                 id: idField ? parseInt(idField) : Date.now(), 
-                date: new Date().toISOString().split('T')[0], 
+                date: idField && state.documents.find(d => d.id == idField) ? state.documents.find(d => d.id == idField).date : new Date().toISOString().split('T')[0], 
                 title: document.getElementById('doc-title') ? document.getElementById('doc-title').value : '', 
                 amount: document.getElementById('doc-amount') ? (parseFloat(document.getElementById('doc-amount').value) || 0) : 0, 
                 type: document.getElementById('doc-type') ? document.getElementById('doc-type').value : '', 
                 companyId: document.getElementById('doc-company') ? parseInt(document.getElementById('doc-company').value) : 0, 
-                file: document.getElementById('doc-file') && document.getElementById('doc-file').value ? true : false 
-            });
+                fileUrl: fileUrl,
+                file: fileUrl ? true : false 
+            };
+            
+            await saveToFirebase('documents', data);
+            
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            if(fileInput) fileInput.value = '';
             closeModal('modal-doc');
         }
 

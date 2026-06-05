@@ -139,6 +139,18 @@
         .detail-label { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 4px; display: block; }
         .detail-value { font-size: 14px; color: var(--text); font-weight: 500; }
         
+        /* Stili aggiunti per Archivio Cloud */
+        .cloud-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 160px;}
+        .cloud-item:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .cloud-icon { font-size: 48px; margin-bottom: 10px; }
+        .cloud-folder-icon { color: #F59E0B; }
+        .cloud-file-icon { color: var(--primary); }
+        .cloud-title { font-size: 14px; font-weight: 600; color: var(--text); word-break: break-all; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .cloud-meta { font-size: 11px; color: var(--text-light); margin-top: 5px; }
+        .cloud-action-btn { position: absolute; top: 10px; right: 10px; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.2s; z-index: 10; }
+        .cloud-item:hover .cloud-action-btn { opacity: 1; }
+        .cloud-action-btn:hover { background: var(--danger); color: white; }
+        
         @media (max-width: 768px) {
             .mobile-menu-btn { display: block; margin-right: 15px; }
             .sidebar { position: fixed; left: -280px; top: 0; bottom: 0; transition: left 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 1001; }
@@ -155,6 +167,7 @@
             .btn { font-size: 13px; padding: 8px 12px; }
             .modal-content { padding: 20px; width: 100%; margin: 10px;}
             table { min-width: 500px; }
+            .cloud-action-btn { opacity: 1; } /* always show on mobile */
         }
     </style>
 </head>
@@ -200,6 +213,7 @@
             <a class="nav-link" onclick="nav('ordini', this)"><span><i class="ph ph-shopping-cart"></i> Ordini & Servizi Horizon</span></a>
             
             <a class="nav-link" onclick="nav('docs', this)"><span><i class="ph ph-files"></i> Documenti & Finanza</span></a>
+            <a class="nav-link" onclick="nav('cloud', this)"><span><i class="ph ph-cloud"></i> Archivio Cloud</span> <i class="ph-fill ph-circle" style="color:var(--primary); font-size:8px;"></i></a>
             <a class="nav-link" onclick="nav('tasks', this)"><span><i class="ph ph-check-square"></i> Task & Ticket</span></a>
 
             <div style="font-size: 10px; color: #64748B; text-transform: uppercase; margin: 20px 0 5px 10px;">Ecosistema Esterno</div>
@@ -435,6 +449,25 @@
                 </table>
             </div>
         </section>
+        
+        <section id="view-cloud" class="view">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <div>
+                    <h2>Archivio Cloud Condiviso</h2>
+                    <div id="cloud-breadcrumb" style="font-size: 13px; color: var(--primary); font-weight: 500; margin-top:5px; cursor:pointer;">
+                        <span onclick="openCloudFolder(null)"><i class="ph-fill ph-house"></i> Root Principale</span> <span id="cloud-breadcrumb-active"></span>
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Archivio documentale interno. Sincronizzato con Cloudinary (Dir: Fatture).</p>
+                </div>
+                <div class="admin-only" style="display:flex; gap:10px;">
+                    <button class="btn" id="btn-cloud-folder" onclick="openModal('modal-cloud-folder')"><i class="ph ph-folder-plus"></i> Nuova Cartella</button>
+                    <button class="btn" id="btn-cloud-upload" onclick="openModal('modal-cloud-file')" style="display:none;"><i class="ph ph-upload-simple"></i> Carica File Qui</button>
+                </div>
+            </div>
+            
+            <div id="cloud-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
+                </div>
+        </section>
 
         <section id="view-tasks" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
@@ -510,10 +543,7 @@
     <div id="modal-dettaglio-servizio" class="modal">
         <div class="modal-content modal-content-lg">
             <h3>Scheda Dettaglio: Richiesta Servizio <span id="ds-id" style="font-size:14px; color:var(--text-light); font-family:monospace;"></span></h3>
-            
-            <div id="dettaglio-servizio-content" style="margin-top: 15px; margin-bottom: 20px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); padding: 20px;">
-                </div>
-            
+            <div id="dettaglio-servizio-content" style="margin-top: 15px; margin-bottom: 20px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); padding: 20px;"></div>
             <div class="admin-only" style="background: rgba(37, 99, 235, 0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--primary);">
                 <h4 style="color:var(--primary); margin-bottom:10px;"><i class="ph ph-arrows-clockwise"></i> Gestione Stato Richiesta</h4>
                 <input type="hidden" id="ds-target-id">
@@ -529,7 +559,6 @@
                     <button class="btn" onclick="updateStatoServizio()"><i class="ph ph-check-circle"></i> Aggiorna Stato</button>
                 </div>
             </div>
-            
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-dettaglio-servizio')">Chiudi Scheda</button>
             </div>
@@ -539,10 +568,7 @@
     <div id="modal-dettaglio-candidatura" class="modal">
         <div class="modal-content modal-content-lg">
             <h3>Scheda Profilo Candidato <span id="dc-id" style="font-size:14px; color:var(--text-light); font-family:monospace;"></span></h3>
-            
-            <div id="dettaglio-candidatura-content" style="margin-top: 15px; margin-bottom: 20px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); padding: 20px;">
-                </div>
-            
+            <div id="dettaglio-candidatura-content" style="margin-top: 15px; margin-bottom: 20px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); padding: 20px;"></div>
             <div class="admin-only" style="background: rgba(34, 197, 94, 0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--success);">
                 <h4 style="color:var(--success); margin-bottom:10px;"><i class="ph ph-arrows-clockwise"></i> Iter di Selezione HR</h4>
                 <input type="hidden" id="dc-target-id">
@@ -558,7 +584,6 @@
                     <button class="btn" style="background:var(--success);" onclick="updateStatoCandidatura()"><i class="ph ph-check-circle"></i> Aggiorna Iter</button>
                 </div>
             </div>
-            
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-dettaglio-candidatura')">Chiudi Scheda</button>
             </div>
@@ -570,20 +595,16 @@
             <h3>Nuovo Servizio a Catalogo</h3>
             <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Aggiungi manualmente i servizi al database per renderli disponibili in base al target.</p>
             <input type="hidden" id="servizio-id">
-            
             <label style="font-size:12px; font-weight:600; display:block;">Nome Servizio</label>
             <input type="text" id="servizio-nome" class="input" placeholder="Es. Sviluppo Gestionale, Consulenza Fiscale...">
-            
             <label style="font-size:12px; font-weight:600; display:block;">Destinato a (Target Cliente)</label>
             <select id="servizio-target" class="input">
                 <option value="Aziende">Solo Aziende (B2B)</option>
                 <option value="Cittadini">Solo Cittadini / Privati (B2C)</option>
                 <option value="Entrambi">Entrambi (B2B & B2C)</option>
             </select>
-            
             <label style="font-size:12px; font-weight:600; display:block;">Descrizione Dettagliata e Requisiti Modulo</label>
             <textarea id="servizio-desc" class="input" placeholder="Descrivi i dettagli che servono per questo servizio..." style="min-height:80px;"></textarea>
-            
             <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-servizio')">Annulla</button>
                 <button class="btn" onclick="saveServizio()">Salva nel Catalogo</button>
@@ -596,36 +617,28 @@
             <h3 id="ordine-modal-title">Nuovo Ordine Horizon</h3>
             <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Modulo adattivo per inserimento ordini (registrazione simultanea su ERP e App Horizon ID)</p>
             <input type="hidden" id="ordine-id">
-            
             <label style="font-size:12px; font-weight:600; display:block;">Target Inserimento</label>
             <select id="ordine-tipo-cliente" class="input" onchange="aggiornaModuloOrdine()">
                 <option value="Azienda">Richiesta per Azienda (B2B)</option>
                 <option value="Privato">Richiesta per Cittadino / Privato (B2C)</option>
             </select>
-
             <label style="font-size:12px; font-weight:600; display:block;">Cliente App (Horizon ID Associato)</label>
             <select id="ordine-cliente" class="input"></select>
-            
             <label style="font-size:12px; font-weight:600; display:block;">Servizio Richiesto (Dal Catalogo Firebase)</label>
             <select id="ordine-servizio" class="input"></select>
-            
             <div id="campi-azienda" style="display:flex; gap:10px; flex-wrap:wrap; background:rgba(37,99,235,0.05); padding:10px; border-radius:8px; border:1px solid rgba(37,99,235,0.2); margin-bottom:15px;">
                 <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Ragione Sociale</label><input type="text" id="ordine-ragione" class="input" style="margin-bottom:0;" placeholder="Ragione Sociale SPA"></div>
                 <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Partita IVA</label><input type="text" id="ordine-piva" class="input" style="margin-bottom:0;" placeholder="P.IVA"></div>
                 <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Codice Univoco SDI</label><input type="text" id="ordine-sdi" class="input" style="margin-bottom:0;" placeholder="SDI a 7 caratteri"></div>
             </div>
-            
             <div id="campi-privato" style="display:none; gap:10px; flex-wrap:wrap; background:rgba(34,197,94,0.05); padding:10px; border-radius:8px; border:1px solid rgba(34,197,94,0.2); margin-bottom:15px;">
                 <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Nome e Cognome Completo</label><input type="text" id="ordine-nome-cognome" class="input" style="margin-bottom:0;" placeholder="Nome e Cognome"></div>
                 <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Codice Fiscale</label><input type="text" id="ordine-cf" class="input" style="margin-bottom:0;" placeholder="16 Caratteri"></div>
             </div>
-
             <label style="font-size:12px; font-weight:600; display:block;">Dettagli Specifici e Moduli Richiesta</label>
             <textarea id="ordine-note" class="input" placeholder="Inserisci note, requisiti tecnici o file allegati virtuali..." style="min-height:60px;"></textarea>
-            
             <label style="font-size:12px; font-weight:600; display:block;">Importo Concordato (€)</label>
             <input type="number" id="ordine-importo" class="input" placeholder="Es. 1500">
-            
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 15px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-ordine')">Annulla</button>
                 <button class="btn" onclick="saveOrdine()">Registra ed Emetti Ordine</button>
@@ -636,10 +649,7 @@
     <div id="modal-ordine-dettagli" class="modal">
         <div class="modal-content" style="max-width: 600px;">
             <h3>Scheda Avanzamento Ordine <span id="dettagli-id-testo" style="font-size:14px; color:var(--text-light); font-family:monospace;"></span></h3>
-            
-            <div id="dettagli-ordine-content" style="margin-top: 15px; margin-bottom: 20px; padding: 15px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); font-size:14px; line-height: 1.6;">
-                </div>
-            
+            <div id="dettagli-ordine-content" style="margin-top: 15px; margin-bottom: 20px; padding: 15px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); font-size:14px; line-height: 1.6;"></div>
             <div class="admin-only" style="background: rgba(37, 99, 235, 0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--primary);">
                 <h4 style="color:var(--primary); margin-bottom:10px;"><i class="ph ph-arrows-clockwise"></i> Gestione Stato Lavorazione</h4>
                 <input type="hidden" id="dettagli-ordine-id">
@@ -656,7 +666,6 @@
                 </div>
                 <p style="font-size:11px; color:var(--text-light); margin-top:8px;"><i class="ph-fill ph-info"></i> L'aggiornamento aggiornerà in Real-Time sia Horizon Global (ERP) che Horizon ID Core (App Cliente).</p>
             </div>
-            
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-ordine-dettagli')">Chiudi Scheda</button>
             </div>
@@ -676,14 +685,12 @@
                         <img id="verify-img-fronte" style="max-width:100%; max-height:100%; object-fit:contain;" src="">
                     </div>
                 </div>
-                
                 <div style="background:#f1f5f9; padding:10px; border-radius:12px; border:1px solid var(--border);">
                     <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-light); display:block; margin-bottom:8px;">2. ID Retro</label>
                     <div style="width:100%; height:200px; display:flex; align-items:center; justify-content:center; background:#fff; border-radius:8px; overflow:hidden;">
                         <img id="verify-img-retro" style="max-width:100%; max-height:100%; object-fit:contain;" src="">
                     </div>
                 </div>
-
                 <div style="background:rgba(37, 99, 235, 0.05); padding:10px; border-radius:12px; border:1px solid rgba(37, 99, 235, 0.2);">
                     <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--primary); display:block; margin-bottom:8px;"><i class="ph-fill ph-video-camera"></i> 3. Biometria Volto (Video)</label>
                     <div style="width:100%; height:200px; display:flex; align-items:center; justify-content:center; background:#000; border-radius:8px; overflow:hidden;">
@@ -691,7 +698,6 @@
                     </div>
                 </div>
             </div>
-
             <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-verify-id')">Annulla</button>
                 <button class="btn" style="background:var(--danger); color:white;" onclick="rejectHorizonId()">Rifiuta Identità</button>
@@ -749,6 +755,33 @@
     
     <div id="modal-timbratura" class="modal"><div class="modal-content"><h3>Timbratura</h3><select id="timb-staff" class="input"></select><select id="timb-type" class="input"><option>Ingresso</option><option>Uscita</option></select><input type="datetime-local" id="timb-time" class="input"><div style="display:flex; justify-content:flex-end; gap:10px;"><button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-timbratura')">Annulla</button><button class="btn" onclick="saveTimbratura()">Forza</button></div></div></div>
 
+    <div id="modal-cloud-folder" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3>Nuova Cartella Cloud</h3>
+            <label style="font-size:12px; font-weight:600; display:block;">Nome Cartella</label>
+            <input type="text" id="cloud-folder-name" class="input" placeholder="Es. Contratti 2024">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-cloud-folder')">Annulla</button>
+                <button class="btn" onclick="saveCloudFolder()">Crea Cartella</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cloud-file" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3>Carica Documento in Cloud</h3>
+            <p style="font-size: 11px; color: var(--text-light); margin-bottom: 15px;">I file saranno archiviati fisicamente in Cloudinary (cartella "Fatture") e sincronizzati con il gestionale.</p>
+            <label style="font-size:12px; font-weight:600; display:block;">Nome File / Descrizione</label>
+            <input type="text" id="cloud-file-name" class="input" placeholder="Es. Visura Camerale Horizon Srl">
+            <label style="font-size:12px; font-weight:600; display:block;">Seleziona File (PDF/Immagine/Doc)</label>
+            <input type="file" id="cloud-file-upload" class="input">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-cloud-file')">Annulla</button>
+                <button class="btn" onclick="saveCloudFile()">Avvia Upload</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- UI LOGIN & ROUTING ---
         let userRoleMode = 'admin';
@@ -786,8 +819,11 @@
         // --- STATE & FIREBASE ---
         let state = {
             companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: [], badges: [], payrolls: [], security_alerts: [], budget_history: [], ordini: [],
-            horizonUsers: [], servizi: [], richieste_servizi: [], candidature: []
+            horizonUsers: [], servizi: [], richieste_servizi: [], candidature: [],
+            cloud_folders: [], cloud_files: [] // <-- Aggiunti array per Cloud
         };
+
+        let currentCloudFolder = null; // Navigazione interna cartelle Cloud
 
         let doughnutChartInst = null;
         let lineChartInst = null;
@@ -857,10 +893,26 @@
             }
         }
 
+        async function initDefaultCloudFolders() {
+            if (!state.cloud_folders || state.cloud_folders.length === 0) {
+                const defaultFolders = [
+                    { id: Date.now() + 1, name: "Statuto e Visure" },
+                    { id: Date.now() + 2, name: "Contratti e Accordi" },
+                    { id: Date.now() + 3, name: "Procedure Operative" },
+                    { id: Date.now() + 4, name: "Modulistica HR" },
+                    { id: Date.now() + 5, name: "Documentazione Fiscale" }
+                ];
+                for (let f of defaultFolders) {
+                    await saveToFirebase('cloud_folders', f);
+                }
+            }
+        }
+
         async function syncConFirebase() {
             if (!window.db || !window.rtdb) return;
             try {
-                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history', 'ordini', 'servizi', 'richieste_servizi', 'candidature'];
+                // Aggiunti cloud_folders e cloud_files
+                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history', 'ordini', 'servizi', 'richieste_servizi', 'candidature', 'cloud_folders', 'cloud_files'];
                 
                 const loadPromises = collections.map(async (coll) => {
                     const snap = await window.rtdb.get(window.rtdb.ref(window.db, coll));
@@ -869,6 +921,9 @@
                     state[coll] = arr;
                 });
                 await Promise.all(loadPromises);
+                
+                // Creazione cartelle di default se cloud è vuoto
+                await initDefaultCloudFolders();
 
                 collections.forEach(coll => {
                     window.rtdb.onValue(window.rtdb.ref(window.db, coll), (snap) => {
@@ -1035,6 +1090,109 @@
             el.innerHTML = divs.map(d => `<option value="${d.id}">${d.name}</option>`).join('') || '<option value="">Nessuna divisione</option>';
         }
 
+        // --- GESTIONE ARCHIVIO CLOUD (Nuove Funzioni) ---
+        window.openCloudFolder = function(id) {
+            currentCloudFolder = id;
+            renderAll(); // Ricarica la vista
+        }
+
+        window.saveCloudFolder = async function() {
+            const nameInput = document.getElementById('cloud-folder-name').value;
+            if(!nameInput) return alert("Inserisci un nome per la cartella.");
+            await saveToFirebase('cloud_folders', { id: Date.now(), name: nameInput });
+            closeModal('modal-cloud-folder');
+            document.getElementById('cloud-folder-name').value = '';
+        }
+
+        window.saveCloudFile = async function() {
+            if(!currentCloudFolder) return alert("Errore: nessuna cartella di destinazione.");
+            const fileInput = document.getElementById('cloud-file-upload');
+            const nameInput = document.getElementById('cloud-file-name').value;
+            
+            if(!nameInput) return alert("Inserisci il nome del file.");
+            if(!fileInput.files[0]) return alert("Seleziona un file da caricare.");
+
+            const btn = document.querySelector('#modal-cloud-file .btn:last-child');
+            const origText = btn.innerText;
+            btn.innerHTML = `<i class="ph ph-spinner ph-spin"></i> Upload Cloud in corso...`;
+            btn.disabled = true;
+
+            try {
+                // Il file viene caricato in Cloudinary nella cartella logica "Fatture"
+                const fileUrl = await window.uploadToCloudinary(fileInput.files[0], 'Fatture');
+                const data = {
+                    id: Date.now(),
+                    folderId: currentCloudFolder,
+                    name: nameInput,
+                    fileUrl: fileUrl,
+                    date: new Date().toISOString().split('T')[0],
+                    uploadedBy: window.userRole === 'admin' ? 'Amministrazione' : 'Staff'
+                };
+                await saveToFirebase('cloud_files', data);
+                closeModal('modal-cloud-file');
+                fileInput.value = '';
+                document.getElementById('cloud-file-name').value = '';
+            } catch(e) {
+                alert("Errore durante l'upload del file: " + e.message);
+            } finally {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
+        }
+
+        function renderCloudSystem() {
+            const container = document.getElementById('cloud-container');
+            const btnNewFolder = document.getElementById('btn-cloud-folder');
+            const btnUploadFile = document.getElementById('btn-cloud-upload');
+            const breadcrumbActive = document.getElementById('cloud-breadcrumb-active');
+            
+            if(!container) return;
+
+            const isAdmin = window.userRole === 'admin';
+            
+            if (currentCloudFolder === null) {
+                // Root view: Mostra Cartelle
+                if(btnNewFolder) btnNewFolder.style.display = isAdmin ? 'inline-flex' : 'none';
+                if(btnUploadFile) btnUploadFile.style.display = 'none';
+                if(breadcrumbActive) breadcrumbActive.innerHTML = '';
+
+                let html = (state.cloud_folders || []).map(f => {
+                    let btnDel = isAdmin ? `<button class="cloud-action-btn" onclick="event.stopPropagation(); deleteData('cloud_folders', ${f.id})" title="Elimina Cartella"><i class="ph-fill ph-trash"></i></button>` : '';
+                    let fileCount = (state.cloud_files || []).filter(file => file.folderId == f.id).length;
+                    return `
+                    <div class="cloud-item" onclick="openCloudFolder(${f.id})">
+                        ${btnDel}
+                        <i class="ph-fill ph-folder cloud-icon cloud-folder-icon"></i>
+                        <div class="cloud-title">${f.name}</div>
+                        <div class="cloud-meta">${fileCount} Elementi archiviati</div>
+                    </div>`;
+                }).join('');
+                container.innerHTML = html || '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:var(--text-light);">Archivio vuoto. Nessuna cartella presente.</div>';
+            } else {
+                // Folder view: Mostra File
+                const currentFolderData = state.cloud_folders.find(f => f.id == currentCloudFolder);
+                const folderName = currentFolderData ? currentFolderData.name : 'Cartella';
+                
+                if(btnNewFolder) btnNewFolder.style.display = 'none';
+                if(btnUploadFile) btnUploadFile.style.display = isAdmin ? 'inline-flex' : 'none';
+                if(breadcrumbActive) breadcrumbActive.innerHTML = ` > <span style="color:var(--text);">${folderName}</span>`;
+
+                const filesInFolder = (state.cloud_files || []).filter(f => f.folderId == currentCloudFolder);
+                let html = filesInFolder.map(f => {
+                    let btnDel = isAdmin ? `<button class="cloud-action-btn" onclick="event.stopPropagation(); deleteData('cloud_files', ${f.id})" title="Elimina File"><i class="ph-fill ph-trash"></i></button>` : '';
+                    return `
+                    <div class="cloud-item" onclick="window.open('${f.fileUrl}', '_blank')">
+                        ${btnDel}
+                        <i class="ph-fill ph-file-text cloud-icon cloud-file-icon"></i>
+                        <div class="cloud-title">${f.name}</div>
+                        <div class="cloud-meta">Data: ${f.date}<br>By: ${f.uploadedBy}</div>
+                        <div style="margin-top:10px; font-size:11px; background:#e2e8f0; padding:4px 8px; border-radius:12px; color:var(--text);">Clicca per aprire</div>
+                    </div>`;
+                }).join('');
+                container.innerHTML = html || '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:var(--text-light);">Cartella vuota. Nessun documento caricato in questa sezione.</div>';
+            }
+        }
+
         // --- GESTIONE DETTAGLI SERVIZI DAL SITO ---
         window.openDettaglioServizio = function(id) {
             const req = state.richieste_servizi.find(r => r.id == id);
@@ -1174,7 +1332,7 @@
             }
         }
 
-        // --- ALTRE FUNZIONI CRUD MANTENUTE INTATTE ---
+        // --- ALTRE FUNZIONI CRUD ---
         window.saveServizio = async function() {
             const data = { id: Date.now(), nome: document.getElementById('servizio-nome').value, target: document.getElementById('servizio-target').value, descrizione: document.getElementById('servizio-desc').value };
             if(!data.nome) return alert("Inserisci il nome del servizio");
@@ -1383,6 +1541,9 @@
             if(tDocs && tDocs.querySelector('tbody')) {
                 tDocs.querySelector('tbody').innerHTML = state.documents.map(d => `<tr><td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td><td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td><td>${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="badge" style="background:var(--primary); color:white; text-decoration:none;"><i class="ph-fill ph-file-pdf"></i> Apri / Scarica</a>` : '-'}</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button>` : '-'}</td></tr>`).join('');
             }
+
+            // Renderizza l'UI dell'Archivio Cloud
+            renderCloudSystem();
         }
     </script>
 </body>

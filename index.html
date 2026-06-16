@@ -521,167 +521,51 @@
 
         <section id="view-settings" class="view admin-only">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-                <h2>Impostazioni di Sistema</h2>
+                <h2>Settings Globali ERP</h2>
             </div>
-            <div class="card" style="max-width: 500px;">
-                <div class="card-title">Modalità Hardware Avanzata</div>
-                <p style="font-size: 13px; color:var(--text-light); margin-bottom: 15px;">Attiva l'interfaccia a riga di comando per i moduli telemetrici mAf e fFk9.</p>
-                <button class="btn" id="btn-toggle-hw" onclick="toggleHwMode()" style="background: var(--secondary);">Abilita Interfaccia HW</button>
+            <div class="card" style="max-width: 600px;">
+                <label style="font-size:12px; font-weight:600; display:block;">Nome Azienda</label>
+                <input type="text" class="input" value="Horizon Global ERP" disabled>
+                <button class="btn" style="margin-top: 15px;" onclick="alert('Salvate.')">Salva Impostazioni</button>
             </div>
         </section>
+
     </main>
 
-    <div id="modal-azienda" class="modal">
-        <div class="modal-content">
-            <h3>Nuova Entità / Azienda</h3>
-            <input type="text" id="az-name" class="input" placeholder="Nome Azienda">
-            <input type="number" id="az-cap" class="input" placeholder="Capitale Nominale (€)">
-            <input type="number" id="az-eff" class="input" placeholder="Grado Efficienza Iniziale (%)" min="0" max="100" value="100">
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-azienda')">Annulla</button>
-                <button class="btn" onclick="saveAzienda()">Salva Azienda</button>
+    <div id="modal-dettaglio-servizio" class="modal">
+        <div class="modal-content modal-content-lg">
+            <h3>Scheda Dettaglio: Richiesta Servizio <span id="ds-id" style="font-size:14px; color:var(--text-light); font-family:monospace;"></span></h3>
+            <div id="dettaglio-servizio-content" style="margin-top: 15px; margin-bottom: 20px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); padding: 20px;"></div>
+            <div class="admin-only" style="background: rgba(37, 99, 235, 0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--primary);">
+                <h4 style="color:var(--primary); margin-bottom:10px;"><i class="ph ph-arrows-clockwise"></i> Gestione Stato Richiesta</h4>
+                <input type="hidden" id="ds-target-id">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <select id="ds-stato-select" class="input" style="margin:0; flex:1;">
+                        <option value="Nuova">Nuova (Da valutare)</option>
+                        <option value="Presa in carico">Presa in carico</option>
+                        <option value="In Contatto">In Contatto</option>
+                        <option value="Preventivo Inviato">Preventivo Inviato</option>
+                        <option value="Approvata/Convertita">Approvata / Convertita in Ordine</option>
+                        <option value="Rifiutata/Chiusa">Rifiutata / Chiusa</option>
+                    </select>
+                    <button class="btn" onclick="updateStatoServizio()"><i class="ph ph-check-circle"></i> Aggiorna Stato</button>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <div id="modal-div" class="modal">
-        <div class="modal-content">
-            <h3>Nuova Divisione Operativa</h3>
-            <input type="text" id="div-name" class="input" placeholder="Nome Divisione">
-            <select id="div-az" class="input"></select>
-            <input type="number" id="div-budget" class="input" placeholder="Budget Assegnato (€)">
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-div')">Annulla</button>
-                <button class="btn" onclick="saveDivision()">Salva Divisione</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-staff" class="modal">
-        <div class="modal-content">
-            <h3 id="staff-modal-title">Anagrafica Dipendente</h3>
-            <input type="hidden" id="staff-id">
-            <input type="text" id="staff-name" class="input" placeholder="Nome e Cognome">
-            <input type="text" id="staff-role" class="input" placeholder="Ruolo Aziendale (Es. System Manager)">
-            <select id="staff-company" class="input" onchange="populateDivisionsForStaff()"></select>
-            <select id="staff-div" class="input"><option value="">Seleziona prima l'azienda</option></select>
-            <input type="text" id="staff-iban" class="input" placeholder="Codice IBAN per Accredito">
-            <input type="text" id="staff-cf" class="input" placeholder="Codice Fiscale">
-            <input type="number" id="staff-eff" class="input" placeholder="Grado Rendimento %" min="0" max="100" value="95">
-            <select id="staff-mach" class="input"><option value="No">Nessun Accesso Macchine</option><option value="Sì">Accesso Autorizzato Mainframe</option></select>
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-staff')">Annulla</button>
-                <button class="btn" onclick="saveStaff()">Salva Dati</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-badge" class="modal">
-        <div class="modal-content">
-            <h3>Associazione Badge Fisico / App</h3>
-            <select id="badge-staff" class="input"></select>
-            <input type="text" id="badge-code" class="input" placeholder="PIN Numerico Segreto (Min. 4 cifre)" maxlength="8">
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-badge')">Annulla</button>
-                <button class="btn" onclick="saveBadge()">Genera e Attiva</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-payroll" class="modal">
-        <div class="modal-content">
-            <h3>Emissione Busta Paga</h3>
-            <input type="hidden" id="pay-id">
-            <select id="pay-staff" class="input"></select>
-            <input type="month" id="pay-month" class="input">
-            <input type="number" id="pay-amount" class="input" placeholder="Importo Netto (€)">
-            <select id="pay-status" class="input"><option>Calcolata</option><option>Bonifico Emesso</option></select>
-            <label style="font-size:12px; font-weight:600;">Carica Cedolino PDF (Opzionale)</label>
-            <input type="file" id="pay-file" class="input" accept="application/pdf">
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-payroll')">Annulla</button>
-                <button class="btn" onclick="savePayroll()">Conferma Emissione</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-doc" class="modal">
-        <div class="modal-content">
-            <h3>Inserimento Prima Nota / Documento</h3>
-            <input type="hidden" id="doc-id">
-            <input type="date" id="doc-date" class="input">
-            <input type="text" id="doc-title" class="input" placeholder="Oggetto / Descrizione">
-            <select id="doc-company" class="input"></select>
-            <input type="number" id="doc-amount" class="input" placeholder="Importo Lordo (€)">
-            <select id="doc-type" class="input"><option value="entrata">Entrata (Fattura Attiva / Incasso)</option><option value="uscita">Uscita (Fattura Passiva / Spesa)</option></select>
-            <label style="font-size:12px; font-weight:600;">File Allegato (Fattura / Ricevuta PDF)</label>
-            <input type="file" id="doc-file-upload" class="input" accept="application/pdf">
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-doc')">Annulla</button>
-                <button class="btn" onclick="saveDocument()">Salva Documento</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-task" class="modal">
-        <div class="modal-content">
-            <h3 id="task-modal-title">Nuova Task</h3>
-            <input type="hidden" id="task-id">
-            <input type="text" id="task-title" class="input" placeholder="Descrizione Attività">
-            <select id="task-staff" class="input"></select>
-            <select id="task-prio" class="input"><option>Bassa</option><option>Media</option><option>Alta</option></select>
-            <select id="task-status" class="input"><option>Da Iniziare</option><option>In Lavorazione</option><option>Completato</option></select>
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-task')">Annulla</button>
-                <button class="btn" onclick="saveTask()">Salva Task</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-timbratura" class="modal">
-        <div class="modal-content">
-            <h3>Forza Timbratura</h3>
-            <select id="timb-staff" class="input"></select>
-            <input type="datetime-local" id="timb-time" class="input">
-            <select id="timb-type" class="input"><option value="Ingresso">Ingresso</option><option value="Uscita">Uscita</option></select>
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-timbratura')">Annulla</button>
-                <button class="btn" onclick="saveTimbratura()">Esegui Forzatura</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-cloud-folder" class="modal">
-        <div class="modal-content">
-            <h3>Crea Nuova Cartella Cloud</h3>
-            <input type="text" id="cloud-folder-name" class="input" placeholder="Nome della cartella">
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-cloud-folder')">Annulla</button>
-                <button class="btn" onclick="saveCloudFolder()">Crea</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-cloud-file" class="modal">
-        <div class="modal-content">
-            <h3>Carica File nell'Archivio Cloud</h3>
-            <input type="text" id="cloud-file-name" class="input" placeholder="Nome file descrittivo">
-            <input type="file" id="cloud-file-upload" class="input">
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-cloud-file')">Annulla</button>
-                <button class="btn" onclick="saveCloudFile()">Avvia Caricamento</button>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-dettaglio-servizio')">Chiudi Scheda</button>
             </div>
         </div>
     </div>
 
     <div id="modal-dettaglio-candidatura" class="modal">
         <div class="modal-content modal-content-lg">
-            <div id="dettaglio-candidatura-content"></div>
-            <div class="admin-only" style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border);">
-                <label style="font-weight:600; font-size:12px;">Aggiorna Stato Avanzamento Iter:</label>
-                <input type="hidden" id="candidatura-id-val">
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <select id="candidatura-stato-select" class="input" style="margin:0;">
+            <h3>Scheda Profilo Candidato <span id="dc-id" style="font-size:14px; color:var(--text-light); font-family:monospace;"></span></h3>
+            <div id="dettaglio-candidatura-content" style="margin-top: 15px; margin-bottom: 20px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); padding: 20px;"></div>
+            <div class="admin-only" style="background: rgba(34, 197, 94, 0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--success);">
+                <h4 style="color:var(--success); margin-bottom:10px;"><i class="ph ph-arrows-clockwise"></i> Iter di Selezione HR</h4>
+                <input type="hidden" id="dc-target-id">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <select id="dc-stato-select" class="input" style="margin:0; flex:1;">
                         <option value="In Attesa">In Attesa (Da visionare)</option>
                         <option value="In Valutazione">In Valutazione (CV screening)</option>
                         <option value="Colloquio Fissato">Colloquio Fissato</option>
@@ -694,29 +578,6 @@
             </div>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-dettaglio-candidatura')">Chiudi Scheda</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-dettaglio-servizio" class="modal">
-        <div class="modal-content modal-content-lg">
-            <h3>Dettagli Richiesta Servizio Sito <span id="ds-id" style="font-family:monospace; color:var(--text-light);"></span></h3>
-            <div id="dettaglio-servizio-content" style="margin-top:15px;"></div>
-            <div class="admin-only" style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border);">
-                <label style="font-weight:600; font-size:12px;">Gestione Stato Richiesta:</label>
-                <input type="hidden" id="ds-target-id">
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <select id="ds-stato-select" class="input" style="margin:0;">
-                        <option value="Nuova">Nuova / In Attesa</option>
-                        <option value="In Lavorazione">In Contatto / Elaborazione</option>
-                        <option value="Approvata/Convertita">Approvata / Converti in Ordine</option>
-                        <option value="Rifiutata/Chiusa">Rifiutata o Chiusa</option>
-                    </select>
-                    <button class="btn" onclick="updateStatoRichiestaServizio()"><i class="ph ph-check-circle"></i> Cambia Stato</button>
-                </div>
-            </div>
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-dettaglio-servizio')">Chiudi</button>
             </div>
         </div>
     </div>
@@ -736,37 +597,38 @@
             </select>
             <label style="font-size:12px; font-weight:600; display:block;">Descrizione Dettagliata e Requisiti Modulo</label>
             <textarea id="servizio-desc" class="input" placeholder="Descrivi i dettagli che servono per questo servizio..." style="min-height:80px;"></textarea>
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-servizio')">Annulla</button>
-                <button class="btn" onclick="saveServizioCatalogo()">Salva nel Catalogo</button>
+                <button class="btn" onclick="saveServizio()">Salva nel Catalogo</button>
             </div>
         </div>
     </div>
 
     <div id="modal-ordine" class="modal">
-        <div class="modal-content">
-            <h3 id="ordine-modal-title">Nuovo Ordine / Servizio Personalizzato</h3>
+        <div class="modal-content" style="max-width: 700px;">
+            <h3 id="ordine-modal-title">Nuovo Ordine Horizon</h3>
+            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Modulo adattivo per inserimento ordini (registrazione simultanea su ERP e App Horizon ID)</p>
             <input type="hidden" id="ordine-id">
-            <label style="font-size:12px; font-weight:600; display:block;">Seleziona Account Cliente Registrato</label>
-            <select id="ordine-cliente" class="input" onchange="toggleOrdineCampiExtra()"></select>
-            
-            <div id="ordine-campi-extra-azienda" style="display:none; padding:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; margin-bottom:15px;">
-                <h4 style="font-size:12px; margin-bottom:10px; color:var(--primary);">Dati Fatturazione Azienda</h4>
-                <input type="text" id="ordine-ragione" class="input" placeholder="Ragione Sociale">
-                <input type="text" id="ordine-piva" class="input" placeholder="Partita IVA">
-                <input type="text" id="ordine-sdi" class="input" placeholder="Codice SDI">
-            </div>
-
-            <div id="ordine-campi-extra-privato" style="display:none; padding:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; margin-bottom:15px;">
-                <h4 style="font-size:12px; margin-bottom:10px; color:var(--primary);">Dati Fatturazione Privato</h4>
-                <input type="text" id="ordine-nome-cognome" class="input" placeholder="Nome e Cognome">
-                <input type="text" id="ordine-cf" class="input" placeholder="Codice Fiscale">
-            </div>
-
-            <label style="font-size:12px; font-weight:600; display:block;">Seleziona Servizio Richiesto</label>
+            <label style="font-size:12px; font-weight:600; display:block;">Target Inserimento</label>
+            <select id="ordine-tipo-cliente" class="input" onchange="aggiornaModuloOrdine()">
+                <option value="Azienda">Richiesta per Azienda (B2B)</option>
+                <option value="Privato">Richiesta per Cittadino / Privato (B2C)</option>
+            </select>
+            <label style="font-size:12px; font-weight:600; display:block;">Cliente App (Horizon ID Associato)</label>
+            <select id="ordine-cliente" class="input"></select>
+            <label style="font-size:12px; font-weight:600; display:block;">Servizio Richiesto (Dal Catalogo Firebase)</label>
             <select id="ordine-servizio" class="input"></select>
-            <label style="font-size:12px; font-weight:600; display:block;">Note Interne ed Avanzamento Progetto</label>
-            <textarea id="ordine-note" class="input" placeholder="Inserisci specifiche tecniche dell'ordine..." style="min-height:60px;"></textarea>
+            <div id="campi-azienda" style="display:flex; gap:10px; flex-wrap:wrap; background:rgba(37,99,235,0.05); padding:10px; border-radius:8px; border:1px solid rgba(37,99,235,0.2); margin-bottom:15px;">
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Ragione Sociale</label><input type="text" id="ordine-ragione" class="input" style="margin-bottom:0;" placeholder="Ragione Sociale SPA"></div>
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Partita IVA</label><input type="text" id="ordine-piva" class="input" style="margin-bottom:0;" placeholder="P.IVA"></div>
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Codice Univoco SDI</label><input type="text" id="ordine-sdi" class="input" style="margin-bottom:0;" placeholder="SDI a 7 caratteri"></div>
+            </div>
+            <div id="campi-privato" style="display:none; gap:10px; flex-wrap:wrap; background:rgba(34,197,94,0.05); padding:10px; border-radius:8px; border:1px solid rgba(34,197,94,0.2); margin-bottom:15px;">
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Nome e Cognome Completo</label><input type="text" id="ordine-nome-cognome" class="input" style="margin-bottom:0;" placeholder="Nome e Cognome"></div>
+                <div style="flex:1; min-width: 150px;"><label style="font-size:11px; font-weight:bold;">Codice Fiscale</label><input type="text" id="ordine-cf" class="input" style="margin-bottom:0;" placeholder="16 Caratteri"></div>
+            </div>
+            <label style="font-size:12px; font-weight:600; display:block;">Dettagli Specifici e Moduli Richiesta</label>
+            <textarea id="ordine-note" class="input" placeholder="Inserisci note, requisiti tecnici o file allegati virtuali..." style="min-height:60px;"></textarea>
             <label style="font-size:12px; font-weight:600; display:block;">Importo Concordato (€)</label>
             <input type="number" id="ordine-importo" class="input" placeholder="Es. 1500">
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 15px;">
@@ -780,128 +642,459 @@
         <div class="modal-content" style="max-width: 600px;">
             <h3>Scheda Avanzamento Ordine <span id="dettagli-id-testo" style="font-size:14px; color:var(--text-light); font-family:monospace;"></span></h3>
             <div id="dettagli-ordine-content" style="margin-top: 15px; margin-bottom: 20px; padding: 15px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); font-size:14px; line-height: 1.6;"></div>
-            <div class="admin-only" style="background: rgba(37,99,235,0.05); padding:15px; border-radius:8px; border:1px solid var(--border);">
-                <label style="font-weight:600; font-size:12px;">Aggiorna Stato Avanzamento:</label>
+            <div class="admin-only" style="background: rgba(37, 99, 235, 0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--primary);">
+                <h4 style="color:var(--primary); margin-bottom:10px;"><i class="ph ph-arrows-clockwise"></i> Gestione Stato Lavorazione</h4>
                 <input type="hidden" id="dettagli-ordine-id">
                 <input type="hidden" id="dettagli-cliente-id">
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <select id="dettagli-stato-select" class="input" style="margin:0;">
-                        <option value="Richiesto">Richiesto (In attesa di contratto)</option>
-                        <option value="Contratto Inviato">Contratto Inviato / Firma</option>
-                        <option value="In Lavorazione">In Lavorazione / Sviluppo</option>
-                        <option value="Fatturato">Fatturato (In attesa saldo)</option>
-                        <option value="Completato">Completato e Saldato</option>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <select id="dettagli-stato-select" class="input" style="margin:0; flex:1;">
+                        <option value="Richiesto">Richiesto</option>
+                        <option value="In Lavorazione">In Lavorazione</option>
+                        <option value="In Attivazione">In Attivazione</option>
+                        <option value="Attivo">Attivo</option>
                         <option value="Annullato">Annullato</option>
                     </select>
-                    <button class="btn" onclick="updateStatoOrdine()"><i class="ph ph-check-circle"></i> Applica</button>
+                    <button class="btn" onclick="updateOrdineStato()"><i class="ph ph-check-circle"></i> Sincronizza Stato</button>
                 </div>
+                <p style="font-size:11px; color:var(--text-light); margin-top:8px;"><i class="ph-fill ph-info"></i> L'aggiornamento aggiornerà in Real-Time sia Horizon Global (ERP) che Horizon ID Core (App Cliente).</p>
             </div>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-ordine-dettagli')">Chiudi</button>
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-ordine-dettagli')">Chiudi Scheda</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-horizon-user" class="modal">
-        <div class="modal-content">
-            <h3>Profilo Utente App (Horizon ID)</h3>
-            <div id="horizon-user-content" style="margin-top:15px; font-size:14px; line-height:1.6;"></div>
-            <div id="horizon-user-actions" class="admin-only" style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end;">
-                <button class="btn" style="background:var(--danger);" onclick="changeHorizonUserStatus('rifiutato')"><i class="ph ph-x-circle"></i> Rifiuta / Sospendi</button>
-                <button class="btn" style="background:var(--success);" onclick="changeHorizonUserStatus('approvato')"><i class="ph ph-check-circle"></i> Approva e Verifica Account</button>
+    <div id="modal-verify-id" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <h3>Verifica Documenti & Biometria: <span id="verify-user-name" style="color:var(--primary);"></span></h3>
+            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 15px;">Dato Fiscale: <strong id="verify-user-piva" style="color:var(--text);"></strong></p>
+            <input type="hidden" id="verify-user-uid">
+            
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:15px; margin-bottom: 20px;">
+                <div style="background:#f1f5f9; padding:10px; border-radius:12px; border:1px solid var(--border);">
+                    <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-light); display:block; margin-bottom:8px;">1. ID Fronte</label>
+                    <div style="width:100%; height:200px; display:flex; align-items:center; justify-content:center; background:#fff; border-radius:8px; overflow:hidden;">
+                        <img id="verify-img-fronte" style="max-width:100%; max-height:100%; object-fit:contain;" src="">
+                    </div>
+                </div>
+                <div style="background:#f1f5f9; padding:10px; border-radius:12px; border:1px solid var(--border);">
+                    <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-light); display:block; margin-bottom:8px;">2. ID Retro</label>
+                    <div style="width:100%; height:200px; display:flex; align-items:center; justify-content:center; background:#fff; border-radius:8px; overflow:hidden;">
+                        <img id="verify-img-retro" style="max-width:100%; max-height:100%; object-fit:contain;" src="">
+                    </div>
+                </div>
+                <div style="background:rgba(37, 99, 235, 0.05); padding:10px; border-radius:12px; border:1px solid rgba(37, 99, 235, 0.2);">
+                    <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--primary); display:block; margin-bottom:8px;"><i class="ph-fill ph-video-camera"></i> 3. Biometria Volto (Video)</label>
+                    <div style="width:100%; height:200px; display:flex; align-items:center; justify-content:center; background:#000; border-radius:8px; overflow:hidden;">
+                        <video id="verify-video" controls style="width:100%; height:100%; object-fit:cover;"></video>
+                    </div>
+                </div>
             </div>
-            <div style="display:flex; justify-content:flex-end; margin-top:20px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-horizon-user')">Chiudi Profilo</button>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-verify-id')">Annulla</button>
+                <button class="btn" style="background:var(--danger); color:white;" onclick="rejectHorizonId()">Rifiuta Identità</button>
+                <button class="btn" style="background:var(--success); color:white;" onclick="approveHorizonId()">Approva & Attiva</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-payroll" class="modal">
+        <div class="modal-content">
+            <h3>Busta Paga</h3>
+            <input type="hidden" id="pay-id">
+            <select id="pay-staff" class="input"></select>
+            <input type="month" id="pay-month" class="input">
+            <input type="number" id="pay-amount" class="input" placeholder="Importo Netto">
+            <select id="pay-status" class="input">
+                <option>In Elaborazione</option>
+                <option>Bonifico Emesso</option>
+            </select>
+            <label style="font-size:12px; font-weight:600; display:block;">File Busta Paga (PDF/Img)</label>
+            <input type="file" id="pay-file" class="input" accept=".pdf,image/*">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-payroll')">Annulla</button>
+                <button class="btn" onclick="savePayroll()">Salva Documento</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-doc" class="modal">
+        <div class="modal-content">
+            <h3 id="doc-modal-title">Documento / Fattura</h3>
+            <input type="hidden" id="doc-id">
+            <input type="text" id="doc-title" class="input" placeholder="Titolo/Descrizione Documento">
+            <input type="number" id="doc-amount" class="input" placeholder="Importo Transazione">
+            <select id="doc-type" class="input"><option value="entrata">Incasso</option><option value="uscita">Spesa</option></select>
+            <select id="doc-company" class="input"></select>
+            <label style="font-size:12px; font-weight:600; display:block;">Carica File Fattura/Doc (PDF/Img)</label>
+            <input type="file" id="doc-file-upload" class="input" accept=".pdf,image/*">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-doc')">Annulla</button>
+                <button class="btn" onclick="saveDocument()">Salva Fattura</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-badge" class="modal">
+        <div class="modal-content">
+            <h3>Codice App Badge</h3>
+            <select id="badge-staff" class="input"></select>
+            <input type="text" id="badge-code" class="input" placeholder="PIN Segreto (Es. 4482)">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-badge')">Annulla</button>
+                <button class="btn" onclick="saveBadge()">Salva e Assegna</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-staff" class="modal">
+        <div class="modal-content">
+            <h3 id="staff-modal-title">Gestione Dipendente HR</h3>
+            <input type="hidden" id="staff-id">
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="staff-name" class="input" placeholder="Nome Completo">
+                <input type="text" id="staff-role" class="input" placeholder="Ruolo Aziendale">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <select id="staff-company" class="input" onchange="populateDivisionsForStaff()"></select>
+                <select id="staff-div" class="input"></select>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="staff-eff" class="input" placeholder="Efficienza %">
+                <select id="staff-machine" class="input">
+                    <option>Nessuno</option>
+                    <option>Grado mAf</option>
+                    <option>Eolo fFk9</option>
+                    <option>Entrambe</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="staff-cf" class="input" placeholder="Codice Fiscale">
+                <input type="text" id="staff-ci" class="input" placeholder="Num. Carta Identità">
+                <input type="text" id="staff-ts" class="input" placeholder="Num. Tessera Sanitaria">
+            </div>
+            <input type="text" id="staff-indirizzo" class="input" placeholder="Indirizzo Residenza">
+            <div style="display:flex; gap:10px;">
+                <input type="date" id="staff-dataNascita" class="input">
+                <input type="text" id="staff-luogoNascita" class="input" placeholder="Luogo Nascita">
+            </div>
+            <input type="text" id="staff-iban" class="input" placeholder="IBAN Bancario">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-staff')">Chiudi</button>
+                <button id="btn-save-staff" class="btn admin-only" onclick="saveStaff()">Salva Profilo</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-azienda" class="modal">
+        <div class="modal-content">
+            <h3 id="azienda-modal-title">Nuova Azienda Gruppo</h3>
+            <input type="hidden" id="azienda-id">
+            <input type="text" id="azienda-name" class="input" placeholder="Ragione Sociale">
+            <input type="number" id="azienda-cap" class="input" placeholder="Capitale Versato (€)">
+            <input type="number" id="azienda-proj" class="input" placeholder="Progetti Attivi">
+            <input type="number" id="azienda-eff" class="input" placeholder="Efficienza %">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-azienda')">Annulla</button>
+                <button class="btn" onclick="saveAzienda()">Salva Azienda</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-div" class="modal">
+        <div class="modal-content">
+            <h3 id="div-modal-title">Nuova Divisione HQ</h3>
+            <input type="hidden" id="div-id">
+            <input type="text" id="div-name" class="input" placeholder="Nome Divisione">
+            <select id="div-company" class="input"></select>
+            <input type="number" id="div-budget" class="input" placeholder="Budget Assegnato (€)">
+            <input type="number" id="div-eff" class="input" placeholder="Efficienza %">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-div')">Annulla</button>
+                <button class="btn" onclick="saveDivision()">Salva Divisione</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-task" class="modal">
+        <div class="modal-content">
+            <h3 id="task-modal-title">Nuova Task</h3>
+            <input type="hidden" id="task-id">
+            <input type="text" id="task-title" class="input" placeholder="Descrizione Attività">
+            <select id="task-staff" class="input"></select>
+            <select id="task-prio" class="input"><option>Bassa</option><option>Media</option><option>Alta</option></select>
+            <select id="task-status" class="input"><option>Da Iniziare</option><option>In Lavorazione</option><option>Completato</option></select>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-task')">Annulla</button>
+                <button class="btn" onclick="saveTask()">Salva Task</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-timbratura" class="modal">
+        <div class="modal-content">
+            <h3>Forza Timbratura</h3>
+            <select id="timb-staff" class="input"></select>
+            <select id="timb-type" class="input"><option>Ingresso</option><option>Uscita</option></select>
+            <input type="datetime-local" id="timb-time" class="input">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-timbratura')">Annulla</button>
+                <button class="btn" onclick="saveTimbratura()">Forza Inserimento</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cloud-folder" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3>Nuova Cartella Cloud</h3>
+            <label style="font-size:12px; font-weight:600; display:block;">Nome Cartella</label>
+            <input type="text" id="cloud-folder-name" class="input" placeholder="Es. Contratti 2024">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-cloud-folder')">Annulla</button>
+                <button class="btn" onclick="saveCloudFolder()">Crea Cartella</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cloud-file" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3>Carica Documento in Cloud</h3>
+            <p style="font-size: 11px; color: var(--text-light); margin-bottom: 15px;">I file saranno archiviati fisicamente in Cloudinary (cartella "Fatture") e sincronizzati con il gestionale.</p>
+            <label style="font-size:12px; font-weight:600; display:block;">Nome File / Descrizione</label>
+            <input type="text" id="cloud-file-name" class="input" placeholder="Es. Visura Camerale Horizon Srl">
+            <label style="font-size:12px; font-weight:600; display:block;">Seleziona File (PDF/Immagine/Doc)</label>
+            <input type="file" id="cloud-file-upload" class="input">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-cloud-file')">Annulla</button>
+                <button class="btn" onclick="saveCloudFile()">Avvia Upload</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CORE APPLICATION STATE
-        window.state = {
-            companies: [], divisions: [], staff: [], time_entries: [], documents: [], 
-            tasks: [], badges: [], payrolls: [], security_alerts: [], budget_history: [],
-            ordini: [], servizi: [], richieste_servizi: [], candidature: [], cloud_folders: [], cloud_files: [],
-            horizonUsers: []
-        };
-        
-        let charts = {};
-        let currentCloudFolder = null;
-        window.userRole = 'staff'; 
-        window.currentUserEmail = '';
-
-        window.openModal = function(id) { 
-            const m = document.getElementById(id); if(m) m.classList.add('active'); 
-            if(id === 'modal-staff') window.populateCompaniesDropdown('staff-company');
-            if(id === 'modal-div') window.populateCompaniesDropdown('div-az');
-            if(id === 'modal-badge') window.populateStaffDropdown('badge-staff');
-            if(id === 'modal-payroll') window.populateStaffDropdown('pay-staff');
-            if(id === 'modal-doc') window.populateCompaniesDropdown('doc-company');
-            if(id === 'modal-task') window.populateStaffDropdown('task-staff');
-            if(id === 'modal-timbratura') window.populateStaffDropdown('timb-staff');
+        // --- UI LOGIN & ROUTING ---
+        let userRoleMode = 'admin';
+        function switchLoginMode(mode) {
+            userRoleMode = mode;
+            const btnA = document.getElementById('btn-tab-admin');
+            const btnS = document.getElementById('btn-tab-staff');
+            const desc = document.getElementById('login-desc');
+            if(btnA) btnA.className = mode === 'admin' ? 'active' : '';
+            if(btnS) btnS.className = mode === 'staff' ? 'active' : '';
+            if(desc) desc.innerText = mode === 'admin' ? 'Accesso Riservato Direzione (direzione@horizonglobal.com)' : 'Accesso Operativo Staff';
         }
-        window.closeModal = function(id) { const m = document.getElementById(id); if(m) m.classList.remove('active'); }
-        window.toggleSidebar = function() { const sb = document.getElementById('sidebar'); const ov = document.getElementById('sidebar-overlay'); if(sb){ sb.classList.toggle('open'); ov.classList.toggle('active'); } }
 
-        window.nav = function(viewId, linkElement) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            const targetView = document.getElementById('view-' + viewId);
-            if(targetView) targetView.classList.add('active');
-            if(linkElement) linkElement.classList.add('active');
+        function toggleNotifiche() {
+            const panel = document.getElementById('notif-panel');
+            if(panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // --- UPLOAD FUNZIONE GLOBALE (CLOUDINARY) ---
+        window.uploadToCloudinary = async function(file, folderName) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'horizon_docs');
+            if(folderName) formData.append('folder', folderName);
             
-            const titles = {
-                'dash': 'Dashboard Globale', 'aziende': 'Gruppo & Aziende', 'divs': 'Divisioni Interne',
-                'richieste-servizi': 'Ricezione Richieste Servizi', 'candidature': 'Ricezione Candidature HR',
-                'staff': 'Gestione Organico HR', 'payrolls': 'Paghe & Stipendi', 'badges': 'Gestione Badge App',
-                'timbrature': 'Timbrature & Presenze', 'ordini': 'Ordini & Servizi Horizon', 'docs': 'Documenti & Finanza',
-                'cloud': 'Archivio Cloud', 'tasks': 'Task & Ticket', 'horizon-id': 'Verifica Utenti Horizon ID',
-                'ai': 'Assistente Analitico Globale', 'macchina': 'Grado mAf Terminal', 'eolo': 'Radioterra Telemetria', 'settings': 'Impostazioni'
-            };
-            document.getElementById('page-title').innerText = titles[viewId] || 'Horizon Global';
-            
-            if (window.innerWidth <= 768) window.toggleSidebar();
-            if(viewId === 'cloud') renderCloudInterface();
+            const res = await fetch(`https://api.cloudinary.com/v1_1/dxblnwvuq/auto/upload`, { 
+                method: 'POST', 
+                body: formData 
+            });
+            const data = await res.json();
+            if(data.error) throw new Error(data.error.message);
+            return data.secure_url;
+        }
+
+        // --- STATE GLOBALE ---
+        let state = {
+            companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: [], badges: [], payrolls: [], security_alerts: [], budget_history: [], ordini: [],
+            horizonUsers: [], servizi: [], richieste_servizi: [], candidature: [],
+            cloud_folders: [], cloud_files: []
         };
 
-        window.switchLoginMode = function(mode) {
-            document.getElementById('btn-tab-admin').classList.toggle('active', mode==='admin');
-            document.getElementById('btn-tab-staff').classList.toggle('active', mode==='staff');
-            document.getElementById('login-desc').innerText = mode === 'admin' ? "Accesso Riservato Direzione (direzione@horizonglobal.com)" : "Accesso Dipendenti e Staff Autorizzato";
-            document.getElementById('btn-login-action').setAttribute('onclick', `attemptLogin('${mode}')`);
+        let currentCloudFolder = null; 
+        let doughnutChartInst = null;
+        let lineChartInst = null;
+
+        function renderCharts() {
+            const dashEl = document.getElementById('view-dash');
+            if(!dashEl || !dashEl.classList.contains('active')) return;
+
+            const divNames = state.divisions.map(d => d.name);
+            const divBudgets = state.divisions.map(d => d.budget);
+
+            const cD = document.getElementById('budgetDoughnutChart');
+            if(cD) {
+                const ctxD = cD.getContext('2d');
+                if(doughnutChartInst) doughnutChartInst.destroy();
+                doughnutChartInst = new Chart(ctxD, {
+                    type: 'doughnut',
+                    data: { labels: divNames.length ? divNames : ['Nessuna'], datasets: [{ data: divBudgets.length ? divBudgets : [1], backgroundColor: ['#2563EB', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6'] }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                });
+            }
+
+            const cH = document.getElementById('budgetHistoryChart');
+            if(cH) {
+                const ctxL = cH.getContext('2d');
+                if(lineChartInst) lineChartInst.destroy();
+
+                let historyLabels = []; let historyData = [];
+                if (state.budget_history && state.budget_history.length > 0) {
+                    let sortedHistory = [...state.budget_history].sort((a, b) => a.id - b.id);
+                    historyLabels = sortedHistory.map(h => h.date); historyData = sortedHistory.map(h => h.total);
+                } else {
+                    let currentTotal = state.divisions.reduce((acc, d) => acc + d.budget, 0);
+                    historyLabels = [new Date().toLocaleDateString('it-IT')]; historyData = [currentTotal];
+                }
+
+                lineChartInst = new Chart(ctxL, {
+                    type: 'line',
+                    data: { labels: historyLabels, datasets: [{ label: 'Budget (€)', data: historyData, borderColor: '#2563EB', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.3 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+                });
+            }
         }
+
+        async function saveToFirebase(collectionName, item) {
+            if (window.rtdb && window.db) {
+                try {
+                    const docId = item.id.toString();
+                    await window.rtdb.set(window.rtdb.ref(window.db, `${collectionName}/${docId}`), JSON.parse(JSON.stringify(item)));
+                } catch (e) { alert("Errore Salvataggio DB: " + e.message); }
+            }
+        }
+
+        window.deleteData = async function(collectionName, id) {
+            if(!confirm("Sicuro di voler eliminare questo elemento? L'azione è irreversibile.")) return;
+            if (window.rtdb && window.db) {
+                try { 
+                    if(collectionName === 'ordini') {
+                        let o = state.ordini.find(x => x.id == id);
+                        if(o && window.dbHorizonId) {
+                            try { await window.rtdb.remove(window.rtdb.ref(window.dbHorizonId, `users/${o.clienteId}/ordini/${id}`)); } catch(e) {}
+                        }
+                    }
+                    await window.rtdb.remove(window.rtdb.ref(window.db, `${collectionName}/${id}`)); 
+                } 
+                catch (e) { alert("Errore Eliminazione: " + e.message); }
+            }
+        }
+
+        async function initDefaultCloudFolders() {
+            if (!state.cloud_folders || state.cloud_folders.length === 0) {
+                const defaultFolders = [
+                    { id: Date.now() + 1, name: "Statuto e Visure" },
+                    { id: Date.now() + 2, name: "Contratti e Accordi" },
+                    { id: Date.now() + 3, name: "Procedure Operative" },
+                    { id: Date.now() + 4, name: "Modulistica HR" },
+                    { id: Date.now() + 5, name: "Documentazione Fiscale" }
+                ];
+                for (let f of defaultFolders) {
+                    await saveToFirebase('cloud_folders', f);
+                }
+            }
+        }
+
+        async function syncConFirebase() {
+            if (!window.db || !window.rtdb) return;
+            try {
+                // Recupero asincrono di tutte le collezioni definite nell'Index 9
+                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history', 'ordini', 'servizi', 'richieste_servizi', 'candidature', 'cloud_folders', 'cloud_files'];
+                
+                const loadPromises = collections.map(async (coll) => {
+                    const snap = await window.rtdb.get(window.rtdb.ref(window.db, coll));
+                    let arr = [];
+                    if (snap.exists()) { snap.forEach((childSnap) => { arr.push(childSnap.val()); }); }
+                    state[coll] = arr;
+                });
+                await Promise.all(loadPromises);
+                
+                await initDefaultCloudFolders();
+
+                // Attivo i listener in realtime
+                collections.forEach(coll => {
+                    window.rtdb.onValue(window.rtdb.ref(window.db, coll), (snap) => {
+                        let arr = [];
+                        if (snap.exists()) { snap.forEach((childSnap) => { arr.push(childSnap.val()); }); }
+                        state[coll] = arr;
+                        const lo = document.getElementById('login-overlay');
+                        if(lo && lo.style.display === 'none') renderAll();
+                    });
+                });
+
+                // Server 2: Horizon ID Core
+                if(window.dbHorizonId) {
+                    window.rtdb.onValue(window.rtdb.ref(window.dbHorizonId, 'users'), (snap) => {
+                        let arr = [];
+                        if (snap.exists()) { snap.forEach((childSnap) => { arr.push(childSnap.val()); }); }
+                        state.horizonUsers = arr;
+                        populateSelects(); 
+                        const lo = document.getElementById('login-overlay');
+                        if(lo && lo.style.display === 'none') renderAll();
+                    });
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        const getCompanyName = (id) => { const c = state.companies.find(x => x.id == id); return c ? c.name : 'N/A'; };
+        const getDivName = (id) => { const d = state.divisions.find(x => x.id == id); return d ? d.name : 'N/A'; };
+        const getStaffName = (id) => { const s = state.staff.find(x => x.id == id); return s ? s.name : 'Sconosciuto'; };
+        const getStaffIban = (id) => { const s = state.staff.find(x => x.id == id); return s && s.iban ? s.iban : 'Nessun IBAN'; };
+
+        // --- GESTIONE LOGIN ---
+        window.addEventListener('DOMContentLoaded', () => {
+             window.onAuthStateChanged(window.auth, async (user) => {
+                 const lo = document.getElementById('login-overlay');
+                 if (user) {
+                     const userEmail = user.email.toLowerCase();
+                     applyUserRole(userEmail);
+                     if(lo) lo.style.display = 'none';
+                     await syncConFirebase(); 
+                     const stL = document.getElementById('menu-staff-link');
+                     if(window.userRole === 'staff' && stL) nav('staff', stL);
+                     else renderAll();
+                 } else {
+                     if(lo) lo.style.display = 'flex';
+                 }
+             });
+        });
 
         window.attemptLogin = async function(roleAttempt) {
             const uEl = document.getElementById('login-user');
             const pEl = document.getElementById('login-pass');
             const btn = document.getElementById('btn-login-action');
-            if(!uEl || !pEl || !uEl.value || !pEl.value) return alert("Compila i campi.");
+            if(!uEl || !pEl || !btn) return;
+
             const u = uEl.value; const p = pEl.value;
             btn.innerText = "Accesso...";
+
             try {
                 const result = await window.signInWithEmailAndPassword(window.auth, u, p);
                 const userEmail = result.user.email.toLowerCase();
+
                 if (roleAttempt === 'admin' && userEmail !== 'direzione@horizonglobal.com') {
                     alert("Accesso negato per Direzione. Prova da 'Staff'.");
                     if(window.signOut) await window.signOut(window.auth);
                     btn.innerText = "Effettua Login";
                     return;
                 }
+
                 if (userEmail === 'direzione@horizonglobal.com' && window.authHorizonId) {
                     try { await window.signInWithEmailAndPassword(window.authHorizonId, u, p); } catch (e) { console.error("Account Admin Horizon ID error.", e); }
                 }
-            } catch (error) {
-                alert("Credenziali errate.");
+            } catch (error) { 
+                alert("Credenziali errate."); 
                 btn.innerText = "Effettua Login";
             }
         }
 
         window.esciDalSistema = async function() {
-            if(confirm("Sei sicuro di voler uscire dal generale?")) {
+            if(confirm("Sei sicuro di voler uscire dal gestionale?")) {
                 try {
                     await window.signOut(window.auth);
                     if(window.authHorizonId) await window.signOut(window.authHorizonId);
-                    window.location.reload();
+                    window.location.reload(); 
                 } catch(e) { console.error("Errore durante il logout:", e); }
             }
         }
@@ -916,317 +1109,509 @@
             const aEl = document.getElementById('current-user-avatar');
             const mEl = document.getElementById('menu-staff-link');
             const hwEl = document.getElementById('nav-group-hw');
-            
+
             if(nEl) nEl.innerText = isAdmin ? "Direzione Generale" : userEmail;
-            if(rEl) rEl.innerText = isAdmin ? "CEO & Founder" : "Operatore Organico";
-            if(aEl) aEl.innerText = isAdmin ? "DG" : userEmail.substring(0,2).toUpperCase();
-            if(mEl) mEl.innerHTML = isAdmin ? `<span><i class="ph ph-users"></i> Organico HR</span>` : `<span><i class="ph ph-user"></i> Mio Profilo HR</span>`;
-            if(hwEl) hwEl.style.display = isAdmin ? 'block' : 'none';
-            
-            document.querySelectorAll('.admin-only').forEach(el => {
-                if(!isAdmin) el.style.removeProperty ? el.style.setProperty('display', 'none', 'important') : el.style.display = 'none';
-            });
-            
-            document.getElementById('login-overlay').style.display = 'none';
-            renderAll();
+            if(rEl) rEl.innerText = isAdmin ? "Root Admin" : "Staff Operativo";
+            if(aEl) aEl.innerText = isAdmin ? "DG" : userEmail.substring(0, 2).toUpperCase();
+            if(mEl) mEl.innerHTML = isAdmin ? `<span><i class="ph ph-users"></i> Organico HR</span>` : `<span><i class="ph ph-identification-card"></i> Il Mio Profilo HR</span>`;
+            if(hwEl) hwEl.style.display = 'block';
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if(!window.auth) return;
-            window.onAuthStateChanged(window.auth, (user) => {
-                if (user) { applyUserRole(user.email); syncConFirebase(); } 
-                else { document.getElementById('login-overlay').style.display = 'flex'; }
-            });
-        });
-
-        async function saveToFirebase(collection, data) {
-            if(!window.db || !window.rtdb) return;
-            try { await window.rtdb.set(window.rtdb.ref(window.db, `${collection}/${data.id}`), data); } 
-            catch(e) { console.error("Firebase Write Error:", e); }
-        }
-
-        window.deleteData = async function(collection, id) {
-            if(!confirm("Eliminare definitivamente questo record?")) return;
-            if(!window.db || !window.rtdb) return;
-            try { await window.rtdb.remove(window.rtdb.ref(window.db, `${collection}/${id}`)); } 
-            catch(e) { console.error("Firebase Delete Error:", e); }
-        }
-
-        async function initDefaultCloudFolders() {
-            if(!state.cloud_folders || state.cloud_folders.length === 0) {
-                const defaultFolders = [
-                    { id: Date.now() + 1, name: "Fatture Attive & Incassi" },
-                    { id: Date.now() + 2, name: "Fatture Passive & Spese" },
-                    { id: Date.now() + 3, name: "Contratti e Logistica" },
-                    { id: Date.now() + 4, name: "Modulistica HR" },
-                    { id: Date.now() + 5, name: "Documentazione Fiscale" }
-                ];
-                for (let f of defaultFolders) { await saveToFirebase('cloud_folders', f); }
+        // --- NAVIGATION E UTILITIES ---
+        window.nav = function(id, element) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            const target = document.getElementById('view-'+id);
+            if(target) target.classList.add('active');
+            if(element) {
+                element.classList.add('active');
+                const pt = document.getElementById('page-title');
+                if(pt) pt.innerText = element.innerText;
             }
+            
+            if(id === 'macchina' || id === 'eolo') {
+                document.body.classList.add('hw-mode');
+            } else {
+                document.body.classList.remove('hw-mode');
+            }
+
+            if(id === 'dash') setTimeout(renderCharts, 50);
+            if(window.innerWidth <= 768) toggleSidebar();
         }
 
-        async function syncConFirebase() {
-            if (!window.db || !window.rtdb) return;
-            try {
-                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history', 'ordini', 'servizi', 'richieste_servizi', 'candidature', 'cloud_folders', 'cloud_files'];
-                const loadPromises = collections.map(async (coll) => {
-                    const snap = await window.rtdb.get(window.rtdb.ref(window.db, coll));
-                    let arr = []; if (snap.exists()) { snap.forEach((childSnap) => { arr.push(childSnap.val()); }); }
-                    state[coll] = arr;
-                });
-                await Promise.all(loadPromises);
-                await initDefaultCloudFolders();
-                
-                collections.forEach(coll => {
-                    window.rtdb.onValue(window.rtdb.ref(window.db, coll), (snap) => {
-                        let arr = []; if (snap.exists()) { snap.forEach((childSnap) => { arr.push(childSnap.val()); }); }
-                        state[coll] = arr;
-                        const lo = document.getElementById('login-overlay');
-                        if(lo && lo.style.display === 'none') renderAll();
-                    });
-                });
-
-                if(window.dbHorizonId) {
-                    window.rtdb.onValue(window.rtdb.ref(window.dbHorizonId, 'users'), (snap) => {
-                        let arr = []; if(snap.exists()) { snap.forEach(cs => { arr.push({ uid: cs.key, ...cs.val() }); }); }
-                        state.horizonUsers = arr;
-                        renderHorizonIdTables(); populateHorizonUsersDropdown();
-                    });
-                }
-            } catch(e) { console.error("Global Sync Error:", e); }
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('sidebar');
+            const sbo = document.getElementById('sidebar-overlay');
+            if(sb) sb.classList.toggle('open');
+            if(sbo) sbo.classList.toggle('active');
         }
 
-        window.populateCompaniesDropdown = function(elId) {
-            const el = document.getElementById(elId); if(!el) return;
-            el.innerHTML = state.companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('') || '<option value="">Nessuna Azienda</option>';
+        window.openModal = function(id) { 
+            const m = document.getElementById(id);
+            if(m) m.classList.add('active'); 
+            populateSelects(); 
         }
-        window.populateStaffDropdown = function(elId) {
-            const el = document.getElementById(elId); if(!el) return;
-            el.innerHTML = state.staff.map(s => `<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">Nessun Dipendente</option>';
+        window.closeModal = function(id) { 
+            const m = document.getElementById(id);
+            if(m) { m.classList.remove('active'); }
         }
-        function populateHorizonUsersDropdown() {
+
+        function populateSelects() {
+            const companyOpts = state.companies.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            ['doc-company','staff-company','div-company'].forEach(i => { const el = document.getElementById(i); if(el) el.innerHTML = companyOpts; });
+            const staffOpts = state.staff.map(s => `<option value="${s.id}">${s.name} (${getCompanyName(s.companyId)})</option>`).join('');
+            ['timb-staff','task-staff','badge-staff','pay-staff'].forEach(i => { const el = document.getElementById(i); if(el) el.innerHTML = staffOpts; });
+            populateDivisionsForStaff();
+
             const activeHorizonUsers = state.horizonUsers.filter(u => u.statoVerifica === 'approvato');
             const horizonOpts = activeHorizonUsers.map(u => `<option value="${u.uid}">${u.nome || u.ragioneSociale} (${u.email})</option>`).join('');
             const ordCli = document.getElementById('ordine-cliente');
             if(ordCli) ordCli.innerHTML = horizonOpts || '<option value="">Nessun utente Horizon ID attivo</option>';
+            
             if(window.aggiornaModuloOrdine) aggiornaModuloOrdine();
         }
+
         window.populateDivisionsForStaff = function() {
             const compId = document.getElementById('staff-company')?.value;
-            const el = document.getElementById('staff-div'); if(!compId || !el) return;
+            const el = document.getElementById('staff-div');
+            if(!compId || !el) return;
             const divs = state.divisions.filter(d => d.companyId == compId);
             el.innerHTML = divs.map(d => `<option value="${d.id}">${d.name}</option>`).join('') || '<option value="">Nessuna divisione</option>';
         }
 
-        window.openCloudFolder = function(id) { currentCloudFolder = id; renderAll(); }
-        window.saveCloudFolder = async function() {
-            const nameInput = document.getElementById('cloud-folder-name').value; if(!nameInput) return alert("Inserisci un nome.");
-            await saveToFirebase('cloud_folders', { id: Date.now(), name: nameInput });
-            closeModal('modal-cloud-folder'); document.getElementById('cloud-folder-name').value = '';
-        }
-        window.saveCloudFile = async function() {
-            if(!currentCloudFolder) return alert("Errore cartella.");
-            const fileInput = document.getElementById('cloud-file-upload');
-            const nameInput = document.getElementById('cloud-file-name').value;
-            if(!nameInput || !fileInput.files[0]) return alert("Compila i campi.");
-            const btn = document.querySelector('#modal-cloud-file .btn:last-child'); const origText = btn.innerText;
-            btn.innerHTML = `<i class="ph ph-spinner ph-spin"></i> Upload...`; btn.disabled = true;
-            try {
-                const fileUrl = await window.uploadToCloudinary(fileInput.files[0], 'Fatture');
-                const data = { id: Date.now(), folderId: currentCloudFolder, name: nameInput, fileUrl: fileUrl, date: new Date().toLocaleDateString(), uploadedBy: window.currentUserEmail };
-                await saveToFirebase('cloud_files', data); closeModal('modal-cloud-file');
-                document.getElementById('cloud-file-name').value = ''; fileInput.value = '';
-            } catch(e) { alert("Errore Cloudinary: "+e.message); } finally { btn.innerText = origText; btn.disabled = false; }
+        // --- GESTIONE ARCHIVIO CLOUD ---
+        window.openCloudFolder = function(id) {
+            currentCloudFolder = id;
+            renderAll(); 
         }
 
+        window.saveCloudFolder = async function() {
+            const nameInput = document.getElementById('cloud-folder-name').value;
+            if(!nameInput) return alert("Inserisci un nome per la cartella.");
+            await saveToFirebase('cloud_folders', { id: Date.now(), name: nameInput });
+            closeModal('modal-cloud-folder');
+            document.getElementById('cloud-folder-name').value = '';
+        }
+
+        window.saveCloudFile = async function() {
+            if(!currentCloudFolder) return alert("Errore: nessuna cartella di destinazione.");
+            const fileInput = document.getElementById('cloud-file-upload');
+            const nameInput = document.getElementById('cloud-file-name').value;
+            
+            if(!nameInput) return alert("Inserisci il nome del file.");
+            if(!fileInput.files[0]) return alert("Seleziona un file da caricare.");
+
+            const btn = document.querySelector('#modal-cloud-file .btn:last-child');
+            const origText = btn.innerText;
+            btn.innerHTML = `<i class="ph ph-spinner ph-spin"></i> Upload Cloud in corso...`;
+            btn.disabled = true;
+
+            try {
+                const fileUrl = await window.uploadToCloudinary(fileInput.files[0], 'Fatture');
+                const data = {
+                    id: Date.now(),
+                    folderId: currentCloudFolder,
+                    name: nameInput,
+                    fileUrl: fileUrl,
+                    date: new Date().toISOString().split('T')[0],
+                    uploadedBy: window.userRole === 'admin' ? 'Amministrazione' : 'Staff'
+                };
+                await saveToFirebase('cloud_files', data);
+                closeModal('modal-cloud-file');
+                fileInput.value = '';
+                document.getElementById('cloud-file-name').value = '';
+            } catch(e) {
+                alert("Errore durante l'upload del file: " + e.message);
+            } finally {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
+        }
+
+        function renderCloudSystem() {
+            const container = document.getElementById('cloud-container');
+            const btnNewFolder = document.getElementById('btn-cloud-folder');
+            const btnUploadFile = document.getElementById('btn-cloud-upload');
+            const breadcrumbActive = document.getElementById('cloud-breadcrumb-active');
+            
+            if(!container) return;
+
+            const isAdmin = window.userRole === 'admin';
+            
+            if (currentCloudFolder === null) {
+                if(btnNewFolder) btnNewFolder.style.display = isAdmin ? 'inline-flex' : 'none';
+                if(btnUploadFile) btnUploadFile.style.display = 'none';
+                if(breadcrumbActive) breadcrumbActive.innerHTML = '';
+
+                let html = (state.cloud_folders || []).map(f => {
+                    let btnDel = isAdmin ? `<button class="cloud-action-btn" onclick="event.stopPropagation(); deleteData('cloud_folders', ${f.id})" title="Elimina Cartella"><i class="ph-fill ph-trash"></i></button>` : '';
+                    let fileCount = (state.cloud_files || []).filter(file => file.folderId == f.id).length;
+                    return `
+                    <div class="cloud-item" onclick="openCloudFolder(${f.id})">
+                        ${btnDel}
+                        <i class="ph-fill ph-folder cloud-icon cloud-folder-icon"></i>
+                        <div class="cloud-title">${f.name}</div>
+                        <div class="cloud-meta">${fileCount} Elementi archiviati</div>
+                    </div>`;
+                }).join('');
+                container.innerHTML = html || '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:var(--text-light);">Archivio vuoto. Nessuna cartella presente.</div>';
+            } else {
+                const currentFolderData = state.cloud_folders.find(f => f.id == currentCloudFolder);
+                const folderName = currentFolderData ? currentFolderData.name : 'Cartella';
+                
+                if(btnNewFolder) btnNewFolder.style.display = 'none';
+                if(btnUploadFile) btnUploadFile.style.display = isAdmin ? 'inline-flex' : 'none';
+                if(breadcrumbActive) breadcrumbActive.innerHTML = ` > <span style="color:var(--text);">${folderName}</span>`;
+
+                const filesInFolder = (state.cloud_files || []).filter(f => f.folderId == currentCloudFolder);
+                let html = filesInFolder.map(f => {
+                    let btnDel = isAdmin ? `<button class="cloud-action-btn" onclick="event.stopPropagation(); deleteData('cloud_files', ${f.id})" title="Elimina File"><i class="ph-fill ph-trash"></i></button>` : '';
+                    return `
+                    <div class="cloud-item" onclick="window.open('${f.fileUrl}', '_blank')">
+                        ${btnDel}
+                        <i class="ph-fill ph-file-text cloud-icon cloud-file-icon"></i>
+                        <div class="cloud-title">${f.name}</div>
+                        <div class="cloud-meta">Data: ${f.date}<br>By: ${f.uploadedBy}</div>
+                        <div style="margin-top:10px; font-size:11px; background:#e2e8f0; padding:4px 8px; border-radius:12px; color:var(--text);">Clicca per aprire</div>
+                    </div>`;
+                }).join('');
+                container.innerHTML = html || '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:var(--text-light);">Cartella vuota. Nessun documento caricato in questa sezione.</div>';
+            }
+        }
+
+        // --- GESTIONE DETTAGLI SERVIZI SITO ---
         window.openDettaglioServizio = function(id) {
-            const req = state.richieste_servizi.find(r => r.id == id); if(!req) return;
+            const req = state.richieste_servizi.find(r => r.id == id);
+            if(!req) return;
+
             document.getElementById('ds-id').innerText = `#${req.id}`;
             document.getElementById('ds-target-id').value = req.id;
             document.getElementById('ds-stato-select').value = req.stato;
+
             let isAz = req.tipo === 'Azienda';
+            
             let html = `
                 <div class="detail-group">
                     <span class="detail-label">Informazioni Generali</span>
                     <div class="form-grid">
                         <div><small style="color:var(--text-light)">Data Richiesta:</small><br><strong>${new Date(req.dataInvio).toLocaleString()}</strong></div>
-                        <div><small style="color:var(--text-light)">Servizio Richiesto:</small><br><strong style="color:var(--primary);">${req.tipoServizio || req.servizio || 'Indefinito'}</strong></div>
+                        <div><small style="color:var(--text-light)">Servizio Richiesto:</small><br><strong style="color:var(--primary); font-size:16px;">${req.tipoServizio || req.servizioAcquistato || req.servizio || 'Indefinito'}</strong></div>
+                        <div><small style="color:var(--text-light)">Tipologia Cliente:</small><br><strong>${req.tipo}</strong></div>
                     </div>
                 </div>
+
                 <div class="detail-group">
-                    <span class="detail-label">Anagrafica Richiedente</span>
+                    <span class="detail-label">Dati Referente & Contatti</span>
                     <div class="form-grid">
-                        <div><small style="color:var(--text-light)">Nome Contatto:</small><br><strong>${req.nome} ${req.cognome}</strong></div>
+                        <div><small style="color:var(--text-light)">Nominativo:</small><br><strong>${req.nome} ${req.cognome}</strong></div>
                         <div><small style="color:var(--text-light)">Email:</small><br><strong><a href="mailto:${req.email}">${req.email}</a></strong></div>
-                        <div><small style="color:var(--text-light)">Telefono:</small><br><strong><a href="tel:${req.telefono}">${req.telefono}</a></strong></div>
-                        <div><small style="color:var(--text-light)">Tipo Soggetto:</small><br><span class="badge" style="background:var(--secondary); color:white;">${req.tipo}</span></div>
+                        <div><small style="color:var(--text-light)">Telefono / Cellulare:</small><br><strong><a href="tel:${req.telefono}">${req.telefono}</a></strong></div>
                     </div>
                 </div>
-                ${isAz ? `
-                <div class="detail-group" style="background:rgba(37,99,235,0.03); padding:10px; border-radius:8px;">
-                    <span class="detail-label">Dati Societari / B2B</span>
-                    <div class="form-grid">
-                        <div><small style="color:var(--text-light)">Ragione Sociale:</small><br><strong>${req.ragioneSociale}</strong></div>
-                        <div><small style="color:var(--text-light)">Partita IVA:</small><br><strong style="font-family:monospace;">${req.piva}</strong></div>
-                        <div><small style="color:var(--text-light)">Codice Univoco SDI:</small><br><strong style="font-family:monospace;">${req.sdi || '-'}</strong></div>
-                        <div><small style="color:var(--text-light)">Sede Legale:</small><br><strong>${req.sedeLegale || '-'}</strong></div>
-                    </div>
-                </div>` : `
-                <div class="detail-group" style="background:rgba(245,158,11,0.03); padding:10px; border-radius:8px;">
-                    <span class="detail-label">Dati Fiscali / B2C</span>
-                    <div class="form-grid">
-                        <div><small style="color:var(--text-light)">Codice Fiscale Privato:</small><br><strong style="font-family:monospace;">${req.cfPrivato}</strong></div>
-                        <div><small style="color:var(--text-light)">Indirizzo Residenza:</small><br><strong>${req.indirizzoPrivato || '-'}</strong></div>
-                    </div>
-                </div>`}
+
                 <div class="detail-group">
-                    <span class="detail-label">Messaggio / Note del Cliente</span>
-                    <div style="background:var(--bg); padding:12px; border-radius:8px; border:1px solid var(--border); font-style:italic;">"${req.messaggio || 'Nessun messaggio inserito.'}"</div>
-                </div>`;
-            document.getElementById('dettaglio-servizio-content').innerHTML = html; openModal('modal-dettaglio-servizio');
+                    <span class="detail-label">Dati Fiscali / Fatturazione</span>
+                    <div class="form-grid">
+                        ${isAz ? `
+                            <div style="grid-column: 1/-1;"><small style="color:var(--text-light)">Ragione Sociale:</small><br><strong>${req.ragioneSociale}</strong></div>
+                            <div><small style="color:var(--text-light)">Partita IVA:</small><br><strong>${req.piva}</strong></div>
+                            <div><small style="color:var(--text-light)">Codice Fiscale (Aziendale):</small><br><strong>${req.cfAzienda || '-'}</strong></div>
+                            <div><small style="color:var(--text-light)">Codice Univoco SDI:</small><br><strong style="font-family:monospace">${req.sdi}</strong></div>
+                            <div><small style="color:var(--text-light)">Indirizzo PEC:</small><br><strong>${req.pec}</strong></div>
+                        ` : `
+                            <div><small style="color:var(--text-light)">Codice Fiscale (Privato):</small><br><strong style="font-family:monospace">${req.cfPrivato}</strong></div>
+                        `}
+                    </div>
+                </div>
+
+                <div class="detail-group">
+                    <span class="detail-label">Indirizzo (Sede Legale / Residenza)</span>
+                    <div class="detail-value">${req.via}, ${req.cap} - ${req.citta} (${req.prov}) - ${req.nazione}</div>
+                </div>
+
+                <div class="detail-group" style="border-bottom:none; padding-bottom:0;">
+                    <span class="detail-label">Dettagli / Messaggio Richiesta</span>
+                    <div style="background:#f1f5f9; padding:15px; border-radius:8px; font-size:13px; line-height:1.6; white-space:pre-wrap;">${req.dettagli}</div>
+                </div>
+            `;
+
+            document.getElementById('dettaglio-servizio-content').innerHTML = html;
+            openModal('modal-dettaglio-servizio');
         }
 
-        window.updateStatoRichiestaServizio = async function() {
+        window.updateStatoServizio = async function() {
             const id = document.getElementById('ds-target-id').value;
-            const req = state.richieste_servizi.find(r => r.id == id); if(!req) return;
-            req.stato = document.getElementById('ds-stato-select').value;
-            await saveToFirebase('richieste_servizi', req); closeModal('modal-dettaglio-servizio');
+            const nuovoStato = document.getElementById('ds-stato-select').value;
+            const req = state.richieste_servizi.find(r => r.id == id);
+            if(req) {
+                req.stato = nuovoStato;
+                await saveToFirebase('richieste_servizi', req);
+                alert("Stato della richiesta aggiornato correttamente.");
+                closeModal('modal-dettaglio-servizio');
+            }
+        }
+
+        // --- GESTIONE DETTAGLI CANDIDATURE ---
+        window.openDettaglioCandidatura = function(id) {
+            const c = state.candidature.find(x => x.id == id);
+            if(!c) return;
+
+            document.getElementById('dc-id').innerText = `#${c.id}`;
+            document.getElementById('dc-target-id').value = c.id;
+            document.getElementById('dc-stato-select').value = c.stato;
+
+            let eta = '-';
+            if(c.dataNascita) {
+                const diff = Date.now() - new Date(c.dataNascita).getTime();
+                eta = Math.abs(new Date(diff).getUTCFullYear() - 1970);
+            }
+
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
+                    <div>
+                        <h2 style="margin:0; color:var(--text);">${c.nome} ${c.cognome}</h2>
+                        <span style="font-size:14px; color:var(--primary); font-weight:600;">Candidato per: ${c.posizione}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:11px; color:var(--text-light); display:block;">Inviato il:</span>
+                        <strong style="font-size:13px;">${new Date(c.dataInvio).toLocaleString()}</strong>
+                    </div>
+                </div>
+
+                <div class="detail-group">
+                    <span class="detail-label">Dati Anagrafici e Fiscali</span>
+                    <div class="form-grid">
+                        <div><small style="color:var(--text-light)">Codice Fiscale:</small><br><strong style="font-family:monospace; font-size:15px;">${c.cf}</strong></div>
+                        <div><small style="color:var(--text-light)">Data e Luogo Nascita:</small><br><strong>${c.dataNascita ? new Date(c.dataNascita).toLocaleDateString() : '-'} a ${c.luogoNascita} (${eta} anni)</strong></div>
+                    </div>
+                </div>
+
+                <div class="detail-group">
+                    <span class="detail-label">Recapiti e Indirizzo</span>
+                    <div class="form-grid">
+                        <div><small style="color:var(--text-light)">Email:</small><br><strong><a href="mailto:${c.email}">${c.email}</a></strong></div>
+                        <div><small style="color:var(--text-light)">Telefono / Cellulare:</small><br><strong><a href="tel:${c.telefono}">${c.telefono}</a></strong></div>
+                        <div style="grid-column: 1/-1;"><small style="color:var(--text-light)">Domicilio / Residenza:</small><br><strong>${c.via}, ${c.cap} - ${c.citta} (${c.prov})</strong></div>
+                    </div>
+                </div>
+
+                <div class="detail-group">
+                    <span class="detail-label">Qualifiche e Note (Lettera di Presentazione)</span>
+                    <div style="margin-bottom:10px;"><small style="color:var(--text-light)">Titolo di Studio Principale:</small><br><strong>${c.titoloStudio}</strong></div>
+                    <div style="background:#f1f5f9; padding:15px; border-radius:8px; font-size:13px; line-height:1.6; white-space:pre-wrap;">${c.note || 'Nessuna nota aggiuntiva fornita dal candidato.'}</div>
+                </div>
+            `;
+
+            document.getElementById('dettaglio-candidatura-content').innerHTML = html;
+            openModal('modal-dettaglio-candidatura');
+        }
+
+        window.updateStatoCandidatura = async function() {
+            const id = document.getElementById('dc-target-id').value;
+            const nuovoStato = document.getElementById('dc-stato-select').value;
+            const c = state.candidature.find(x => x.id == id);
+            if(c) {
+                c.stato = nuovoStato;
+                await saveToFirebase('candidature', c);
+                alert("Iter HR aggiornato correttamente.");
+                closeModal('modal-dettaglio-candidatura');
+            }
+        }
+
+        // --- VERIFICA HORIZON ID ---
+        window.verifyHorizonUser = function(uid) {
+            const user = state.horizonUsers.find(u => u.uid === uid);
+            if(!user) return;
+
+            document.getElementById('verify-user-uid').value = user.uid;
+            document.getElementById('verify-user-name').innerText = user.nome || user.ragioneSociale || 'Utente Sconosciuto';
+            document.getElementById('verify-user-piva').innerText = user.piva || user.cf || 'Dato Fiscale Mancante';
+
+            const imgFronte = document.getElementById('verify-img-fronte');
+            const imgRetro = document.getElementById('verify-img-retro');
+            const videoBio = document.getElementById('verify-video');
+
+            imgFronte.src = user.docFronteUrl || 'https://via.placeholder.com/400x250.png?text=Documento+Fronte+Assente';
+            imgRetro.src = user.docRetroUrl || 'https://via.placeholder.com/400x250.png?text=Documento+Retro+Assente';
+            videoBio.src = user.videoBiometriaUrl || ''; 
+            
+            openModal('modal-verify-id');
+        }
+
+        window.approveHorizonId = async function() {
+            const uid = document.getElementById('verify-user-uid').value;
+            if(!uid) return;
+            if(!confirm("Confermi di voler APPROVARE questo utente? L'account diventerà attivo nel suo ecosistema App.")) return;
+
+            try {
+                if(window.dbHorizonId && window.rtdb) {
+                    await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${uid}`), { statoVerifica: 'approvato' });
+                    alert("Utente approvato e attivato con successo.");
+                    closeModal('modal-verify-id');
+                } else {
+                    alert("Errore di connessione al database Horizon ID App.");
+                }
+            } catch(e) {
+                alert("Errore: " + e.message);
+            }
+        }
+
+        window.rejectHorizonId = async function() {
+            const uid = document.getElementById('verify-user-uid').value;
+            if(!uid) return;
+            if(!confirm("Confermi di voler RIFIUTARE questo utente? Il sistema chiederà di ricaricare i documenti.")) return;
+
+            try {
+                if(window.dbHorizonId && window.rtdb) {
+                    await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${uid}`), { statoVerifica: 'rifiutato' });
+                    alert("Identità utente rifiutata.");
+                    closeModal('modal-verify-id');
+                } else {
+                    alert("Errore di connessione al database Horizon ID App.");
+                }
+            } catch(e) {
+                alert("Errore: " + e.message);
+            }
         }
 
         function renderHorizonIdTables() {
             const tbodyPending = document.querySelector('#table-horizon-pending tbody');
             const tbodyActive = document.querySelector('#table-horizon-active tbody');
             if(!tbodyPending || !tbodyActive) return;
-            let htmlPending = ''; let htmlActive = '';
+
+            let htmlPending = '';
+            let htmlActive = '';
+
             (state.horizonUsers || []).forEach(u => {
                 const isPending = !u.statoVerifica || u.statoVerifica === 'in_attesa' || u.statoVerifica === 'rifiutato';
-                const name = u.ragioneSociale || u.nome || 'Sconosciuto'; const piva = u.piva || u.cf || '-'; const dataReg = u.dataRegistrazione || '-';
-                let badgeColor = 'var(--warning)'; let statusTxt = 'IN ATTESA';
-                if (u.statoVerifica === 'approvato') { badgeColor = 'var(--success)'; statusTxt = 'ATTIVO'; } 
+                const name = u.ragioneSociale || u.nome || 'Sconosciuto';
+                const piva = u.piva || u.cf || '-';
+                const dataReg = u.dataRegistrazione || '-';
+                
+                let badgeColor = 'var(--warning)';
+                let statusTxt = 'IN ATTESA';
+                
+                if (u.statoVerifica === 'approvato') { badgeColor = 'var(--success)'; statusTxt = 'ATTIVO'; }
                 else if (u.statoVerifica === 'rifiutato') { badgeColor = 'var(--danger)'; statusTxt = 'RIFIUTATO'; }
-                const row = `<tr><td>${name}</td><td>${piva}</td><td>${u.email || '-'}</td><td>${dataReg}</td><td><span class="badge" style="background:${badgeColor}; color:white;">${statusTxt}</span></td><td>${isPending ? `<button class="btn" style="padding:6px 10px; font-size:12px;" onclick="verifyHorizonUser('${u.uid}')"><i class="ph ph-magnifying-glass"></i> Verifica Documenti</button>` : `<button class="btn" style="padding:6px 10px; font-size:12px; background:var(--secondary);" onclick="verifyHorizonUser('${u.uid}')"><i class="ph ph-eye"></i> Vedi Profilo</button>`}</td></tr>`;
-                if(u.statoVerifica === 'approvato') htmlActive += row; else htmlPending += row;
+
+                const row = `<tr>
+                    <td>${name}</td>
+                    <td>${piva}</td>
+                    <td>${u.email || '-'}</td>
+                    <td>${dataReg}</td>
+                    <td><span class="badge" style="background:${badgeColor}; color:white;">${statusTxt}</span></td>
+                    <td>
+                        ${isPending 
+                            ? `<button class="btn" style="padding:6px 10px; font-size:12px;" onclick="verifyHorizonUser('${u.uid}')"><i class="ph ph-magnifying-glass"></i> Verifica Documenti</button>` 
+                            : `<button class="btn" style="padding:6px 10px; font-size:12px; background:var(--secondary);" onclick="verifyHorizonUser('${u.uid}')"><i class="ph ph-eye"></i> Vedi Profilo</button>`}
+                    </td>
+                </tr>`;
+
+                if(u.statoVerifica === 'approvato') htmlActive += row;
+                else htmlPending += row;
             });
-            tbodyPending.innerHTML = htmlPending || '<tr><td colspan="6" style="text-align:center; color:var(--text-light)">Nessun utente in attesa</td></tr>';
-            tbodyActive.innerHTML = htmlActive || '<tr><td colspan="6" style="text-align:center; color:var(--text-light)">Nessun utente verificato attivo</td></tr>';
+
+            tbodyPending.innerHTML = htmlPending || '<tr><td colspan="6" style="text-align:center;">Nessuna richiesta in attesa.</td></tr>';
+            tbodyActive.innerHTML = htmlActive || '<tr><td colspan="6" style="text-align:center;">Nessun utente attivo.</td></tr>';
         }
 
-        window.verifyHorizonUser = function(uid) {
-            const u = state.horizonUsers.find(x => x.uid === uid); if(!u) return;
-            let html = `<h4>${u.ragioneSociale || u.nome || 'Dati Incompleti'}</h4><p>Email: <b>${u.email}</b></p><p>Codice Fiscale / P.IVA: <b>${u.piva || u.cf || '-'}</b></p><p>Registrato il: <b>${u.dataRegistrazione || '-'}</b></p><p>Tipo Profilo: <b>${u.tipoAccount === 'azienda' ? 'B2B (Azienda)' : 'B2C (Cittadino)'}</b></p>`;
-            if(u.documentoUrl) html += `<div style="margin-top:15px;"><a href="${u.documentoUrl}" target="_blank" class="btn" style="background:var(--primary);"><i class="ph ph-file-text"></i> Apri Documento di Identità / Visura</a></div>`;
-            else html += `<p style="color:var(--danger); margin-top:10px;"><i class="ph ph-warning"></i> Nessun documento caricato dall'utente.</p>`;
-            document.getElementById('horizon-user-content').innerHTML = html;
-            document.getElementById('horizon-user-actions').innerHTML = `<button class="btn" style="background:var(--danger);" onclick="changeHorizonUserStatus('${uid}', 'rifiutato')"><i class="ph ph-x-circle"></i> Rifiuta / Sospendi</button><button class="btn" style="background:var(--success);" onclick="changeHorizonUserStatus('${uid}', 'approvato')"><i class="ph ph-check-circle"></i> Approva e Verifica Account</button>`;
-            openModal('modal-horizon-user');
+        // --- ALTRE FUNZIONI CRUD ---
+        window.saveServizio = async function() {
+            const data = { id: Date.now(), nome: document.getElementById('servizio-nome').value, target: document.getElementById('servizio-target').value, descrizione: document.getElementById('servizio-desc').value };
+            if(!data.nome) return alert("Inserisci il nome del servizio");
+            await saveToFirebase('servizi', data); closeModal('modal-servizio'); alert("Nuovo servizio aggiunto con successo.");
         }
-
-        window.changeHorizonUserStatus = async function(uid, newStatus) {
-            if(!window.dbHorizonId || !window.rtdb) return;
-            try {
-                await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${uid}`), { statoVerifica: newStatus });
-                closeModal('modal-horizon-user');
-            } catch(e) { console.error(e); }
-        }
-
-        window.saveOrdine = async function() {
-            const idField = document.getElementById('ordine-id').value;
-            const clienteId = document.getElementById('ordine-cliente').value; if(!clienteId) return alert("Seleziona cliente.");
-            const cliente = state.horizonUsers.find(u => u.uid === clienteId);
-            const tipoCliente = cliente ? (cliente.tipoAccount === 'azienda' ? 'Azienda' : 'Privato') : 'Privato';
-            const newId = idField ? parseInt(idField) : Date.now();
-            let extraDati = {};
-            if(tipoCliente === 'Azienda') {
-                extraDati = { ragioneSociale: document.getElementById('ordine-ragione').value, piva: document.getElementById('ordine-piva').value, sdi: document.getElementById('ordine-sdi').value };
-            } else { extraDati = { nomeCognome: document.getElementById('ordine-nome-cognome').value, cf: document.getElementById('ordine-cf').value }; }
-            const data = {
-                id: newId, clienteId: clienteId, tipoCliente: tipoCliente, servizio: document.getElementById('ordine-servizio').value, note: document.getElementById('ordine-note').value,
-                importo: parseFloat(document.getElementById('ordine-importo').value) || 0, stato: idField ? state.ordini.find(o => o.id == idField).stato : 'Richiesto',
-                data: idField ? state.ordini.find(o => o.id == idField).data : new Date().toISOString().split('T')[0], ...extraDati
-            };
-            await saveToFirebase('ordini', data);
-            if(window.rtdb && window.dbHorizonId) {
-                try { await window.rtdb.set(window.rtdb.ref(window.dbHorizonId, `users/${clienteId}/ordini/${newId}`), data); } catch(e) { console.error(e); }
+        window.apriNuovoOrdine = function() { openModal('modal-ordine'); const elId = document.getElementById('ordine-id'); if(elId) elId.value = ''; document.getElementById('ordine-tipo-cliente').value = 'Azienda'; aggiornaModuloOrdine(); }
+        window.aggiornaModuloOrdine = function() {
+            const tipo = document.getElementById('ordine-tipo-cliente') ? document.getElementById('ordine-tipo-cliente').value : 'Azienda';
+            const cA = document.getElementById('campi-azienda'); const cP = document.getElementById('campi-privato');
+            if(tipo === 'Azienda') { if(cA) cA.style.display = 'flex'; if(cP) cP.style.display = 'none'; } else { if(cA) cA.style.display = 'none'; if(cP) cP.style.display = 'flex'; }
+            const elSer = document.getElementById('ordine-servizio');
+            if(elSer && state.servizi) {
+                let servFiltrati = state.servizi.filter(s => s.target === 'Entrambi' || (tipo === 'Azienda' ? s.target === 'Aziende' : s.target === 'Cittadini'));
+                elSer.innerHTML = servFiltrati.map(s => `<option value="${s.nome}">${s.nome} (${s.target})</option>`).join('') || '<option value="">(Nessun servizio nel catalogo)</option>';
             }
+        }
+        window.saveOrdine = async function() {
+            const elId = document.getElementById('ordine-id'); const idField = elId ? elId.value : null; const newId = idField ? parseInt(idField) : Date.now();
+            const clienteId = document.getElementById('ordine-cliente').value; const tipoCliente = document.getElementById('ordine-tipo-cliente').value;
+            if(!clienteId) return alert("Seleziona un cliente Horizon ID.");
+            let extraDati = {};
+            if(tipoCliente === 'Azienda') { extraDati = { ragioneSociale: document.getElementById('ordine-ragione').value, piva: document.getElementById('ordine-piva').value, sdi: document.getElementById('ordine-sdi').value }; } 
+            else { extraDati = { nomeCognome: document.getElementById('ordine-nome-cognome').value, cf: document.getElementById('ordine-cf').value }; }
+            const data = { id: newId, clienteId: clienteId, tipoCliente: tipoCliente, servizio: document.getElementById('ordine-servizio').value, note: document.getElementById('ordine-note').value, importo: parseFloat(document.getElementById('ordine-importo').value) || 0, stato: idField ? state.ordini.find(o => o.id == idField).stato : 'Richiesto', data: idField ? state.ordini.find(o => o.id == idField).data : new Date().toISOString().split('T')[0], ...extraDati };
+            await saveToFirebase('ordini', data);
+            if(window.rtdb && window.dbHorizonId) { try { await window.rtdb.set(window.rtdb.ref(window.dbHorizonId, `users/${clienteId}/ordini/${newId}`), data); } catch(e) { console.error("Errore Sync Horizon ID:", e); } }
             closeModal('modal-ordine');
         }
-
         window.openOrdineDettagli = function(id) {
             const o = state.ordini.find(x => x.id == id); if(!o) return;
-            let cliente = state.horizonUsers.find(u => u.uid === o.clienteId); let nomeCliente = cliente ? (cliente.nome || cliente.ragioneSociale) : 'Sconosciuto';
-            document.getElementById('dettagli-id-testo').innerText = `#${o.id}`;
-            document.getElementById('dettagli-ordine-id').value = o.id;
-            document.getElementById('dettagli-cliente-id').value = o.clienteId;
-            document.getElementById('dettagli-stato-select').value = o.stato;
-            let extraHtml = o.tipoCliente === 'Azienda' ? `<p>Ragione Sociale: <b>${o.ragioneSociale}</b><br>P.IVA: <b>${o.piva}</b><br>SDI: <b>${o.sdi}</b></p>` : `<p>Nome Cognome: <b>${o.nomeCognome}</b><br>Codice Fiscale: <b>${o.cf}</b></p>`;
-            document.getElementById('dettagli-ordine-content').innerHTML = `<h4>Servizio: ${o.servizio}</h4><p>Data Emissione: <b>${o.data}</b></p><p>Importo: <b>€ ${o.importo.toLocaleString()}</b></p><p>Cliente Master: <b>${nomeCliente}</b></p><hr style="margin:10px 0; border:none; border-bottom:1px solid var(--border);">${extraHtml}<hr style="margin:10px 0; border:none; border-bottom:1px solid var(--border);"><p>Note Tecniche Avanzamento:<br><i>${o.note || 'Nessuna nota presente.'}</i></p>`;
+            let cliente = state.horizonUsers.find(u => u.uid === o.clienteId); let nomeCliente = cliente ? cliente.nome : 'Sconosciuto';
+            document.getElementById('dettagli-id-testo').innerText = `#${o.id}`; document.getElementById('dettagli-ordine-id').value = o.id; document.getElementById('dettagli-cliente-id').value = o.clienteId; document.getElementById('dettagli-stato-select').value = o.stato;
+            let extraHtml = o.tipoCliente === 'Azienda' ? `<p><b>Ragione Sociale:</b> ${o.ragioneSociale || '-'}</p><p><b>Partita IVA:</b> ${o.piva || '-'}</p><p><b>Codice SDI:</b> <span style="font-family:monospace">${o.sdi || '-'}</span></p>` : `<p><b>Nome e Cognome:</b> ${o.nomeCognome || '-'}</p><p><b>Codice Fiscale:</b> <span style="font-family:monospace">${o.cf || '-'}</span></p>`;
+            let badgeCol = o.stato === 'Attivo' ? 'var(--success)' : (o.stato === 'In Lavorazione' || o.stato === 'In Attivazione' ? 'var(--primary)' : (o.stato === 'Annullato' ? 'var(--danger)' : 'var(--warning)'));
+            document.getElementById('dettagli-ordine-content').innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><strong><i class="ph-fill ph-tag"></i> Stato Avanzamento:</strong> <span class="badge" style="font-size:12px; padding:6px 12px; background:${badgeCol}; color:white;">${o.stato}</span></div><hr style="border:0; border-top:1px solid var(--border); margin:15px 0;"><h4 style="margin-bottom:10px; color:var(--primary);"><i class="ph-fill ph-user-circle"></i> Dati Cliente</h4><p><b>Account Horizon ID:</b> ${nomeCliente} <span style="color:var(--text-light); font-size:11px;">(${o.clienteId})</span></p><p><b>Inquadramento:</b> ${o.tipoCliente}</p><div style="background:var(--bg); border:1px solid var(--border); padding:10px; border-radius:6px; margin:10px 0;">${extraHtml}</div><hr style="border:0; border-top:1px solid var(--border); margin:15px 0;"><h4 style="margin-bottom:10px; color:var(--primary);"><i class="ph-fill ph-shopping-bag"></i> Dettagli Fornitura</h4><p><b>Data Registrazione:</b> ${o.data}</p><p><b>Servizio Erogato:</b> <strong style="color:var(--text)">${o.servizio}</strong></p><p><b>Importo:</b> <span style="color:var(--accent); font-weight:bold;">€ ${o.importo.toLocaleString()}</span></p><p style="margin-top:10px;"><b>Note Tecniche:</b><br> <span style="color:var(--text-light); white-space:pre-wrap;">${o.note || 'Nessuna specifica.'}</span></p>`;
             openModal('modal-ordine-dettagli');
         }
-
-        window.updateStatoOrdine = async function() {
-            const id = document.getElementById('dettagli-ordine-id').value;
-            const clienteId = document.getElementById('dettagli-cliente-id').value;
-            const o = state.ordini.find(x => x.id == id); if(!o) return;
-            o.stato = document.getElementById('dettagli-stato-select').value;
-            await saveToFirebase('ordini', o);
-            if(window.rtdb && window.dbHorizonId) {
-                try { await window.rtdb.set(window.rtdb.ref(window.dbHorizonId, `users/${clienteId}/ordini/${id}/stato`), o.stato); } catch(e) { console.error(e); }
-            }
-            closeModal('modal-ordine-dettagli');
+        window.updateOrdineStato = async function() {
+            const id = document.getElementById('dettagli-ordine-id').value; const clienteId = document.getElementById('dettagli-cliente-id').value; const newStato = document.getElementById('dettagli-stato-select').value;
+            if(!id || !clienteId) return; let o = state.ordini.find(x => x.id == parseInt(id)); if(!o) return; o.stato = newStato;
+            await window.rtdb.update(window.rtdb.ref(window.db, `ordini/${id}`), { stato: newStato });
+            if(window.dbHorizonId) { try { await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${clienteId}/ordini/${id}`), { stato: newStato }); } catch(e) {} }
+            alert("Stato Sincronizzato con l'App Cliente!"); openOrdineDettagli(id); 
         }
-
-        window.saveAzienda = async function() { await saveToFirebase('companies', { id: Date.now(), name: document.getElementById('az-name').value, capital: parseFloat(document.getElementById('az-cap').value)||0, efficiency: parseInt(document.getElementById('az-eff').value)||100, status: 'Attiva' }); closeModal('modal-azienda'); }
-        window.saveDivision = async function() {
-            const compId = parseInt(document.getElementById('div-az').value);
-            const newBudget = parseFloat(document.getElementById('div-budget').value)||0;
-            await saveToFirebase('divisions', { id: Date.now(), name: document.getElementById('div-name').value, companyId: compId, budget: newBudget, efficiency: 100 });
-            let otherDivsBudget = state.divisions.reduce((acc, d) => acc + d.budget, 0);
-            let histDate = new Date(); let formattedTime = histDate.toLocaleDateString('it-IT') + ' ' + histDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'});
-            await saveToFirebase('budget_history', { id: Date.now(), date: formattedTime, total: otherDivsBudget + newBudget });
-            closeModal('modal-div');
+        window.validateTimbratura = async function(id) { let t = state.time_entries.find(x => x.id == id); if(t) { t.validated = true; await saveToFirebase('time_entries', t); } }
+        window.completeTask = async function(id) { let t = state.tasks.find(x => x.id == id); if(t) { t.status = 'Completato'; await saveToFirebase('tasks', t); } }
+        
+        window.savePayroll = async function() {
+            const elId = document.getElementById('pay-id'); const idField = elId ? elId.value : null; const fileInput = document.getElementById('pay-file');
+            const btn = document.querySelector('#modal-payroll .btn:last-child'); const origText = btn.innerText; btn.innerHTML = `<i class="ph ph-spinner ph-spin"></i> Upload...`; btn.disabled = true;
+            let fileUrl = idField && state.payrolls.find(p => p.id == idField)?.fileUrl ? state.payrolls.find(p => p.id == idField).fileUrl : '';
+            if (fileInput && fileInput.files[0]) { try { fileUrl = await window.uploadToCloudinary(fileInput.files[0], 'Buste paga'); } catch(e) { alert("Errore: " + e.message); btn.innerHTML = origText; btn.disabled = false; return; } }
+            const data = { id: idField ? parseInt(idField) : Date.now(), staffId: document.getElementById('pay-staff') ? parseInt(document.getElementById('pay-staff').value) : 0, month: document.getElementById('pay-month') ? document.getElementById('pay-month').value : '', amount: document.getElementById('pay-amount') ? (parseFloat(document.getElementById('pay-amount').value) || 0) : 0, status: document.getElementById('pay-status') ? document.getElementById('pay-status').value : '', fileUrl: fileUrl };
+            if(!data.month) { alert("Seleziona il mese."); btn.innerHTML = origText; btn.disabled = false; return; } await saveToFirebase('payrolls', data); btn.innerHTML = origText; btn.disabled = false; if(fileInput) fileInput.value = ''; closeModal('modal-payroll');
         }
-        window.saveTask = async function() { const elId = document.getElementById('task-id'); const idField = elId ? elId.value : null; await saveToFirebase('tasks', { id: idField ? parseInt(idField) : Date.now(), title: document.getElementById('task-title').value, staffId: parseInt(document.getElementById('task-staff').value) || 0, priority: document.getElementById('task-prio').value, status: document.getElementById('task-status').value }); closeModal('modal-task'); }
-        window.saveTimbratura = async function() { await saveToFirebase('time_entries', { id: Date.now(), staffId: parseInt(document.getElementById('timb-staff').value) || 0, timestamp: document.getElementById('timb-time').value || new Date().toISOString(), type: document.getElementById('timb-type').value, geo: 'Inserimento Manuale Admin', device: 'Desktop System', validated: true, forced: true }); closeModal('modal-timbratura'); }
-        window.saveBadge = async function() {
-            const staffId = document.getElementById('badge-staff').value; const code = document.getElementById('badge-code').value.trim();
-            if(code.length < 4) return alert("PIN minimo 4 caratteri."); if(state.badges.find(b => b.staffId == staffId)) return alert("Dipendente ha già un badge.");
-            await saveToFirebase('badges', { id: Date.now(), staffId: parseInt(staffId), accessCode: code, createdAt: new Date().toISOString() });
-            closeModal('modal-badge'); document.getElementById('badge-code').value = '';
-        }
-        window.saveDocument = async function() {
-            const elId = document.getElementById('doc-id'); const idField = elId ? elId.value : null;
-            const fileInput = document.getElementById('doc-file-upload'); const btn = document.querySelector('#modal-doc .btn:last-child');
-            const origText = btn.innerText; btn.innerHTML = `<i class="ph ph-spinner ph-spin"></i> Upload...`; btn.disabled = true;
-            let fileUrl = idField && state.documents.find(d => d.id == idField)?.fileUrl ? state.documents.find(d => d.id == idField).fileUrl : '';
-            if (fileInput && fileInput.files[0]) { try { fileUrl = await window.uploadToCloudinary(fileInput.files[0], 'Fatture'); } catch(e) { alert(e.message); btn.innerText = origText; btn.disabled = false; return; } }
-            await saveToFirebase('documents', { id: idField ? parseInt(idField) : Date.now(), date: document.getElementById('doc-date').value, title: document.getElementById('doc-title').value, companyId: parseInt(document.getElementById('doc-company').value), amount: parseFloat(document.getElementById('doc-amount').value)||0, type: document.getElementById('doc-type').value, fileUrl: fileUrl });
-            btn.innerText = origText; btn.disabled = false; closeModal('modal-doc');
-        }
+        
         window.saveStaff = async function() {
             const elId = document.getElementById('staff-id'); const idField = elId ? elId.value : null;
-            await saveToFirebase('staff', { id: idField ? parseInt(idField) : Date.now(), name: document.getElementById('staff-name').value, role: document.getElementById('staff-role').value, companyId: parseInt(document.getElementById('staff-company').value), divisionId: parseInt(document.getElementById('staff-div').value)||0, iban: document.getElementById('staff-iban').value, cf: document.getElementById('staff-cf').value, efficiency: parseInt(document.getElementById('staff-eff').value)||95, machineAccess: document.getElementById('staff-mach').value, status: 'Attivo' });
-            closeModal('modal-staff');
+            const data = { id: idField ? parseInt(idField) : Date.now(), name: document.getElementById('staff-name').value, role: document.getElementById('staff-role').value, companyId: parseInt(document.getElementById('staff-company').value) || 0, divisionId: parseInt(document.getElementById('staff-div').value) || 0, eff: parseInt(document.getElementById('staff-eff').value) || 100, machineAccess: document.getElementById('staff-machine').value, cf: document.getElementById('staff-cf').value.toUpperCase(), ci: document.getElementById('staff-ci').value.toUpperCase(), ts: document.getElementById('staff-ts').value.toUpperCase(), indirizzo: document.getElementById('staff-indirizzo').value, dataNascita: document.getElementById('staff-dataNascita').value, luogoNascita: document.getElementById('staff-luogoNascita').value, iban: document.getElementById('staff-iban').value.toUpperCase(), status: 'IN SEDE' };
+            await saveToFirebase('staff', data); closeModal('modal-staff');
         }
-        window.savePayroll = async function() {
-            const elId = document.getElementById('pay-id'); const idField = elId ? elId.value : null;
-            const fileInput = document.getElementById('pay-file'); const btn = document.querySelector('#modal-payroll .btn:last-child');
-            const origText = btn.innerText; btn.innerHTML = `<i class="ph ph-spinner ph-spin"></i> Upload...`; btn.disabled = true;
-            let fileUrl = idField && state.payrolls.find(p => p.id == idField)?.fileUrl ? state.payrolls.find(p => p.id == idField).fileUrl : '';
-            if (fileInput && fileInput.files[0]) { try { fileUrl = await window.uploadToCloudinary(fileInput.files[0], 'Buste paga'); } catch(e) { alert(e.message); btn.innerHTML = origText; btn.disabled = false; return; } }
-            const data = { id: idField ? parseInt(idField) : Date.now(), staffId: parseInt(document.getElementById('pay-staff').value)||0, month: document.getElementById('pay-month').value, amount: parseFloat(document.getElementById('pay-amount').value)||0, status: document.getElementById('pay-status').value, fileUrl: fileUrl };
-            if(!data.month) { alert("Seleziona il mese."); btn.innerHTML = origText; btn.disabled = false; return; }
-            await saveToFirebase('payrolls', data); btn.innerHTML = origText; btn.disabled = false; closeModal('modal-payroll');
+        
+        window.saveAzienda = async function() { const elId = document.getElementById('azienda-id'); const idField = elId ? elId.value : null; await saveToFirebase('companies', { id: idField ? parseInt(idField) : Date.now(), name: document.getElementById('azienda-name').value, cap: parseFloat(document.getElementById('azienda-cap').value) || 0, projects: parseInt(document.getElementById('azienda-proj').value) || 0, eff: parseInt(document.getElementById('azienda-eff').value) || 100, isActive: true }); closeModal('modal-azienda'); }
+        
+        window.saveDivision = async function() { const elId = document.getElementById('div-id'); const idField = elId ? elId.value : null; const parsedId = idField ? parseInt(idField) : Date.now(); const newBudget = parseFloat(document.getElementById('div-budget').value) || 0; await saveToFirebase('divisions', { id: parsedId, name: document.getElementById('div-name').value, companyId: parseInt(document.getElementById('div-company').value) || 0, budget: newBudget, eff: parseInt(document.getElementById('div-eff').value) || 100 }); let otherDivsBudget = state.divisions.filter(d => d.id !== parsedId).reduce((s, d) => s + d.budget, 0); let histDate = new Date(); let formattedTime = histDate.toLocaleDateString('it-IT') + ' ' + histDate.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'}); await saveToFirebase('budget_history', { id: Date.now(), date: formattedTime, total: otherDivsBudget + newBudget }); closeModal('modal-div'); }
+        
+        window.saveTask = async function() { const elId = document.getElementById('task-id'); const idField = elId ? elId.value : null; await saveToFirebase('tasks', { id: idField ? parseInt(idField) : Date.now(), title: document.getElementById('task-title').value, staffId: parseInt(document.getElementById('task-staff').value) || 0, priority: document.getElementById('task-prio').value, status: document.getElementById('task-status').value }); closeModal('modal-task'); }
+        
+        window.saveTimbratura = async function() { await saveToFirebase('time_entries', { id: Date.now(), staffId: parseInt(document.getElementById('timb-staff').value) || 0, timestamp: document.getElementById('timb-time').value || new Date().toISOString(), type: document.getElementById('timb-type').value, geo: 'Inserimento Manuale Admin', device: 'Desktop System', validated: true, forced: true }); closeModal('modal-timbratura'); }
+        
+        window.saveBadge = async function() { const staffId = document.getElementById('badge-staff').value; const code = document.getElementById('badge-code').value.trim(); if(code.length < 4) return alert("PIN minimo 4 caratteri."); if(state.badges.find(b => b.staffId == staffId)) return alert("Dipendente ha già un badge."); await saveToFirebase('badges', { id: Date.now(), staffId: parseInt(staffId), accessCode: code, createdAt: new Date().toISOString() }); closeModal('modal-badge'); document.getElementById('badge-code').value = ''; }
+        
+        window.saveDocument = async function() {
+            const elId = document.getElementById('doc-id'); const idField = elId ? elId.value : null; const fileInput = document.getElementById('doc-file-upload');
+            const btn = document.querySelector('#modal-doc .btn:last-child'); const origText = btn.innerText; btn.innerHTML = `<i class="ph ph-spinner ph-spin"></i> Upload...`; btn.disabled = true;
+            let fileUrl = idField && state.documents.find(d => d.id == idField)?.fileUrl ? state.documents.find(d => d.id == idField).fileUrl : '';
+            if (fileInput && fileInput.files[0]) { try { fileUrl = await window.uploadToCloudinary(fileInput.files[0], 'Fatture'); } catch(e) { alert("Errore: " + e.message); btn.innerHTML = origText; btn.disabled = false; return; } }
+            const data = { id: idField ? parseInt(idField) : Date.now(), date: idField && state.documents.find(d => d.id == idField) ? state.documents.find(d => d.id == idField).date : new Date().toISOString().split('T')[0], title: document.getElementById('doc-title').value, amount: parseFloat(document.getElementById('doc-amount').value) || 0, type: document.getElementById('doc-type').value, companyId: parseInt(document.getElementById('doc-company').value) || 0, fileUrl: fileUrl, file: fileUrl ? true : false };
+            await saveToFirebase('documents', data); btn.innerHTML = origText; btn.disabled = false; if(fileInput) fileInput.value = ''; closeModal('modal-doc');
         }
+        
+        window.sendAiPrompt = function() { const input = document.getElementById('ai-text'); const chat = document.getElementById('chat-box'); if(!input || input.value.trim() === '' || !chat) return; chat.innerHTML += `<div class="msg user"><strong>Tu:</strong> ${input.value}</div>`; input.value = ''; setTimeout(() => { chat.innerHTML += `<div class="msg bot"><strong>Gemini AI:</strong> Analisi completata. I dati Realtime risultano corretti e sincronizzati sui due database.</div>`; chat.scrollTop = chat.scrollHeight; }, 800); }
+        
+        window.printGradoB = function() { const term = document.getElementById('grado-terminal'); if(term) { term.innerHTML += `> Esecuzione override sensori...<br>> Verifica integrità hardware... <span style="color:var(--accent)">100% OK</span><br>> Ricalibrazione fFk9: ONLINE<br>`; term.scrollTop = term.scrollHeight; } }
 
+        // --- RENDER MOTORE PRINCIPALE ---
         window.renderAll = function() {
             const isAdmin = window.userRole === 'admin';
             let userPrefix = window.currentUserEmail ? window.currentUserEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') : '';
             let myStaffRecord = state.staff.find(s => s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
-            
+
             if(isAdmin) {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
                 const sAv = document.getElementById('staff-admin-view'); if(sAv) sAv.style.display = 'block';
                 const sUv = document.getElementById('staff-user-view'); if(sUv) sUv.style.display = 'none';
+
                 renderCharts();
 
                 // RENDERING RICHIESTE SERVIZI (SITO WEB)
@@ -1235,141 +1620,109 @@
                     tRserv.querySelector('tbody').innerHTML = (state.richieste_servizi || []).sort((a,b)=>new Date(b.dataInvio)-new Date(a.dataInvio)).map(r => {
                         let badgeCol = r.stato === 'Nuova' ? 'var(--warning)' : (r.stato === 'Approvata/Convertita' ? 'var(--success)' : (r.stato === 'Rifiutata/Chiusa' ? 'var(--danger)' : 'var(--primary)'));
                         return `
-                            <tr class="clickable-row" onclick="openDettaglioServizio(${r.id})">
-                                <td>${new Date(r.dataInvio).toLocaleDateString()}</td>
-                                <td><b>${r.nome} ${r.cognome}</b></td>
-                                <td><span style="font-size:12px;">${r.tipo === 'Azienda' ? r.ragioneSociale : 'Privato (CF: '+r.cfPrivato+')'}</span></td>
-                                <td>${r.tipoServizio || r.servizio || 'Indefinito'}</td>
-                                <td><span class="badge" style="background:${badgeCol}; color:white;">${r.stato}</span></td>
-                                <td class="action-btns" onclick="event.stopPropagation();">
-                                    <button class="btn-edit" onclick="openDettaglioServizio(${r.id})"><i class="ph ph-eye"></i> Apri</button>
-                                    <button class="btn-del" onclick="deleteData('richieste_servizi', ${r.id})">Del</button>
-                                </td>
-                            </tr>`;
-                    }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--text-light)">Nessuna richiesta ricevuta dal sito.</td></tr>';
+                        <tr class="clickable-row" onclick="openDettaglioServizio(${r.id})">
+                            <td>${new Date(r.dataInvio).toLocaleDateString()}</td>
+                            <td><b>${r.nome} ${r.cognome}</b></td>
+                            <td><span style="font-size:12px;">${r.tipo === 'Azienda' ? r.ragioneSociale : 'Privato (CF: '+r.cfPrivato+')'}</span></td>
+                            <td>${r.tipoServizio || r.servizioAcquistato || r.servizio || 'Indefinito'}</td>
+                            <td><span class="badge" style="background:${badgeCol}; color:white;">${r.stato}</span></td>
+                            <td class="action-btns" onclick="event.stopPropagation();">
+                                <button class="btn-edit" onclick="openDettaglioServizio(${r.id})"><i class="ph ph-eye"></i> Apri</button>
+                                <button class="btn-del" onclick="deleteData('richieste_servizi', ${r.id})">Del</button>
+                            </td>
+                        </tr>`;
+                    }).join('') || '<tr><td colspan="6" style="text-align:center;">Nessuna richiesta ricevuta dal sito web.</td></tr>';
                 }
+
+                // RENDERING CANDIDATURE (SITO WEB)
+                const tCand = document.getElementById('table-candidature');
+                if(tCand && tCand.querySelector('tbody')) {
+                    tCand.querySelector('tbody').innerHTML = (state.candidature || []).sort((a,b)=>new Date(b.dataInvio)-new Date(a.dataInvio)).map(c => {
+                        let badgeCol = c.stato === 'In Attesa' ? 'var(--warning)' : (c.stato === 'Assunto' ? 'var(--success)' : (c.stato === 'Scartato' ? 'var(--danger)' : 'var(--primary)'));
+                        return `
+                        <tr class="clickable-row" onclick="openDettaglioCandidatura(${c.id})">
+                            <td>${new Date(c.dataInvio).toLocaleDateString()}</td>
+                            <td><b>${c.nome} ${c.cognome}</b></td>
+                            <td>${c.posizione}</td>
+                            <td style="font-size:12px;">${c.email}</td>
+                            <td><span class="badge" style="background:${badgeCol}; color:white;">${c.stato}</span></td>
+                            <td class="action-btns" onclick="event.stopPropagation();">
+                                <button class="btn-edit" onclick="openDettaglioCandidatura(${c.id})"><i class="ph ph-eye"></i> Profilo</button>
+                                <button class="btn-del" onclick="deleteData('candidature', ${c.id})">Del</button>
+                            </td>
+                        </tr>`;
+                    }).join('') || '<tr><td colspan="6" style="text-align:center;">Nessun curriculum ricevuto dal sito web.</td></tr>';
+                }
+
+                // TABELLE MAIN ERP CLASSICO
+                let totalCap = state.companies.reduce((s, c) => s + c.cap, 0);
+                const dSum = document.getElementById('dash-summary'); if(dSum) dSum.innerHTML = `<div class="card"><div class="card-title">Capitale Gruppo</div><div class="card-value">€ ${(totalCap/1000000).toFixed(2)} M</div></div><div class="card"><div class="card-title">Aziende</div><div class="card-value">${state.companies.length}</div></div><div class="card"><div class="card-title">Staff</div><div class="card-value">${state.staff.length}</div></div>`;
+                
+                const tDash = document.getElementById('table-dash-stats'); if(tDash && tDash.querySelector('tbody')) tDash.querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td><span style="color:${c.eff>90?'var(--accent)':'var(--warning)'}">${c.eff}%</span></td></tr>`).join('');
+                const tAz = document.getElementById('table-aziende'); if(tAz && tAz.querySelector('tbody')) tAz.querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td>${c.eff}%</td><td><span class="badge" style="background:var(--accent); color:white;">Attiva</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('companies', ${c.id})">Del</button></td></tr>`).join('');
+                const tDiv = document.getElementById('table-divs'); if(tDiv && tDiv.querySelector('tbody')) tDiv.querySelector('tbody').innerHTML = state.divisions.map(d => `<tr><td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.eff}%</td><td class="action-btns"><button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button></td></tr>`).join('');
+                const tBad = document.getElementById('table-badges'); if(tBad && tBad.querySelector('tbody')) tBad.querySelector('tbody').innerHTML = state.badges.map(b => `<tr><td><b>${getStaffName(b.staffId)}</b></td><td style="font-family: monospace; color: var(--primary); font-size: 16px;">${b.accessCode}</td><td>${new Date(b.createdAt).toLocaleDateString()}</td><td><span style="font-family:monospace; font-size:11px; background:#e2e8f0; padding:2px 6px; border-radius:4px;">${b.deviceId ? b.deviceId : 'Non ancora associato'}</span></td><td><span class="badge" style="background:var(--accent); color:white;">Attivo</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('badges', ${b.id})">Revoca App</button></td></tr>`).join('');
+                const tPay = document.getElementById('table-payrolls'); if(tPay && tPay.querySelector('tbody')) tPay.querySelector('tbody').innerHTML = state.payrolls.sort((a,b)=>new Date(b.month)-new Date(a.month)).map(p => `<tr><td><b>${p.month}</b></td><td>${getStaffName(p.staffId)}</td><td>€ ${parseFloat(p.amount).toLocaleString()}</td><td style="font-family:monospace; font-size:12px;">${getStaffIban(p.staffId)}</td><td><span class="badge" style="background:${p.status === 'Bonifico Emesso' ? 'var(--success)' : 'var(--warning)'}; color:white;">${p.status}</span></td><td>${p.fileUrl ? `<a href="${p.fileUrl}" target="_blank" class="badge" style="background:var(--primary); color:white; text-decoration:none;"><i class="ph-fill ph-download-simple"></i> Scarica</a>` : '<span style="font-size:11px; color:var(--text-light)">Nessun file</span>'}</td><td class="action-btns"><button class="btn-del" onclick="deleteData('payrolls', ${p.id})">Del</button></td></tr>`).join('');
+                const tStaff = document.getElementById('table-staff'); if(tStaff && tStaff.querySelector('tbody')) tStaff.querySelector('tbody').innerHTML = state.staff.map(s => `<tr><td><b>${s.name}</b></td><td>${s.role}</td><td>${getCompanyName(s.companyId)}</td><td><span style="color:var(--success); font-weight:800;">${s.eff || 100}%</span></td><td><span class="badge" style="background:var(--secondary); color:white;">${s.machineAccess || 'Nessuno'}</span></td><td><span class="badge" style="background:var(--primary); color:white;">${s.status}</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('staff', ${s.id})">Del</button></td></tr>`).join('');
+                
+                const tOrdini = document.getElementById('table-ordini');
+                if(tOrdini && tOrdini.querySelector('tbody')) {
+                    tOrdini.querySelector('tbody').innerHTML = state.ordini.map(o => {
+                        let cliente = state.horizonUsers.find(u => u.uid === o.clienteId); let nomeCliente = cliente ? cliente.nome : 'Utente non trovato';
+                        let badgeCol = o.stato === 'Attivo' ? 'var(--success)' : (o.stato === 'In Lavorazione' || o.stato === 'In Attivazione' ? 'var(--primary)' : (o.stato === 'Annullato' ? 'var(--danger)' : 'var(--warning)'));
+                        return `<tr class="clickable-row" onclick="openOrdineDettagli(${o.id})"><td>${o.data}</td><td><b>${nomeCliente}</b> <br><small style="color:var(--text-light);">${o.tipoCliente || '-'}</small></td><td>${o.servizio}</td><td>€ ${o.importo.toLocaleString()}</td><td><span class="badge" style="background:${badgeCol}; color:white;">${o.stato}</span></td><td class="action-btns" onclick="event.stopPropagation();"><button class="btn-edit" style="background:var(--secondary); color:white;" onclick="openOrdineDettagli(${o.id})"><i class="ph ph-sliders"></i> Gestisci</button> <button class="btn-del" onclick="deleteData('ordini', ${o.id})">Elimina</button></td></tr>`;
+                    }).join('') || '<tr><td colspan="6" style="text-align:center;">Nessun ordine registrato.</td></tr>';
+                }
+
+                renderHorizonIdTables();
+
             } else {
+                // UTENTE STAFF / DIPENDENTE
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
                 const sAv = document.getElementById('staff-admin-view'); if(sAv) sAv.style.display = 'none';
-                const sUv = document.getElementById('staff-user-view'); if(sUv) sUv.style.display = 'block';
-                if(myStaffRecord && sUv) {
-                    sUv.innerHTML = `<div class="card" style="max-width:600px;"><h3>Mio Profilo Dipendente</h3><hr style="margin:15px 0; border:none; border-bottom:1px solid var(--border);"><p>Nome: <b>${myStaffRecord.name}</b></p><p>Ruolo: <b>${myStaffRecord.role}</b></p><p>IBAN: <b style="font-family:monospace;">${myStaffRecord.iban}</b></p><p>Codice Fiscale: <b style="font-family:monospace;">${myStaffRecord.cf}</b></p><p>Efficienza Assegnata: <b>${myStaffRecord.efficiency}%</b></p><p>Accesso Infrastruttura Grado B: <b>${myStaffRecord.machineAccess}</b></p></div>`;
-                } else if(sUv) { sUv.innerHTML = `<div class="card">Utente connesso (${window.currentUserEmail}) non ancora agganciato ad un record nell'Organico HR. Contattare l'Amministratore.</div>`; }
+                const sUv = document.getElementById('staff-user-view'); 
+                if(sUv) { 
+                    sUv.style.display = 'block'; 
+                    if(myStaffRecord) {
+                        let myPayrolls = state.payrolls.filter(p => p.staffId == myStaffRecord.id).sort((a,b)=>new Date(b.month)-new Date(a.month));
+                        let payrollHtml = myPayrolls.map(p => `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; margin-bottom:10px;"><div><strong style="display:block;">Busta Paga: ${p.month}</strong><span style="font-size:12px; color:var(--text-light);">Importo: € ${parseFloat(p.amount).toLocaleString()} | Stato: ${p.status}</span></div>${p.fileUrl ? `<a href="${p.fileUrl}" target="_blank" class="btn" style="padding:6px 12px; font-size:12px; text-decoration:none; display:inline-flex; width:auto;"><i class="ph ph-download-simple"></i> Scarica PDF</a>` : '<span style="font-size:11px; color:var(--text-light)">File non disp.</span>'}</div>`).join('');
+                        sUv.innerHTML = `<div class="card" style="margin-bottom:20px;"><h3>Profilo Operativo: ${myStaffRecord.name}</h3><p style="font-size:14px; color:var(--text-light); margin-top:5px;">Ruolo: ${myStaffRecord.role}</p></div><div class="card"><h3 style="margin-bottom:15px;"><i class="ph-fill ph-money"></i> Le mie Buste Paga</h3>${payrollHtml || '<p style="font-size:13px; color:var(--text-light)">Nessuna busta paga presente.</p>'}</div>`;
+                    } else { sUv.innerHTML = `<div class="card"><p>Nessun profilo assegnato.</p></div>`; }
+                }
             }
 
-            const getCompanyName = (id) => state.companies.find(c => c.id == id)?.name || '-';
-            const getStaffName = (id) => state.staff.find(s => s.id == id)?.name || 'Sconosciuto';
-            const getStaffIban = (id) => state.staff.find(s => s.id == id)?.iban || '-';
-
-            // Renderizza le altre tabelle di sistema...
-            const tAz = document.getElementById('table-aziende');
-            if(tAz && tAz.querySelector('tbody')) tAz.querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.capital.toLocaleString()}</td><td>${state.documents.filter(d=>d.companyId==c.id).length}</td><td>${c.efficiency}%</td><td><span class="badge" style="background:var(--accent); color:white;">${c.status}</span></td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('companies', ${c.id})">Del</button>` : '-'}</td></tr>`).join('');
-            
-            const tDiv = document.getElementById('table-divs');
-            if(tDiv && tDiv.querySelector('tbody')) tDiv.querySelector('tbody').innerHTML = state.divisions.map(d => `<tr><td><b>${d.name}</b></td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.budget.toLocaleString()}</td><td>${d.efficiency}%</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('divisions', ${d.id})">Del</button>` : '-'}</td></tr>`).join('');
-            
-            const tBad = document.getElementById('table-badges');
-            if(tBad && tBad.querySelector('tbody')) tBad.querySelector('tbody').innerHTML = state.badges.map(b => `<tr><td>${getStaffName(b.staffId)}</td><td style="font-family:monospace; font-weight:700; color:var(--primary); font-size: 16px;">${b.accessCode}</td><td>${new Date(b.createdAt).toLocaleDateString()}</td><td><span class="badge" style="background:var(--accent); color:white;">Attivo</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('badges', ${b.id})">Revoca App</button></td></tr>`).join('');
-            
-            const tPay = document.getElementById('table-payrolls');
-            if(tPay && tPay.querySelector('tbody')) tPay.querySelector('tbody').innerHTML = state.payrolls.sort((a,b)=>new Date(b.month)-new Date(a.month)).map(p => `<tr><td><b>${p.month}</b></td><td>${getStaffName(p.staffId)}</td><td>€ ${parseFloat(p.amount).toLocaleString()}</td><td style="font-family:monospace; font-size:12px;">${getStaffIban(p.staffId)}</td><td><span class="badge" style="background:${p.status === 'Bonifico Emesso' ? 'var(--success)' : 'var(--warning)'}; color:white;">${p.status}</span></td><td>${p.fileUrl ? `<a href="${p.fileUrl}" target="_blank" class="badge" style="background:var(--primary); color:white; text-decoration:none;"><i class="ph-fill ph-download-simple"></i> Scarica</a>` : '<span style="font-size:11px; color:var(--text-light)">Nessun file</span>'}</td><td class="action-btns"><button class="btn-del" onclick="deleteData('payrolls', ${p.id})">Del</button></td></tr>`).join('');
-            
-            const tStaff = document.getElementById('table-staff');
-            if(tStaff && tStaff.querySelector('tbody')) tStaff.querySelector('tbody').innerHTML = state.staff.map(s => `<tr><td><b>${s.name}</b></td><td>${s.role}</td><td>${getCompanyName(s.companyId)}</td><td>${s.efficiency}%</td><td>${s.machineAccess === 'Sì' ? '<span style="color:var(--primary); font-weight:bold;">Abilitato</span>' : 'No'}</td><td><span class="badge" style="background:var(--accent); color:white;">${s.status}</span></td><td class="action-btns">${isAdmin ? `<button class="btn-edit" onclick="apriModificaStaff(${s.id})">Modifica</button><button class="btn-del" onclick="deleteData('staff', ${s.id})">Licenzia</button>` : '-'}</td></tr>`).join('');
-            
+            // COMUNI (ADMIN E STAFF)
             const tTimb = document.getElementById('table-timbrature');
             if(tTimb && tTimb.querySelector('tbody')) {
-                let filteredTimb = isAdmin ? state.time_entries : state.time_entries.filter(t => { let s = state.staff.find(x=>x.id==t.staffId); return s && s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix; });
-                tTimb.querySelector('tbody').innerHTML = filteredTimb.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(t => `<tr><td>${new Date(t.timestamp).toLocaleString()}</td><td><b>${getStaffName(t.staffId)}</b></td><td>${getCompanyName(state.staff.find(x=>x.id==t.staffId)?.companyId)}</td><td><span class="badge" style="background:${t.type==='Ingresso'?'var(--accent)':'var(--warning)'}; color:white;">${t.type.toUpperCase()}</span></td><td><span style="font-size:11px; color:var(--text-light)">${t.device} (${t.geo})</span></td><td>${t.validated ? `<i class="ph-fill ph-check-circle" style="color:var(--accent)"></i> OK` : (isAdmin ? `<button class="btn-validate" onclick="validateTimbratura(${t.id})">Valida</button>` : 'In Attesa')}</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('time_entries', ${t.id})">Del</button>` : '-'}</td></tr>`).join('');
-            }
-
-            const tDocs = document.getElementById('table-docs');
-            const totalIn = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + d.amount, 0);
-            const totalOut = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + d.amount, 0);
-            const fSum = document.getElementById('finance-summary'); if(fSum) fSum.innerHTML = `<div class="card"><div class="card-title">Incassi</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div><div class="card"><div class="card-title">Uscite</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>`;
-            if(tDocs && tDocs.querySelector('tbody')) {
-                tDocs.querySelector('tbody').innerHTML = state.documents.map(d => `<tr><td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td><td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}\">${d.type.toUpperCase()}</span></td><td>${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="badge" style="background:var(--primary); color:white; text-decoration:none;"><i class="ph-fill ph-file-pdf\"></i> Apri / Scarica</a>` : '-'}</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('documents', ${d.id})\">Del</button>` : '-'}</td></tr>`).join('');
+                let visibleTimbrature = isAdmin ? state.time_entries : state.time_entries.filter(t => getStaffName(t.staffId).toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
+                tTimb.querySelector('tbody').innerHTML = visibleTimbrature.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).map(t => `<tr><td>${new Date(t.timestamp).toLocaleString()}</td><td><b>${getStaffName(t.staffId)}</b></td><td>${getCompanyName(state.staff.find(x=>x.id==t.staffId)?.companyId)}</td><td><span class="badge" style="background:${t.type==='Ingresso'?'var(--accent)':'var(--warning)'}; color:white;">${t.type}</span></td><td><span style="font-size:11px;">${t.device} | Geo: ${t.geo}</span></td><td>${t.validated ? `<i class="ph-fill ph-check-circle" style="color:var(--accent)"></i> OK` : (isAdmin ? `<button class="btn-validate" onclick="validateTimbratura(${t.id})">Valida</button>` : 'In Attesa')}</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('time_entries', ${t.id})">Del</button>` : '-'}</td></tr>`).join('');
             }
 
             const tTasks = document.getElementById('table-tasks');
             if(tTasks && tTasks.querySelector('tbody')) {
-                tTasks.querySelector('tbody').innerHTML = state.tasks.map(t => `<tr><td>${t.title}</td><td>${getStaffName(t.staffId)}</td><td><span class="badge" style="background:${t.priority==='Alta'?'var(--danger)':(t.priority==='Media'?'var(--warning)':'var(--secondary)')}; color:white;">${t.priority}</span></td><td><b>${t.status}</b></td><td class="action-btns">${t.status!=='Completato'?'<button class="btn-validate" onclick="completaTask('+t.id+')">Chiudi</button>':''}<button class="btn-del" onclick="deleteData('tasks', ${t.id})">Del</button></td></tr>`).join('');
-            }
-
-            const tOrd = document.getElementById('table-ordini');
-            if(tOrd && tOrd.querySelector('tbody')) {
-                tOrd.querySelector('tbody').innerHTML = (state.ordini || []).map(o => {
-                    let cl = state.horizonUsers.find(u => u.uid === o.clienteId); let nomeCl = cl ? (cl.nome || cl.ragioneSociale) : 'Sconosciuto';
-                    return `<tr><td>${o.data}</td><td><b>${nomeCl}</b> <span class="badge" style="background:var(--secondary); color:white; font-size:10px;">${o.tipoCliente}</span></td><td>${o.servizio}</td><td><b>€ ${o.importo.toLocaleString()}</b></td><td><span class="badge" style="background:var(--primary); color:white;">${o.stato}</span></td><td class="action-btns"><button class="btn-edit" onclick="openOrdineDettagli(${o.id})"><i class="ph ph-list-magnifying-glass"></i> Gestisci</button>${isAdmin ? `<button class="btn-del" onclick="deleteData('ordini', ${o.id})">Del</button>` : ''}</td></tr>`;
-                }).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--text-light)">Nessun ordine presente a sistema.</td></tr>';
-            }
-            
-            renderCloudInterface();
-        }
-
-        function renderCloudInterface() {
-            const container = document.getElementById('cloud-container'); if(!container) return;
-            const isAdmin = window.userRole === 'admin';
-            const btnNewFolder = document.getElementById('btn-cloud-folder');
-            const btnUploadFile = document.getElementById('btn-cloud-upload');
-            const breadcrumbActive = document.getElementById('cloud-breadcrumb-active');
-            
-            if(!currentCloudFolder) {
-                if(btnNewFolder) btnNewFolder.style.display = isAdmin ? 'inline-flex' : 'none';
-                if(btnUploadFile) btnUploadFile.style.display = 'none';
-                if(breadcrumbActive) breadcrumbActive.innerHTML = '';
-                let html = (state.cloud_folders || []).map(f => {
-                    let btnDel = isAdmin ? `<button class="cloud-action-btn" onclick="event.stopPropagation(); deleteData('cloud_folders', ${f.id})" title="Elimina Cartella"><i class="ph-fill ph-trash"></i></button>` : '';
-                    return `<div class="cloud-item" onclick="openCloudFolder(${f.id})">${btnDel}<i class="ph-fill ph-folder cloud-icon cloud-folder-icon"></i><div class="cloud-title">${f.name}</div><div class="cloud-meta">Cartella di Sistema</div></div>`;
+                tTasks.querySelector('tbody').innerHTML = state.tasks.map(t => {
+                    let isMyTask = (getStaffName(t.staffId).toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
+                    if(!isAdmin && !isMyTask) return '';
+                    let badgeCol = t.status === 'Completato' ? 'var(--accent)' : (t.status === 'In Lavorazione' ? 'var(--primary)' : 'var(--warning)');
+                    let actionHtml = isAdmin ? `<button class="btn-del" onclick="deleteData('tasks', ${t.id})">Del</button>` : (isMyTask && t.status !== 'Completato' ? `<button class="btn-validate" onclick="completeTask(${t.id})">Completato</button>` : '-');
+                    return `<tr><td><b>${t.title}</b></td><td>${getStaffName(t.staffId)}</td><td>${t.priority}</td><td><span class="badge" style="background:${badgeCol}; color:white;">${t.status}</span></td><td class="action-btns">${actionHtml}</td></tr>`;
                 }).join('');
-                container.innerHTML = html || '<div style="grid-column:1/-1; text-align:center; padding:40px;">Nessuna cartella cloud presente.</div>';
-            } else {
-                let currentFolderData = state.cloud_folders.find(f => f.id == currentCloudFolder);
-                let folderName = currentFolderData ? currentFolderData.name : 'Cartella';
-                if(btnNewFolder) btnNewFolder.style.display = 'none';
-                if(btnUploadFile) btnUploadFile.style.display = isAdmin ? 'inline-flex' : 'none';
-                if(breadcrumbActive) breadcrumbActive.innerHTML = ` > <span style="color:var(--text);">${folderName}</span>`;
-                const filesInFolder = (state.cloud_files || []).filter(f => f.folderId == currentCloudFolder);
-                let html = filesInFolder.map(f => {
-                    let btnDel = isAdmin ? `<button class="cloud-action-btn" onclick="event.stopPropagation(); deleteData('cloud_files', ${f.id})" title="Elimina File"><i class="ph-fill ph-trash"></i></button>` : '';
-                    return `<div class="cloud-item" onclick="window.open('${f.fileUrl}', '_blank')">${btnDel}<i class="ph-fill ph-file-text cloud-icon cloud-file-icon"></i><div class="cloud-title">${f.name}</div><div class="cloud-meta">Data: ${f.date}<br>By: ${f.uploadedBy}</div><div style="margin-top:10px; font-size:11px; background:#e2e8f0; padding:4px 8px; border-radius:12px; color:var(--text);">Clicca per aprire</div></div>`;
-                }).join('');
-                container.innerHTML = html || '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:var(--text-light);">Cartella vuota. Nessun documento caricato in questa sezione.</div>';
             }
-        }
 
-        // FUNZIONI CHART COMPLESSE
-        function renderCharts() {
-            if(!isAdminGlobalCheck()) return;
-            const ctxDoughnut = document.getElementById('budgetDoughnutChart');
-            const ctxLine = document.getElementById('budgetHistoryChart');
-            if(!ctxDoughnut || !ctxLine) return;
-            
-            const labels = state.divisions.map(d => d.name);
-            const dataBudget = state.divisions.map(d => d.budget);
-            
-            if(charts.doughnut) charts.doughnut.destroy();
-            charts.doughnut = new Chart(ctxDoughnut, {
-                type: 'doughnut',
-                data: { labels: labels, datasets: [{ data: dataBudget, backgroundColor: ['#2563EB','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: getComputedStyle(document.body).getPropertyValue('--text').trim() } } } }
-            });
-
-            const lineLabels = state.budget_history.map(h => h.date);
-            const lineData = state.budget_history.map(h => h.total);
-            if(charts.line) charts.line.destroy();
-            charts.line = new Chart(ctxLine, {
-                type: 'line',
-                data: { labels: lineLabels, datasets: [{ label: 'Budget Allocato Totale (€)', data: lineData, borderColor: '#2563EB', tension: 0.2, fill: false }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } } } }
-            });
-            
-            const tDash = document.getElementById('table-dash-stats');
-            if(tDash && tDash.querySelector('tbody')) {
-                tDash.querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name} (Corporate)</b></td><td>€ ${c.capital.toLocaleString()}</td><td>-</td><td>${c.efficiency}%</td></tr>`).join('') + state.divisions.map(d => `<tr><td>${d.name} (Divisione)</td><td>-</td><td>-</td><td>${d.efficiency}%</td></tr>`).join('');
+            let totalIn = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + d.amount, 0);
+            let totalOut = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + d.amount, 0);
+            const fSum = document.getElementById('finance-summary'); if(fSum) fSum.innerHTML = `<div class="card"><div class="card-title">Incassi</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div><div class="card"><div class="card-title">Uscite</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>`;
+            const tDocs = document.getElementById('table-docs'); 
+            if(tDocs && tDocs.querySelector('tbody')) {
+                tDocs.querySelector('tbody').innerHTML = state.documents.map(d => `<tr><td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td><td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td><td>${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="badge" style="background:var(--primary); color:white; text-decoration:none;"><i class="ph-fill ph-file-pdf"></i> Apri / Scarica</a>` : '-'}</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button>` : '-'}</td></tr>`).join('');
             }
+
+            // Renderizza l'UI dell'Archivio Cloud
+            renderCloudSystem();
+            
+            // Popola i select a prescindere ogni volta che si renderizza
+            populateSelects();
         }
-        
-        function isAdminGlobalCheck() { return window.userRole === 'admin'; }
     </script>
 </body>
 </html>

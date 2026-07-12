@@ -1891,18 +1891,32 @@
             }
         }
 
-        // --- GESTIONE NUOVA SCHEDA: SUPPORTO CHAT (LIVE) ---
-        function renderChatSupportTable() {
-            const tbody = document.querySelector('#table-chat-supporto tbody');
-            if(!tbody) return;
+        // Funzione per il rendering della tabella chat
+function renderChatTable() {
+    const tbody = document.getElementById('table-chat-supporto').querySelector('tbody');
+    if (!tbody) return;
 
-            const chats = state.chats || {};
-            const uids = Object.keys(chats);
+    let html = "";
+    // Iteriamo sugli oggetti chat presenti nel nodo 'chats'
+    Object.keys(state.chats).forEach(uid => {
+        const chatData = state.chats[uid];
+        const user = state.horizonUsers.find(u => u.uid === uid) || { nome: "Utente Sconosciuto", piva: "N/A" };
+        
+        // Prendiamo l'ultimo messaggio (se esiste un oggetto messaggi)
+        const msgs = chatData.messaggi ? Object.values(chatData.messaggi) : [];
+        const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : { testo: "Nessun messaggio", timestamp: Date.now() };
 
-            if(uids.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nessuna conversazione di supporto attiva con gli utenti.</td></tr>';
-                return;
-            }
+        html += `
+        <tr class="clickable-row" onclick="apriChatModal('${uid}')">
+            <td><strong>${user.nome || user.ragioneSociale}</strong></td>
+            <td>${user.piva || '-'}</td>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis;">${lastMsg.testo}</td>
+            <td>${new Date(lastMsg.timestamp).toLocaleString()}</td>
+            <td><button class="btn" onclick="event.stopPropagation(); apriChatModal('${uid}')">Rispondi</button></td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
 
             let html = '';
             uids.forEach(uid => {

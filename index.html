@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Horizon Global ERP</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -111,6 +111,7 @@
         .btn-validate { background: var(--accent); color: #fff; }
 
         .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--primary); color: white; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .input { width: 100%; padding: 10px; margin: 5px 0 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; }
         .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
 
@@ -151,6 +152,41 @@
         .cloud-action-btn { position: absolute; top: 10px; right: 10px; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.2s; z-index: 10; }
         .cloud-item:hover .cloud-action-btn { opacity: 1; }
         .cloud-action-btn:hover { background: var(--danger); color: white; }
+
+        /* Stile Ricevuta Minimal Typewriter per Chiusura Fiscale */
+        .receipt-container {
+            font-family: 'Courier Prime', monospace;
+            background: #ffffff;
+            color: #111;
+            padding: 25px;
+            border: 1px dashed #000;
+            max-width: 450px;
+            margin: 0 auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            line-height: 1.4;
+        }
+        .receipt-header {
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 6px 0;
+            font-size: 13px;
+        }
+        .receipt-divider {
+            border-top: 1px dashed #000;
+            margin: 12px 0;
+        }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #receipt-print-area, #receipt-print-area * { visibility: visible; }
+            #receipt-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
         
         @media (max-width: 768px) {
             .mobile-menu-btn { display: block; margin-right: 15px; }
@@ -267,8 +303,14 @@
         <section id="view-dash" class="view active admin-only">
             <div class="grid" id="dash-summary"></div>
             <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
-                <div class="card"><div class="card-title">Distribuzione Budget</div><div style="position: relative; height: 260px; width: 100%;"><canvas id="budgetDoughnutChart"></canvas></div></div>
-                <div class="card"><div class="card-title">Trend Storico Budget</div><div style="position: relative; height: 260px; width: 100%;"><canvas id="budgetHistoryChart"></canvas></div></div>
+                <div class="card">
+                    <div class="card-title">Andamento Patrimonio e Proiezione Lineare</div>
+                    <div style="position: relative; height: 260px; width: 100%;"><canvas id="patrimonioChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Distribuzione Budget</div>
+                    <div style="position: relative; height: 260px; width: 100%;"><canvas id="budgetDoughnutChart"></canvas></div>
+                </div>
             </div>
             <div class="card">
                 <div class="card-title">Performance Entità Globali</div>
@@ -471,11 +513,20 @@
         </section>
 
         <section id="view-docs" class="view">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-                <h2>Amministrazione, Fatture & Uploads</h2>
-                <button class="btn admin-only" onclick="openModal('modal-doc')"><i class="ph ph-plus"></i> Inserisci Documento</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:10px;">
+                <h2>Amministrazione, Fatture & Uploads (Sezione Fiscale)</h2>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button id="btn-chiusura-fiscale" class="btn admin-only" style="background:var(--danger);" onclick="eseguiChiusuraFiscaleManuale()"><i class="ph ph-lock-key"></i> CHIUSURA ANNO FISCALE</button>
+                    <button class="btn admin-only" onclick="openModal('modal-doc')"><i class="ph ph-plus"></i> Inserisci Documento</button>
+                </div>
             </div>
             <div class="grid admin-only" id="finance-summary"></div>
+            
+            <div id="closed-fiscal-years-panel" class="card admin-only" style="margin-bottom:24px; display:none; background: rgba(15, 23, 42, 0.03);">
+                <div class="card-title" style="color:var(--primary); font-weight:700;"><i class="ph-fill ph-archive"></i> Registro Anni Fiscali Chiusi</div>
+                <div id="closed-fiscal-years-list"></div>
+            </div>
+
             <div class="card">
                 <table id="table-docs">
                     <thead><tr><th>Data</th><th>Descrizione</th><th>Azienda Rif.</th><th>Importo</th><th>Tipo</th><th>File / Download</th><th>Azioni</th></tr></thead>
@@ -566,6 +617,37 @@
         </section>
 
     </main>
+
+    <!-- MODALE RICEVUTA CHIUSURA ANNO FISCALE (STYLE LOTTOMATICA / TYPEWRITER) -->
+    <div id="modal-receipt" class="modal">
+        <div class="modal-content" style="max-width: 500px; padding: 20px;">
+            <div id="receipt-print-area">
+                <div class="receipt-container">
+                    <div class="receipt-header">
+                        <strong style="font-size:16px;">HORIZON GLOBAL ERP</strong><br>
+                        <span style="font-size:11px;">RICEVUTA CHIUSURA ANNO FISCALE</span><br>
+                        <span id="rc-year" style="font-weight:bold; font-size:14px;">ANNO 2026</span>
+                    </div>
+                    <div class="receipt-row"><span>DATA CHIUSURA:</span><span id="rc-date">-</span></div>
+                    <div class="receipt-row"><span>MODALITA:</span><span id="rc-type">MANUALE</span></div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-row"><span>TOTALE ENTRATE:</span><span id="rc-in">€ 0.00</span></div>
+                    <div class="receipt-row"><span>TOTALE USCITE:</span><span id="rc-out">€ 0.00</span></div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-row" style="font-weight:bold; font-size:15px;"><span>UTILE NETTO:</span><span id="rc-net">€ 0.00</span></div>
+                    <div class="receipt-divider"></div>
+                    <div style="font-size:10px; text-align:center; margin-top:10px; color:#444;">
+                        DOCUMENTO CONSERVATO IN FIREBASE DATABASE<br>
+                        OPERAZIONE REGISTRATA CON PROT. <span id="rc-id">000</span>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top: 20px;">
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-receipt')">Chiudi</button>
+                <button class="btn" onclick="window.print()"><i class="ph ph-printer"></i> Scarica / Stampa PDF</button>
+            </div>
+        </div>
+    </div>
 
     <div id="modal-crm-user" class="modal">
         <div class="modal-content modal-content-lg">
@@ -690,7 +772,7 @@
         </div>
     </div>
 
-    <div id="modal-dettaglio-candidatura" class="modal">
+    <div id="modal-dettaglio-candidature" class="modal">
         <div class="modal-content modal-content-lg">
             <h3>Scheda Profilo Candidato <span id="dc-id" style="font-size:14px; color:var(--text-light); font-family:monospace;"></span></h3>
             <div id="dettaglio-candidatura-content" style="margin-top: 15px; margin-bottom: 20px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); padding: 20px;"></div>
@@ -710,7 +792,7 @@
                 </div>
             </div>
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-dettaglio-candidatura')">Chiudi Scheda</button>
+                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-dettaglio-candidature')">Chiudi Scheda</button>
             </div>
         </div>
     </div>
@@ -1003,50 +1085,6 @@
             </div>
         </div>
     </div>
-    <!-- MODALE CRM DEFINITIVO -->
-    <div id="modal-crm-user" class="modal">
-        <div class="modal-content modal-content-lg">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:15px;">
-                <div>
-                    <h3 id="crm-modal-name" style="font-size:20px; color:var(--text);">Nome Cliente</h3>
-                    <p style="font-size:12px; color:var(--text-light); margin-top:2px;">CF/P.IVA: <strong id="crm-modal-piva" style="color:var(--text); font-family:monospace;"></strong> | Email: <span id="crm-modal-email"></span></p>
-                </div>
-                <div style="text-align:right;">
-                    <span style="font-size:11px; color:var(--text-light); text-transform:uppercase; display:block; font-weight:bold;">Saldo AuraCredit</span>
-                    <span id="crm-modal-credit" style="font-size:24px; font-weight:800; color:var(--accent);">€ 0.00</span>
-                </div>
-            </div>
-            <input type="hidden" id="crm-target-uid">
-            <input type="hidden" id="crm-target-piva">
-
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h4 style="font-size:14px; color:var(--primary);"><i class="ph-fill ph-briefcase"></i> Servizi e Pratiche</h4>
-                <button class="btn" style="padding:6px 12px; font-size:12px;" onclick="openModal('modal-crm-add-service')"><i class="ph ph-plus"></i> Aggiungi Manuale</button>
-            </div>
-            
-            <div class="card" style="padding:15px; margin-bottom:25px; max-height:260px; overflow-y:auto;">
-                <table style="margin-top:0;">
-                    <thead><tr><th>ID</th><th>Servizio</th><th>Data</th><th>Stato</th></tr></thead>
-                    <tbody id="crm-services-tbody"></tbody>
-                </table>
-            </div>
-
-            <div style="background:rgba(34, 197, 94, 0.05); border:1px solid var(--accent); padding:20px; border-radius:12px; margin-bottom:20px;">
-                <h4 style="color:var(--accent); margin-bottom:12px; font-size:14px;"><i class="ph-fill ph-receipt"></i> Emetti Fattura & Scala AuraCredit</h4>
-                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
-                    <input type="text" id="crm-inv-desc" class="input" style="margin:0;" placeholder="Descrizione">
-                    <input type="number" id="crm-inv-amount" class="input" style="margin:0;" placeholder="Importo (€)">
-                </div>
-                <div style="text-align:right; margin-top:12px;">
-                    <button class="btn" style="background:var(--accent);" onclick="scalaAuraCredit()"><i class="ph ph-check-circle"></i> Esegui Addebito</button>
-                </div>
-            </div>
-
-            <div style="display:flex; justify-content:flex-end;">
-                <button class="btn" style="background:#e2e8f0; color:#333;" onclick="closeModal('modal-crm-user')">Chiudi Scheda</button>
-            </div>
-        </div>
-    </div>
 
     <script>
         // --- UI LOGIN & ROUTING ---
@@ -1086,13 +1124,14 @@
         let state = {
             companies: [], divisions: [], staff: [], time_entries: [], documents: [], tasks: [], badges: [], payrolls: [], security_alerts: [], budget_history: [], ordini: [],
             horizonUsers: [], servizi: [], richieste_servizi: [], candidature: [],
-            cloud_folders: [], cloud_files: [], chats: {}
+            cloud_folders: [], cloud_files: [], chats: {}, fiscal_years: []
         };
 
         let currentCloudFolder = null; 
         let doughnutChartInst = null;
-        let lineChartInst = null;
+        let patrimonioChartInst = null;
 
+        // --- GRAFICO PATRIMONIO E STIMA LINEARE ---
         function renderCharts() {
             const dashEl = document.getElementById('view-dash');
             if(!dashEl || !dashEl.classList.contains('active')) return;
@@ -1111,24 +1150,99 @@
                 });
             }
 
-            const cH = document.getElementById('budgetHistoryChart');
-            if(cH) {
-                const ctxL = cH.getContext('2d');
-                if(lineChartInst) lineChartInst.destroy();
+            // GRAFICO PATRIMONIO BASATO SU ENTRATE E USCITE SEZIONE FISCALE
+            const cP = document.getElementById('patrimonioChart');
+            if(cP) {
+                const ctxP = cP.getContext('2d');
+                if(patrimonioChartInst) patrimonioChartInst.destroy();
 
-                let historyLabels = []; let historyData = [];
-                if (state.budget_history && state.budget_history.length > 0) {
-                    let sortedHistory = [...state.budget_history].sort((a, b) => a.id - b.id);
-                    historyLabels = sortedHistory.map(h => h.date); historyData = sortedHistory.map(h => h.total);
-                } else {
-                    let currentTotal = state.divisions.reduce((acc, d) => acc + d.budget, 0);
-                    historyLabels = [new Date().toLocaleDateString('it-IT')]; historyData = [currentTotal];
+                const mesiNomi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giug', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+                const now = new Date();
+                const currentMonthIdx = now.getMonth(); 
+
+                // Calcolo entrate e uscite effettive mensili dell'anno corrente
+                let mensiliReali = new Array(12).fill(0);
+                let mesiConDati = 0;
+                let sommaFinoAdOggi = 0;
+
+                (state.documents || []).forEach(doc => {
+                    if(!doc.date) return;
+                    const d = new Date(doc.date);
+                    if(d.getFullYear() === now.getFullYear()) {
+                        const m = d.getMonth();
+                        const val = doc.type === 'entrata' ? (parseFloat(doc.amount)||0) : -(parseFloat(doc.amount)||0);
+                        mensiliReali[m] += val;
+                    }
+                });
+
+                // Calcolo progressivo effettivo
+                let patrimonioProgressivo = new Array(12).fill(null);
+                let accumulatore = 0;
+                for(let i = 0; i <= currentMonthIdx; i++) {
+                    accumulatore += mensiliReali[i];
+                    patrimonioProgressivo[i] = accumulatore;
+                    sommaFinoAdOggi = accumulatore;
                 }
 
-                lineChartInst = new Chart(ctxL, {
+                // Stima Lineare per i mesi rimanenti dell'anno
+                let stimaLineare = new Array(12).fill(null);
+                stimaLineare[currentMonthIdx] = sommaFinoAdOggi;
+                let mediaMensile = (currentMonthIdx >= 0) ? (sommaFinoAdOggi / (currentMonthIdx + 1)) : 0;
+
+                for(let i = currentMonthIdx + 1; i < 12; i++) {
+                    stimaLineare[i] = stimaLineare[i - 1] + mediaMensile;
+                }
+
+                let datasets = [];
+
+                // Dataset Anno Corrente Attivo
+                datasets.push({
+                    label: `Anno Corrente (${now.getFullYear()})`,
+                    data: patrimonioProgressivo,
+                    borderColor: '#22C55E',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                });
+
+                datasets.push({
+                    label: `Stima Lineare Proiettata`,
+                    data: stimaLineare,
+                    borderColor: '#F59E0B',
+                    borderDash: [5, 5],
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.1
+                });
+
+                // Se ci sono Anni Fiscali Chiusi, li fissa nel grafico con Data e Guadagno Fisso
+                (state.fiscal_years || []).forEach(fy => {
+                    let arrayFisso = new Array(12).fill(fy.netGain || 0);
+                    datasets.push({
+                        label: `Chiuso ${fy.year} (€ ${fy.netGain.toLocaleString()}) [${fy.closedAtDate}]`,
+                        data: arrayFisso,
+                        borderColor: '#64748B',
+                        borderDash: [2, 2],
+                        backgroundColor: 'transparent',
+                        fill: false,
+                        pointRadius: 0
+                    });
+                });
+
+                patrimonioChartInst = new Chart(ctxP, {
                     type: 'line',
-                    data: { labels: historyLabels, datasets: [{ label: 'Budget (€)', data: historyData, borderColor: '#2563EB', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.3 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+                    data: {
+                        labels: mesiNomi,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                        },
+                        scales: { y: { beginAtZero: false } }
+                    }
                 });
             }
         }
@@ -1176,8 +1290,7 @@
         async function syncConFirebase() {
             if (!window.db || !window.rtdb) return;
             try {
-                // Recupero asincrono di tutte le collezioni definite nell'Index 9
-                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history', 'ordini', 'servizi', 'richieste_servizi', 'candidature', 'cloud_folders', 'cloud_files'];
+                const collections = ['companies', 'divisions', 'staff', 'time_entries', 'documents', 'tasks', 'badges', 'payrolls', 'security_alerts', 'budget_history', 'ordini', 'servizi', 'richieste_servizi', 'candidature', 'cloud_folders', 'cloud_files', 'fiscal_years'];
                 
                 const loadPromises = collections.map(async (coll) => {
                     const snap = await window.rtdb.get(window.rtdb.ref(window.db, coll));
@@ -1189,7 +1302,6 @@
                 
                 await initDefaultCloudFolders();
 
-                // Attivo i listener in realtime
                 collections.forEach(coll => {
                     window.rtdb.onValue(window.rtdb.ref(window.db, coll), (snap) => {
                         let arr = [];
@@ -1200,7 +1312,6 @@
                     });
                 });
 
-                // Server 2: Horizon ID Core (Utenti e Chat Live)
                 if(window.dbHorizonId) {
                     window.rtdb.onValue(window.rtdb.ref(window.dbHorizonId, 'users'), (snap) => {
                         let arr = [];
@@ -1219,6 +1330,10 @@
                         if(lo && lo.style.display === 'none') renderAll();
                     });
                 }
+
+                // Controllo e Chiusura Automatica Anno Fiscale al 1° Gennaio ore 00:00
+                verificareChiusuraAutomaticaFiscale();
+
             } catch (error) { console.error(error); }
         }
 
@@ -1464,6 +1579,139 @@
             }
         }
 
+        // --- CHIUSURA ANNO FISCALE LOGICA COMPLETA ---
+        function gestisciPulsanteChiusuraFiscale() {
+            const btn = document.getElementById('btn-chiusura-fiscale');
+            if(!btn) return;
+
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const month = now.getMonth(); 
+            const day = now.getDate();
+
+            // Il pulsante si rende cliccabile a partire dal 25 Ottobre (mese 9, giorno 25)
+            const isClickableDate = (month > 9) || (month === 9 && day >= 25);
+            const giaChiusoQuestAnno = (state.fiscal_years || []).some(fy => fy.year === currentYear);
+
+            if(isClickableDate && !giaChiusoQuestAnno) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            }
+        }
+
+        window.eseguiChiusuraFiscaleManuale = function() {
+            if(!confirm("CONFERMA CHIUSURA ANNO FISCALE\n\nSei sicuro di voler effettuare la chiusura dell'anno fiscale corrente? Tutti i dati di entrate ed uscite attuali verranno salvati nell'archivio storico e la sezione verrà azzerata per il nuovo anno.")) return;
+            eseguiChiusuraAnnoFiscale(false);
+        }
+
+        async function eseguiChiusuraAnnoFiscale(isAutomatic = false) {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+
+            // Calcolo valori correnti dai documenti attivi
+            let docsCurrentYear = (state.documents || []).filter(d => {
+                if(!d.date) return true;
+                return new Date(d.date).getFullYear() === currentYear;
+            });
+
+            let totalIn = docsCurrentYear.filter(d => d.type === 'entrata').reduce((s, d) => s + (parseFloat(d.amount)||0), 0);
+            let totalOut = docsCurrentYear.filter(d => d.type === 'uscita').reduce((s, d) => s + (parseFloat(d.amount)||0), 0);
+            let netGain = totalIn - totalOut;
+
+            // Generazione Codice Univoco di Chiusura
+            const protocolCode = `PROT-FY-${currentYear}-${Date.now().toString().slice(-6)}`;
+
+            const closedObj = {
+                id: protocolCode,
+                year: currentYear,
+                closedAtDate: now.toLocaleDateString('it-IT') + ' ' + now.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}),
+                totalIn: totalIn,
+                totalOut: totalOut,
+                netGain: netGain,
+                autoClosed: isAutomatic,
+                documentsBackup: docsCurrentYear
+            };
+
+            try {
+                // 1. Salva il record dell'anno fiscale chiuso su Firebase
+                await saveToFirebase('fiscal_years', closedObj);
+
+                // 2. Azzera la sezione rimuovendo i documenti dell'anno appena chiuso
+                for(let doc of docsCurrentYear) {
+                    if(window.rtdb && window.db) {
+                        await window.rtdb.remove(window.rtdb.ref(window.db, `documents/${doc.id}`));
+                    }
+                }
+
+                alert(`Anno Fiscale ${currentYear} chiuso con successo!\nCodice Univoco: ${protocolCode}\nUtile Netto: € ${netGain.toLocaleString()}`);
+                renderAll();
+            } catch(e) {
+                alert("Errore durante la chiusura fiscale: " + e.message);
+            }
+        }
+
+        function verificareChiusuraAutomaticaFiscale() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const lastYear = currentYear - 1;
+
+            // Se siamo al 1° Gennaio (o successivi) e l'anno precedente non è stato chiuso, fa la chiusura automatica
+            const giaChiuso = (state.fiscal_years || []).some(fy => fy.year === lastYear);
+            if(!giaChiuso && state.documents && state.documents.length > 0) {
+                const ciSonoDocAnnoScorso = state.documents.some(d => d.date && new Date(d.date).getFullYear() === lastYear);
+                if(ciSonoDocAnnoScorso) {
+                    eseguiChiusuraAnnoFiscale(true);
+                }
+            }
+        }
+
+        window.apriRicevutaFiscaleModal = function(id) {
+            const fy = (state.fiscal_years || []).find(f => f.id == id);
+            if(!fy) return;
+
+            document.getElementById('rc-id').innerText = fy.id;
+            document.getElementById('rc-year').innerText = `ANNO FISCALE ${fy.year}`;
+            document.getElementById('rc-date').innerText = fy.closedAtDate;
+            document.getElementById('rc-type').innerText = fy.autoClosed ? 'AUTOMATICA (01/01)' : 'MANUALE (DIREZIONE)';
+            document.getElementById('rc-in').innerText = `€ ${fy.totalIn.toLocaleString('it-IT', {minimumFractionDigits:2})}`;
+            document.getElementById('rc-out').innerText = `€ ${fy.totalOut.toLocaleString('it-IT', {minimumFractionDigits:2})}`;
+            document.getElementById('rc-net').innerText = `€ ${fy.netGain.toLocaleString('it-IT', {minimumFractionDigits:2})}`;
+
+            openModal('modal-receipt');
+        }
+
+        function renderClosedFiscalYearsList() {
+            const panel = document.getElementById('closed-fiscal-years-panel');
+            const container = document.getElementById('closed-fiscal-years-list');
+            if(!panel || !container) return;
+
+            const list = state.fiscal_years || [];
+            if(list.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            panel.style.display = 'block';
+            container.innerHTML = list.sort((a,b) => b.year - a.year).map(fy => {
+                return `
+                <div class="clickable-row" onclick="apriRicevutaFiscaleModal('${fy.id}')" style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--card); border:1px solid var(--border); border-radius:8px; margin-top:8px;">
+                    <div>
+                        <strong style="font-size:15px; color:var(--text);"><i class="ph-fill ph-file-text"></i> ANNO FISCALE ${fy.year} CHIUSO [${fy.id}]</strong>
+                        <span style="font-size:12px; color:var(--text-light); display:block;">Data Chiusura: ${fy.closedAtDate} | Modalità: <b>${fy.autoClosed ? 'Automatica (Modificabile)' : 'Manuale'}</b></span>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:16px; font-weight:800; color:${fy.netGain >= 0 ? 'var(--accent)' : 'var(--danger)'}">€ ${fy.netGain.toLocaleString()}</span>
+                        <span style="font-size:11px; display:block; color:var(--primary); font-weight:bold;">Vedi Ricevuta Minimal &gt;</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
         // --- GESTIONE DETTAGLI SERVIZI SITO ---
         window.openDettaglioServizio = function(id) {
             const req = state.richieste_servizi.find(r => r.id == id);
@@ -1588,7 +1836,7 @@
             `;
 
             document.getElementById('dettaglio-candidatura-content').innerHTML = html;
-            openModal('modal-dettaglio-candidatura');
+            openModal('modal-dettaglio-candidature');
         }
 
         window.updateStatoCandidatura = async function() {
@@ -1599,7 +1847,7 @@
                 c.stato = nuovoStato;
                 await saveToFirebase('candidature', c);
                 alert("Iter HR aggiornato correttamente.");
-                closeModal('modal-dettaglio-candidatura');
+                closeModal('modal-dettaglio-candidature');
             }
         }
 
@@ -2088,6 +2336,9 @@
             let userPrefix = window.currentUserEmail ? window.currentUserEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') : '';
             let myStaffRecord = state.staff.find(s => s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === userPrefix);
 
+            // Gestione e abilità pulsante chiusura fiscale
+            gestisciPulsanteChiusuraFiscale();
+
             if(isAdmin) {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
                 const sAv = document.getElementById('staff-admin-view'); if(sAv) sAv.style.display = 'block';
@@ -2137,7 +2388,51 @@
 
                 // TABELLE MAIN ERP CLASSICO
                 let totalCap = state.companies.reduce((s, c) => s + c.cap, 0);
-                const dSum = document.getElementById('dash-summary'); if(dSum) dSum.innerHTML = `<div class="card"><div class="card-title">Capitale Gruppo</div><div class="card-value">€ ${(totalCap/1000000).toFixed(2)} M</div></div><div class="card"><div class="card-title">Aziende</div><div class="card-value">${state.companies.length}</div></div><div class="card"><div class="card-title">Staff</div><div class="card-value">${state.staff.length}</div></div>`;
+                
+                // CALCOLO PATRIMONIO NETTO REALE DALLA SEZIONE FISCALE
+                let totalInCurrent = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + (parseFloat(d.amount)||0), 0);
+                let totalOutCurrent = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + (parseFloat(d.amount)||0), 0);
+                let currentNetGain = totalInCurrent - totalOutCurrent;
+
+                // COSTRUZIONE CARDS DASHBOARD CON ANNI CHIUSI E ANNO CORRENTE
+                let closedCardsHtml = (state.fiscal_years || []).sort((a,b) => b.year - a.year).map(fy => {
+                    return `
+                    <div class="card" style="border-left: 4px solid var(--primary); background: rgba(37,99,235,0.02);">
+                        <div class="card-title" style="color:var(--primary); font-size:11px;">
+                            <i class="ph-fill ph-lock-key"></i> Anno Chiuso ${fy.year}
+                        </div>
+                        <div class="card-value" style="font-size:22px; color:${fy.netGain >= 0 ? 'var(--accent)' : 'var(--danger)'}">
+                            € ${fy.netGain.toLocaleString()}
+                        </div>
+                        <div style="font-size:10px; color:var(--text-light); margin-top:6px; font-family:monospace;">
+                            Cod: ${fy.id}<br>Data: ${fy.closedAtDate}
+                        </div>
+                    </div>`;
+                }).join('');
+
+                const dSum = document.getElementById('dash-summary'); 
+                if(dSum) {
+                    dSum.innerHTML = `
+                        <div class="card" style="border-left: 4px solid var(--accent);">
+                            <div class="card-title" style="color:var(--accent);">Guadagno Netto Corrente (${new Date().getFullYear()})</div>
+                            <div class="card-value" style="color:${currentNetGain >= 0 ? 'var(--accent)' : 'var(--danger)'}">€ ${currentNetGain.toLocaleString()}</div>
+                            <div style="font-size:11px; color:var(--text-light); margin-top:4px;">In corso di maturanza</div>
+                        </div>
+                        ${closedCardsHtml}
+                        <div class="card">
+                            <div class="card-title">Capitale Gruppo</div>
+                            <div class="card-value">€ ${(totalCap/1000000).toFixed(2)} M</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">Aziende Registrate</div>
+                            <div class="card-value">${state.companies.length}</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">Organico Staff</div>
+                            <div class="card-value">${state.staff.length}</div>
+                        </div>
+                    `;
+                }
                 
                 const tDash = document.getElementById('table-dash-stats'); if(tDash && tDash.querySelector('tbody')) tDash.querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td><span style="color:${c.eff>90?'var(--accent)':'var(--warning)'}">${c.eff}%</span></td></tr>`).join('');
                 const tAz = document.getElementById('table-aziende'); if(tAz && tAz.querySelector('tbody')) tAz.querySelector('tbody').innerHTML = state.companies.map(c => `<tr><td><b>${c.name}</b></td><td>€ ${c.cap.toLocaleString()}</td><td>${c.projects}</td><td>${c.eff}%</td><td><span class="badge" style="background:var(--accent); color:white;">Attiva</span></td><td class="action-btns"><button class="btn-del" onclick="deleteData('companies', ${c.id})">Del</button></td></tr>`).join('');
@@ -2194,9 +2489,23 @@
                 }).join('');
             }
 
-            let totalIn = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + d.amount, 0);
-            let totalOut = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + d.amount, 0);
-            const fSum = document.getElementById('finance-summary'); if(fSum) fSum.innerHTML = `<div class="card"><div class="card-title">Incassi</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div><div class="card"><div class="card-title">Uscite</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>`;
+            // CALCOLO BANNER ENTRATE, USCITE E PATRIMONIO SEZIONE FISCALE
+            let totalIn = state.documents.filter(d => d.type === 'entrata').reduce((s, d) => s + (parseFloat(d.amount)||0), 0);
+            let totalOut = state.documents.filter(d => d.type === 'uscita').reduce((s, d) => s + (parseFloat(d.amount)||0), 0);
+            let netGain = totalIn - totalOut;
+
+            const fSum = document.getElementById('finance-summary'); 
+            if(fSum) {
+                fSum.innerHTML = `
+                    <div class="card"><div class="card-title">Incassi (Entrate)</div><div class="card-value" style="color:var(--accent)">€ ${totalIn.toLocaleString()}</div></div>
+                    <div class="card"><div class="card-title">Spese (Uscite)</div><div class="card-value" style="color:var(--danger)">€ ${totalOut.toLocaleString()}</div></div>
+                    <div class="card"><div class="card-title">Patrimonio Netto Attuale</div><div class="card-value" style="color:${netGain >= 0 ? 'var(--accent)' : 'var(--danger)'}">€ ${netGain.toLocaleString()}</div></div>
+                `;
+            }
+
+            // LISTA ANNI FISCALI CHIUSI
+            renderClosedFiscalYearsList();
+
             const tDocs = document.getElementById('table-docs'); 
             if(tDocs && tDocs.querySelector('tbody')) {
                 tDocs.querySelector('tbody').innerHTML = state.documents.map(d => `<tr><td>${d.date}</td><td>${d.title}</td><td>${getCompanyName(d.companyId)}</td><td>€ ${d.amount}</td><td><span style="color:${d.type==='entrata'?'var(--accent)':'var(--danger)'}">${d.type.toUpperCase()}</span></td><td>${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="badge" style="background:var(--primary); color:white; text-decoration:none;"><i class="ph-fill ph-file-pdf"></i> Apri / Scarica</a>` : '-'}</td><td class="action-btns">${isAdmin ? `<button class="btn-del" onclick="deleteData('documents', ${d.id})">Del</button>` : '-'}</td></tr>`).join('');
@@ -2205,45 +2514,9 @@
             // Renderizza l'UI dell'Archivio Cloud
             renderCloudSystem();
             
-            // Popola i select a prescindere ogni volta che si renderizza
+            // Popola i select
             populateSelects();
         }
-        
-        window.scalaAuraCredit = async function() {
-            const uid = document.getElementById('crm-target-uid').value;
-            const amount = parseFloat(document.getElementById('crm-inv-amount').value);
-            const desc = document.getElementById('crm-inv-desc').value;
-
-            if(!uid || isNaN(amount) || amount <= 0) return alert("Inserisci un importo valido.");
-            
-            const user = state.horizonUsers.find(u => u.uid === uid);
-            if(!user) return alert("Utente non trovato.");
-            
-            const currentCredit = parseFloat(user.auraCredit || 0);
-
-            if(amount > currentCredit) return alert("Credito insufficiente per questa operazione.");
-
-            try {
-                // 1. Aggiorna DB Horizon ID Core
-                await window.rtdb.update(window.rtdb.ref(window.dbHorizonId, `users/${uid}`), {
-                    auraCredit: (currentCredit - amount).toFixed(2)
-                });
-                
-                // 2. Salva nel registro fatture (ERP Centrale)
-                await window.rtdb.push(window.rtdb.ref(window.db, 'documents'), {
-                    title: `Addebito CRM: ${desc}`,
-                    amount: amount,
-                    type: 'entrata',
-                    date: new Date().toISOString().split('T')[0],
-                    targetUser: uid
-                });
-
-                alert("Addebito eseguito con successo!");
-                closeModal('modal-crm-user');
-            } catch (e) {
-                alert("Errore durante l'operazione: " + e.message);
-            }
-        };
     </script>
 </body>
 </html>
